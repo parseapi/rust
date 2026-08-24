@@ -24,6 +24,7 @@ pub struct IpDeep {
 	pub datacenter: Option<bool>,
 	pub relay: Option<bool>,
 	pub tor: Option<bool>,
+	pub vpn: Option<bool>,
 	pub provider: Option<String>,
 }
 
@@ -371,7 +372,7 @@ pub struct DomainDeep {
 	pub mx: Vec<MxRecord>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub txt: Vec<String>,
-	pub provider: Option<String>,
+	pub mailhost: Option<String>,
 	pub registration: Option<DomainRegistration>,
 }
 
