@@ -719,11 +719,24 @@ pub struct WeatherHour {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct WeatherMinute {
+	pub at: Option<String>,
+	pub precipitation: Option<f64>,
+	pub precipitation_in: Option<f64>,
+	#[serde(rename = "type")]
+	pub precipitation_type: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct WeatherDeep {
 	#[serde(default, deserialize_with = "null_default")]
 	pub forecast: Vec<WeatherForecastPeriod>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub alerts: Vec<WeatherAlert>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub minutes: Vec<WeatherMinute>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub hours: Vec<WeatherHour>,
 }
