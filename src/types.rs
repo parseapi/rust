@@ -654,19 +654,37 @@ pub struct WeatherAlert {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct WeatherDeep {
-	#[serde(default, deserialize_with = "null_default")]
-	pub forecast: Vec<WeatherForecastPeriod>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub alerts: Vec<WeatherAlert>,
+pub struct WeatherHour {
+	pub at: Option<String>,
+	pub daytime: Option<bool>,
+	pub temperature: Option<f64>,
+	pub temperature_f: Option<f64>,
+	pub humidity: Option<f64>,
+	pub precipitation_chance: Option<f64>,
+	pub wind_speed: Option<f64>,
+	pub wind_speed_mph: Option<f64>,
+	pub wind_direction: Option<f64>,
+	pub condition: Option<String>,
+	pub condition_name: Option<String>,
+	pub condition_emoji: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct Weather {
-	pub latitude: f64,
-	pub longitude: f64,
+pub struct WeatherDeep {
+	#[serde(default, deserialize_with = "null_default")]
+	pub forecast: Vec<WeatherForecastPeriod>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub alerts: Vec<WeatherAlert>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub hours: Vec<WeatherHour>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct WeatherCurrent {
 	pub temperature: Option<f64>,
 	pub temperature_f: Option<f64>,
 	pub feels_like: Option<f64>,
@@ -687,12 +705,35 @@ pub struct Weather {
 	pub condition_name: Option<String>,
 	pub condition_emoji: Option<String>,
 	pub observed_at: Option<String>,
-	pub station: String,
-	pub station_name: Option<String>,
-	pub station_distance: f64,
-	pub station_distance_mi: f64,
-	pub source: String,
-	pub source_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct WeatherStation {
+	pub id: String,
+	pub name: Option<String>,
+	pub distance: Option<f64>,
+	pub distance_mi: Option<f64>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct WeatherSource {
+	pub id: String,
+	pub name: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Weather {
+	pub latitude: f64,
+	pub longitude: f64,
+	pub current: WeatherCurrent,
+	pub station: Option<WeatherStation>,
+	pub source: WeatherSource,
 	pub deep: Option<WeatherDeep>,
 }
 

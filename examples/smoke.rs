@@ -199,7 +199,7 @@ async fn main() {
 			.unwrap_or(Some(format!("country {:?}", r.country)))
 	});
 	s.ok("weather", parse.weather(40.7128, -74.006, None).await, |r| {
-		(!r.station.is_empty()).then_some(None).unwrap_or(Some("no station".into()))
+		r.station.as_ref().is_some_and(|s| !s.id.is_empty()).then_some(None).unwrap_or(Some("no station".into()))
 	});
 	s.ok("emoji", parse.emoji("rocket").await, |r| {
 		(r.emoji == "\u{1F680}").then_some(None).unwrap_or(Some("wrong emoji".into()))
