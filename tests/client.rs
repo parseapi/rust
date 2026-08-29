@@ -1,6 +1,6 @@
 use parseapi::{
-	CityOptions, CitySearchOptions, Client, DeepOptions, Error, HolidayOptions, PhoneOptions,
-	PostalNearbyOptions,
+	CityOptions, CitySearchOptions, Client, CountryOptions, DeepOptions, Error, HolidayOptions,
+	PhoneOptions, PostalNearbyOptions,
 };
 use std::collections::HashMap;
 use std::io::{Read, Write};
@@ -161,6 +161,17 @@ url_test!(
 	c => c.phone("+14155552671", PhoneOptions { deep: true, ..Default::default() }),
 	"/phone/%2B14155552671?deep=true"
 );
+url_test!(
+	url_carrier_encodes_plus,
+	c => c.carrier("+14155552671", None),
+	"/carrier/%2B14155552671"
+);
+url_test!(
+	url_caller_with_country,
+	c => c.caller("4155552671", CountryOptions { country: Some("US".into()) }),
+	"/caller/4155552671?country=US"
+);
+url_test!(url_hlr, c => c.hlr("+447712345678", None), "/hlr/%2B447712345678");
 url_test!(url_domain, c => c.domain("example.com", None), "/domain/example.com");
 url_test!(url_mx, c => c.mx("example.com"), "/mx/example.com");
 url_test!(url_useragent, c => c.useragent("TestUA/1.0", None), "/useragent");

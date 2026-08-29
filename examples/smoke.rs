@@ -147,6 +147,16 @@ async fn main() {
 	s.ok("phone", parse.phone("+14155552671", None).await, |r| {
 		(r.phone.as_deref() == Some("+14155552671")).then_some(None).unwrap_or(Some("wrong phone".into()))
 	});
+	// Metered core siblings: junk numbers answer 200 valid false, free, no vendor dip.
+	s.ok("carrier junk free", parse.carrier("555-0100", None).await, |r| {
+		(!r.valid).then_some(None).unwrap_or(Some("expected invalid".into()))
+	});
+	s.ok("caller junk free", parse.caller("555-0100", None).await, |r| {
+		(!r.valid).then_some(None).unwrap_or(Some("expected invalid".into()))
+	});
+	s.ok("hlr junk free", parse.hlr("555-0100", None).await, |r| {
+		(!r.valid).then_some(None).unwrap_or(Some("expected invalid".into()))
+	});
 	s.ok("domain", parse.domain("gmail.com", None).await, |r| {
 		(!r.available).then_some(None).unwrap_or(Some("gmail available?".into()))
 	});

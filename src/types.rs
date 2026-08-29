@@ -313,12 +313,37 @@ pub struct Email {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct PhoneDeep {
+pub struct Phone {
+	pub phone: Option<String>,
+	pub valid: bool,
+	/// What the numbering plan can see: mobile, landline, toll_free, unknown. Never voip.
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
+	/// NPA-derived state code (US/CA).
+	pub state: Option<String>,
+	pub state_name: Option<String>,
+	pub country: Option<String>,
+	pub national: Option<String>,
+	pub international: Option<String>,
+	/// Always empty. The metered proves are their own endpoints: carrier, caller, hlr.
+	pub deep: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Carrier {
+	pub phone: Option<String>,
+	pub valid: bool,
+	pub country: Option<String>,
+	/// The network's word, including voip.
+	#[serde(rename = "type")]
+	pub kind: Option<String>,
+	/// Current carrier display name. None when the probe had no answer.
 	pub carrier: Option<String>,
 	/// Carrier is a known burner number app. None when carrier is unknown.
 	pub burner: Option<bool>,
+	/// Issuing rate-center city.
 	pub city: Option<String>,
 	pub state: Option<String>,
 	pub state_name: Option<String>,
@@ -327,13 +352,35 @@ pub struct PhoneDeep {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct Phone {
+pub struct Caller {
 	pub phone: Option<String>,
 	pub valid: bool,
 	pub country: Option<String>,
-	pub national: Option<String>,
-	pub international: Option<String>,
-	pub deep: Option<PhoneDeep>,
+	/// CNAM record verbatim (all-caps telco artifact). None when no record or outside NANP.
+	pub caller: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Hlr {
+	pub phone: Option<String>,
+	pub valid: bool,
+	pub country: Option<String>,
+	/// Assigned to a subscriber.
+	pub live: Option<bool>,
+	/// Handset reachable right now. None means unconfirmed, never no.
+	pub connected: Option<bool>,
+	/// The six network extras fill on live HLR dips only. None elsewhere (NANP, failover).
+	pub roaming: Option<bool>,
+	pub roaming_network: Option<String>,
+	/// ISO2, uppercase.
+	pub roaming_country: Option<String>,
+	/// Current serving network name.
+	pub network: Option<String>,
+	pub original_network: Option<String>,
+	pub mcc: Option<String>,
+	pub mnc: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

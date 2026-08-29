@@ -133,6 +133,13 @@ pub struct PhoneOptions {
 	pub deep: bool,
 }
 
+/// Narrows a phone-family lookup. Country is the default region for
+/// national formats without a leading plus.
+#[derive(Debug, Clone, Default)]
+pub struct CountryOptions {
+	pub country: Option<String>,
+}
+
 /// Evaluates the zone at an optional ISO-8601 instant.
 #[derive(Debug, Clone, Default)]
 pub struct TimezoneOptions {
@@ -459,6 +466,30 @@ impl Client {
 		push(&mut query, "country", opts.country);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/phone/{}", seg(number)), query, None).await
+	}
+
+	/// Looks up the current carrier serving a phone number. Metered.
+	pub async fn carrier(&self, number: &str, opts: impl Into<Option<CountryOptions>>) -> Result<Carrier> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "country", opts.country);
+		self.get(&format!("/carrier/{}", seg(number)), query, None).await
+	}
+
+	/// Looks up the caller ID name (CNAM) for a NANP phone number. Metered.
+	pub async fn caller(&self, number: &str, opts: impl Into<Option<CountryOptions>>) -> Result<Caller> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "country", opts.country);
+		self.get(&format!("/caller/{}", seg(number)), query, None).await
+	}
+
+	/// Checks live network status for a phone number worldwide. Metered.
+	pub async fn hlr(&self, number: &str, opts: impl Into<Option<CountryOptions>>) -> Result<Hlr> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "country", opts.country);
+		self.get(&format!("/hlr/{}", seg(number)), query, None).await
 	}
 
 	/// Checks if a domain is available to register.
