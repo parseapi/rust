@@ -730,6 +730,21 @@ pub struct WeatherMinute {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct WeatherDay {
+	pub date: Option<String>,
+	pub high: Option<f64>,
+	pub high_f: Option<f64>,
+	pub low: Option<f64>,
+	pub low_f: Option<f64>,
+	pub precipitation_chance: Option<f64>,
+	pub condition: Option<String>,
+	pub condition_name: Option<String>,
+	pub condition_emoji: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct WeatherDeep {
 	#[serde(default, deserialize_with = "null_default")]
 	pub forecast: Vec<WeatherForecastPeriod>,
@@ -739,6 +754,8 @@ pub struct WeatherDeep {
 	pub minutes: Vec<WeatherMinute>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub hours: Vec<WeatherHour>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub days: Vec<WeatherDay>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
