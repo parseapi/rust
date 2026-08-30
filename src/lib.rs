@@ -357,6 +357,16 @@ impl Client {
 		self.get(&format!("/continent/{}/countries", seg(code)), Query::new(), None).await
 	}
 
+	/// Looks up a country group by code (EU, SCHENGEN, NATO, ...).
+	pub async fn bloc(&self, code: &str) -> Result<Bloc> {
+		self.get(&format!("/bloc/{}", seg(code)), Query::new(), None).await
+	}
+
+	/// Lists the current members of a bloc.
+	pub async fn bloc_countries(&self, code: &str) -> Result<BlocCountries> {
+		self.get(&format!("/bloc/{}/countries", seg(code)), Query::new(), None).await
+	}
+
 	/// Looks up a country by ISO code.
 	pub async fn country(&self, code: &str) -> Result<Country> {
 		self.get(&format!("/country/{}", seg(code)), Query::new(), None).await

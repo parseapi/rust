@@ -71,6 +71,16 @@ async fn main() {
 	s.ok("continent_countries", parse.continent_countries("NA").await, |r| {
 		(!r.countries.is_empty()).then_some(None).unwrap_or(Some("empty".into()))
 	});
+	s.ok("bloc", parse.bloc("EU").await, |r| {
+		(r.name == "European Union" && r.members == 27)
+			.then_some(None)
+			.unwrap_or(Some("wrong bloc".into()))
+	});
+	s.ok("bloc_countries", parse.bloc_countries("SCHENGEN").await, |r| {
+		(r.countries.len() == 29)
+			.then_some(None)
+			.unwrap_or(Some("wrong members".into()))
+	});
 	s.ok("country", parse.country("US").await, |r| {
 		(r.iso3 == "USA").then_some(None).unwrap_or(Some("wrong iso3".into()))
 	});

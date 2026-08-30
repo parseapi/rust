@@ -76,6 +76,34 @@ pub struct ContinentCountries {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct Bloc {
+	pub bloc: String,
+	pub name: String,
+	pub members: i32,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BlocCountryItem {
+	pub country: String,
+	pub name: String,
+	pub emoji: Option<String>,
+	pub calling_code: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BlocCountries {
+	pub bloc: String,
+	#[serde(default, deserialize_with = "null_default")]
+	pub countries: Vec<BlocCountryItem>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct Country {
 	pub country: String,
 	pub iso3: String,
@@ -102,6 +130,8 @@ pub struct Country {
 	pub languages: Vec<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub borders: Vec<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub blocs: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

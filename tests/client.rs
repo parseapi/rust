@@ -109,6 +109,12 @@ url_test!(
 	c => c.continent_countries("NA"),
 	"/continent/NA/countries"
 );
+url_test!(url_bloc, c => c.bloc("EU"), "/bloc/EU");
+url_test!(
+	url_bloc_countries,
+	c => c.bloc_countries("SCHENGEN"),
+	"/bloc/SCHENGEN/countries"
+);
 url_test!(url_country, c => c.country("US"), "/country/US");
 url_test!(url_country_states, c => c.country_states("US"), "/country/US/states");
 url_test!(url_state, c => c.state("NC", "US"), "/state/NC?country=US");
