@@ -49,6 +49,7 @@ parse.currency("USD").await?;
 parse.currency_rate("USD", "EUR", None).await?;
 parse.language("en").await?;
 parse.name("BILLY OSHALL").await?;
+parse.sanctions("AEROCARIBBEAN AIRLINES").await?;
 parse.timezone("America/New_York", None).await?;
 parse.holiday("US", None).await?;
 parse.holiday_date("US", "2026-12-25").await?;

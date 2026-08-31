@@ -223,6 +223,16 @@ async fn main() {
 			.then_some(None)
 			.unwrap_or(Some("wrong name".into()))
 	});
+	s.ok("sanctions", parse.sanctions("AEROCARIBBEAN AIRLINES").await, |r| {
+		(r.sanctioned && r.matches.first().map(|m| m.list.as_str()) == Some("sdn"))
+			.then_some(None)
+			.unwrap_or(Some("expected sdn match".into()))
+	});
+	s.ok("sanctions clean", parse.sanctions("Jane Smith").await, |r| {
+		(!r.sanctioned && r.matches.is_empty())
+			.then_some(None)
+			.unwrap_or(Some("expected no match".into()))
+	});
 	s.ok("timezone", parse.timezone("America/New_York", None).await, |r| {
 		(r.offset_minutes == -240 || r.offset_minutes == -300)
 			.then_some(None)

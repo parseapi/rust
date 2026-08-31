@@ -769,6 +769,38 @@ pub struct Name {
 	pub salutation: Option<String>,
 }
 
+/// One official OFAC record, verbatim.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct SanctionsMatch {
+	/// OFAC uid, stable across publications.
+	pub id: u64,
+	/// "sdn" or "consolidated".
+	pub list: String,
+	/// "individual", "entity", "vessel", or "aircraft".
+	pub r#type: String,
+	/// Listed primary name, verbatim.
+	pub name: String,
+	/// Official sanctions program codes (SDGT, CUBA, IRGC).
+	#[serde(default, deserialize_with = "null_default")]
+	pub programs: Vec<String>,
+}
+
+/// An OFAC screening result. Sanctioned false means not on the list as
+/// published. It is not clearance.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Sanctions {
+	/// The name you passed, folded to its match key.
+	pub name: String,
+	pub sanctioned: bool,
+	/// Official records matched. Empty when sanctioned is false.
+	#[serde(default, deserialize_with = "null_default")]
+	pub matches: Vec<SanctionsMatch>,
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
