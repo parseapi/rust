@@ -671,6 +671,8 @@ pub struct CurrencyRate {
 	pub quote: String,
 	pub rate: f64,
 	pub date: String,
+	pub amount: Option<f64>,
+	pub converted: Option<f64>,
 	pub source: Option<String>,
 }
 

@@ -1,6 +1,6 @@
 use parseapi::{
-	CityNearbyOptions, CityOptions, CitySearchOptions, Client, CountryOptions, DeepOptions, Error,
-	HolidayOptions, PhoneOptions, PostalNearbyOptions, VatOptions,
+	CityNearbyOptions, CityOptions, CitySearchOptions, Client, CountryOptions, CurrencyRateOptions,
+	DeepOptions, Error, HolidayOptions, PhoneOptions, PostalNearbyOptions, VatOptions,
 };
 use std::collections::HashMap;
 use std::io::{Read, Write};
@@ -203,8 +203,20 @@ url_test!(url_useragent, c => c.useragent("TestUA/1.0", None), "/useragent");
 url_test!(url_currency, c => c.currency("USD"), "/currency/USD");
 url_test!(
 	url_currency_rate,
-	c => c.currency_rate("USD", "EUR"),
+	c => c.currency_rate("USD", "EUR", None),
 	"/currency/USD/EUR"
+);
+url_test!(
+	url_currency_rate_date_amount,
+	c => c.currency_rate(
+		"USD",
+		"JPY",
+		CurrencyRateOptions {
+			date: Some("2026-08-28".into()),
+			amount: Some(100.0),
+		}
+	),
+	"/currency/USD/JPY?date=2026-08-28&amount=100"
 );
 url_test!(url_language, c => c.language("en"), "/language/en");
 url_test!(url_name_encodes_spaces, c => c.name("Smith, John"), "/name/Smith%2C%20John");

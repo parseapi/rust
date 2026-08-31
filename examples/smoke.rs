@@ -186,7 +186,7 @@ async fn main() {
 	s.ok("currency", parse.currency("USD").await, |r| {
 		(r.symbol.as_deref() == Some("$")).then_some(None).unwrap_or(Some("wrong symbol".into()))
 	});
-	s.ok("currency_rate", parse.currency_rate("USD", "EUR").await, |r| {
+	s.ok("currency_rate", parse.currency_rate("USD", "EUR", None).await, |r| {
 		(r.rate > 0.0 && r.rate < 10.0).then_some(None).unwrap_or(Some("bad rate".into()))
 	});
 	s.ok("language", parse.language("en").await, |r| {

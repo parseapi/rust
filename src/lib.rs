@@ -160,6 +160,13 @@ pub struct CountryOptions {
 	pub country: Option<String>,
 }
 
+/// Selects a past bulletin day and/or converts an amount on a currency pair.
+#[derive(Debug, Clone, Default)]
+pub struct CurrencyRateOptions {
+	pub date: Option<String>,
+	pub amount: Option<f64>,
+}
+
 /// Evaluates the zone at an optional ISO-8601 instant.
 #[derive(Debug, Clone, Default)]
 pub struct TimezoneOptions {
@@ -581,8 +588,17 @@ impl Client {
 	}
 
 	/// Returns the daily official reference rate for a currency pair.
-	pub async fn currency_rate(&self, base: &str, quote: &str) -> Result<CurrencyRate> {
-		self.get(&format!("/currency/{}/{}", seg(base), seg(quote)), Query::new(), None).await
+	pub async fn currency_rate(
+		&self,
+		base: &str,
+		quote: &str,
+		opts: impl Into<Option<CurrencyRateOptions>>,
+	) -> Result<CurrencyRate> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "date", opts.date);
+		push(&mut query, "amount", opts.amount.map(|a| a.to_string()));
+		self.get(&format!("/currency/{}/{}", seg(base), seg(quote)), query, None).await
 	}
 
 	/// Looks up an IANA timezone.

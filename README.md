@@ -44,7 +44,7 @@ parse.district("37081", None).await?;
 parse.continent("NA").await?;
 parse.continent_countries("NA").await?;
 parse.currency("USD").await?;
-parse.currency_rate("USD", "EUR").await?;
+parse.currency_rate("USD", "EUR", None).await?;
 parse.language("en").await?;
 parse.name("BILLY OSHALL").await?;
 parse.timezone("America/New_York", None).await?;
