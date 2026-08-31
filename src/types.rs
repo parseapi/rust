@@ -169,6 +169,15 @@ pub struct State {
 	pub population: Option<i64>,
 	pub area: Option<f64>,
 	pub timezone: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub timezones: Vec<String>,
+	pub iso_3166_2: Option<String>,
+	pub fips: Option<String>,
+	pub capital: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub area_codes: Vec<String>,
+	pub tax: Option<String>,
+	pub tax_rate: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -210,6 +219,10 @@ pub struct District {
 	pub population: Option<i64>,
 	pub land_area: Option<f64>,
 	pub water_area: Option<f64>,
+	pub seat: Option<String>,
+	pub timezone: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub timezones: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -218,12 +231,22 @@ pub struct District {
 pub struct City {
 	pub name: String,
 	pub local_name: Option<String>,
+	#[serde(rename = "type")]
+	pub kind: Option<String>,
+	pub capital: Option<String>,
 	pub state: Option<String>,
 	pub state_name: Option<String>,
+	pub district: Option<String>,
+	pub district_name: Option<String>,
 	pub country: String,
+	pub country_name: Option<String>,
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
+	pub elevation: Option<f64>,
+	pub elevation_ft: Option<f64>,
 	pub population: Option<i64>,
+	pub land_area: Option<f64>,
+	pub water_area: Option<f64>,
 	pub timezone: Option<String>,
 	/// Minted parse id (`city_` + 12 chars). Stable pin via `/city/id/{id}`.
 	pub id: String,
@@ -254,6 +277,19 @@ pub struct CitySearch {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct CityNearby {
+	pub city: String,
+	pub state: Option<String>,
+	pub country: String,
+	pub radius: f64,
+	pub unit: String,
+	#[serde(default, deserialize_with = "null_default")]
+	pub nearby: Vec<CityNearest>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct Postal {
 	pub postal: String,
 	pub city: Option<String>,
@@ -265,11 +301,14 @@ pub struct Postal {
 	pub state_name: Option<String>,
 	pub state_name_local: Option<String>,
 	pub country: String,
+	pub country_name: Option<String>,
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
 	pub elevation: Option<f64>,
 	pub elevation_ft: Option<f64>,
 	pub population: Option<i64>,
+	pub land_area: Option<f64>,
+	pub water_area: Option<f64>,
 	pub timezone: Option<String>,
 	pub currency: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]

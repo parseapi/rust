@@ -101,6 +101,7 @@ pub struct DeepOptions {
 #[derive(Debug, Clone, Default)]
 pub struct DistrictOptions {
 	pub country: Option<String>,
+	pub state: Option<String>,
 }
 
 /// Narrows a city lookup.
@@ -123,6 +124,16 @@ pub struct CitySearchOptions {
 pub struct PostalNearbyOptions {
 	pub radius: Option<f64>,
 	pub unit: Option<String>,
+}
+
+/// Tunes cities around a named anchor.
+#[derive(Debug, Clone, Default)]
+pub struct CityNearbyOptions {
+	pub country: Option<String>,
+	pub state: Option<String>,
+	pub radius: Option<f64>,
+	pub unit: Option<String>,
+	pub limit: Option<u32>,
 }
 
 /// Narrows a phone lookup. Country is the default region for national
@@ -377,8 +388,8 @@ impl Client {
 		self.get(&format!("/country/{}/states", seg(code)), Query::new(), None).await
 	}
 
-	/// Looks up a state or province. Country is required because state codes
-	/// are not globally unique.
+	/// Looks up a state or province by code or name. Country is optional when
+	/// the code or name is unique. Pass "" to omit it.
 	pub async fn state(&self, code: &str, country: &str) -> Result<State> {
 		let mut query = Query::new();
 		push(&mut query, "country", Some(country.to_string()));
@@ -392,11 +403,12 @@ impl Client {
 		self.get(&format!("/state/{}/districts", seg(code)), query, None).await
 	}
 
-	/// Looks up a district (ADM2) by code.
+	/// Looks up a district (ADM2) by code or name.
 	pub async fn district(&self, code: &str, opts: impl Into<Option<DistrictOptions>>) -> Result<District> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "country", opts.country);
+		push(&mut query, "state", opts.state);
 		self.get(&format!("/district/{}", seg(code)), query, None).await
 	}
 
@@ -433,7 +445,20 @@ impl Client {
 		self.get("/city", query, None).await
 	}
 
-	/// Looks up a postal or ZIP code. Country is required.
+	/// Lists cities around a named city, nearest first.
+	pub async fn city_nearby(&self, name: &str, opts: impl Into<Option<CityNearbyOptions>>) -> Result<CityNearby> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "country", opts.country);
+		push(&mut query, "state", opts.state);
+		push(&mut query, "radius", opts.radius.map(|r| r.to_string()));
+		push(&mut query, "unit", opts.unit);
+		push(&mut query, "limit", opts.limit.map(|l| l.to_string()));
+		self.get(&format!("/city/{}/nearby", seg(name)), query, None).await
+	}
+
+	/// Looks up a postal or ZIP code. Country is optional when the code is unique.
+	/// Pass "" to omit it.
 	pub async fn postal(&self, code: &str, country: &str) -> Result<Postal> {
 		let mut query = Query::new();
 		push(&mut query, "country", Some(country.to_string()));
@@ -449,7 +474,7 @@ impl Client {
 	) -> Result<PostalNearby> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
-		push(&mut query, "country", Some(country.to_string()));
+		push(&mut query, "country", if country.is_empty() { None } else { Some(country.to_string()) });
 		push(&mut query, "radius", opts.radius.map(|r| r.to_string()));
 		push(&mut query, "unit", opts.unit);
 		self.get(&format!("/postal/{}/nearby", seg(code)), query, None).await

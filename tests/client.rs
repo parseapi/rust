@@ -1,6 +1,6 @@
 use parseapi::{
-	CityOptions, CitySearchOptions, Client, CountryOptions, DeepOptions, Error, HolidayOptions,
-	PhoneOptions, PostalNearbyOptions,
+	CityNearbyOptions, CityOptions, CitySearchOptions, Client, CountryOptions, DeepOptions, Error,
+	HolidayOptions, PhoneOptions, PostalNearbyOptions,
 };
 use std::collections::HashMap;
 use std::io::{Read, Write};
@@ -118,6 +118,7 @@ url_test!(
 url_test!(url_country, c => c.country("US"), "/country/US");
 url_test!(url_country_states, c => c.country_states("US"), "/country/US/states");
 url_test!(url_state, c => c.state("NC", "US"), "/state/NC?country=US");
+url_test!(url_state_name, c => c.state("colorado", ""), "/state/colorado");
 url_test!(
 	url_state_districts,
 	c => c.state_districts("NC", "US"),
@@ -146,7 +147,16 @@ url_test!(
 	c => c.city_nearest(35.2271, -80.8431),
 	"/city?lat=35.2271&lon=-80.8431"
 );
+url_test!(
+	url_city_nearby,
+	c => c.city_nearby(
+		"denver",
+		CityNearbyOptions { radius: Some(8.0), unit: Some("mi".into()), limit: Some(3), ..Default::default() }
+	),
+	"/city/denver/nearby?radius=8&unit=mi&limit=3"
+);
 url_test!(url_postal, c => c.postal("28202", "US"), "/postal/28202?country=US");
+url_test!(url_postal_bare, c => c.postal("SW1A 1AA", ""), "/postal/SW1A%201AA");
 url_test!(
 	url_postal_nearby,
 	c => c.postal_nearby(

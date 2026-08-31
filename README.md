@@ -25,6 +25,7 @@ parse.phone("+14155552671", None).await?;
 parse.carrier("+14155552671", None).await?;
 parse.caller("+14155552671", None).await?;
 parse.hlr("+14155552671", None).await?;
+parse.postal("SW1A 1AA", "").await?;
 parse.postal("28202", "US").await?;
 parse.postal_nearby("28202", "US", None).await?;
 parse.postal_distance("28202", "10001", "US").await?;
@@ -32,8 +33,10 @@ parse.city("charlotte", CityOptions { country: Some("US".into()), ..Default::def
 parse.city_id("city_mb8mbqrkz8zb").await?;
 parse.city_search("char", None).await?;
 parse.city_nearest(35.2271, -80.8431).await?;
+parse.city_nearby("denver", CityNearbyOptions { radius: Some(8.0), unit: Some("mi".into()), ..Default::default() }).await?;
 parse.country("US").await?;
 parse.country_states("US").await?;
+parse.state("colorado", "").await?;
 parse.state("NC", "US").await?;
 parse.state_districts("NC", "US").await?;
 parse.district("37081", None).await?;
