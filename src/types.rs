@@ -382,6 +382,38 @@ pub struct Email {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct VatAddress {
+	pub street: Option<String>,
+	pub city: Option<String>,
+	pub postal: Option<String>,
+	pub country: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct VatDeep {
+	pub registered: Option<bool>,
+	pub name: Option<String>,
+	pub address: Option<VatAddress>,
+	pub consultation: Option<String>,
+	pub consulted: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Vat {
+	pub vat: Option<String>,
+	pub valid: bool,
+	pub country: Option<String>,
+	pub from: Option<String>,
+	pub deep: Option<VatDeep>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct Phone {
 	pub phone: Option<String>,
 	pub valid: bool,

@@ -1,6 +1,6 @@
 use parseapi::{
 	CityNearbyOptions, CityOptions, CitySearchOptions, Client, CountryOptions, DeepOptions, Error,
-	HolidayOptions, PhoneOptions, PostalNearbyOptions,
+	HolidayOptions, PhoneOptions, PostalNearbyOptions, VatOptions,
 };
 use std::collections::HashMap;
 use std::io::{Read, Write};
@@ -172,6 +172,15 @@ url_test!(
 	"/postal/28202/distance/10001?country=US"
 );
 url_test!(url_email, c => c.email("a@b.com", None), "/email/a%40b.com");
+url_test!(url_vat, c => c.vat("DE136695976", None), "/vat/DE136695976");
+url_test!(
+	url_vat_from_deep,
+	c => c.vat(
+		"DE136695976",
+		VatOptions { from: Some("IE6388047V".into()), deep: true, ..Default::default() }
+	),
+	"/vat/DE136695976?from=IE6388047V&deep=true"
+);
 url_test!(
 	url_phone_encodes_plus,
 	c => c.phone("+14155552671", PhoneOptions { deep: true, ..Default::default() }),

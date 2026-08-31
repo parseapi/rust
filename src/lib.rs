@@ -144,6 +144,15 @@ pub struct PhoneOptions {
 	pub deep: bool,
 }
 
+/// Narrows a VAT lookup. Country fills a missing prefix. From is the
+/// caller's own VAT number for a consultation identifier.
+#[derive(Debug, Clone, Default)]
+pub struct VatOptions {
+	pub country: Option<String>,
+	pub from: Option<String>,
+	pub deep: bool,
+}
+
 /// Narrows a phone-family lookup. Country is the default region for
 /// national formats without a leading plus.
 #[derive(Debug, Clone, Default)]
@@ -492,6 +501,16 @@ impl Client {
 		let mut query = Query::new();
 		push_deep(&mut query, opts.into().is_some_and(|o| o.deep));
 		self.get(&format!("/email/{}", seg(email)), query, None).await
+	}
+
+	/// Checksums a VAT number. Deep asks the live EU registry.
+	pub async fn vat(&self, number: &str, opts: impl Into<Option<VatOptions>>) -> Result<Vat> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "country", opts.country);
+		push(&mut query, "from", opts.from);
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/vat/{}", seg(number)), query, None).await
 	}
 
 	/// Validates and formats a phone number.

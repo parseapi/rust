@@ -154,6 +154,11 @@ async fn main() {
 	s.ok("email", parse.email("hello@gmail.com", None).await, |r| {
 		r.valid.then_some(None).unwrap_or(Some("not valid".into()))
 	});
+	s.ok("vat", parse.vat("DE136695976", None).await, |r| {
+		(r.valid && r.country.as_deref() == Some("DE"))
+			.then_some(None)
+			.unwrap_or(Some("not valid DE".into()))
+	});
 	s.ok("phone", parse.phone("+14155552671", None).await, |r| {
 		(r.phone.as_deref() == Some("+14155552671")).then_some(None).unwrap_or(Some("wrong phone".into()))
 	});
