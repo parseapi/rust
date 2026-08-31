@@ -213,6 +213,12 @@ url_test!(url_hlr, c => c.hlr("+447712345678", None), "/hlr/%2B447712345678");
 url_test!(url_domain, c => c.domain("example.com", None), "/domain/example.com");
 url_test!(url_mx, c => c.mx("example.com"), "/mx/example.com");
 url_test!(url_useragent, c => c.useragent("TestUA/1.0", None), "/useragent");
+url_test!(url_vin, c => c.vin("1HGCM82633A004352", None), "/vin/1HGCM82633A004352");
+url_test!(
+	url_vin_deep,
+	c => c.vin("1HGCM82633A004352", DeepOptions { deep: true }),
+	"/vin/1HGCM82633A004352?deep=true"
+);
 url_test!(url_currency, c => c.currency("USD"), "/currency/USD");
 url_test!(
 	url_currency_rate,

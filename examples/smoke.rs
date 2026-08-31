@@ -191,6 +191,14 @@ async fn main() {
 			.then_some(None)
 			.unwrap_or(Some(format!("browser {:?}", r.browser)))
 	});
+	s.ok("vin", parse.vin("1HGCM82633A004352", None).await, |r| {
+		(r.valid && r.make.as_deref() == Some("Honda") && r.year == Some(2003))
+			.then_some(None)
+			.unwrap_or(Some("wrong decode".into()))
+	});
+	s.ok("vin junk", parse.vin("1HGCM82613A004352", None).await, |r| {
+		(!r.valid).then_some(None).unwrap_or(Some("expected invalid".into()))
+	});
 	s.ok("currency", parse.currency("USD").await, |r| {
 		(r.symbol.as_deref() == Some("$")).then_some(None).unwrap_or(Some("wrong symbol".into()))
 	});

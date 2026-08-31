@@ -586,6 +586,13 @@ impl Client {
 		self.get("/useragent", query, Some(ua)).await
 	}
 
+	/// Decodes a 17-character VIN. Deep adds open recall campaigns on paid plans.
+	pub async fn vin(&self, vin: &str, opts: impl Into<Option<DeepOptions>>) -> Result<Vin> {
+		let mut query = Query::new();
+		push_deep(&mut query, opts.into().is_some_and(|o| o.deep));
+		self.get(&format!("/vin/{}", seg(vin)), query, None).await
+	}
+
 	/// Looks up a currency by ISO 4217 code.
 	pub async fn currency(&self, code: &str) -> Result<Currency> {
 		self.get(&format!("/currency/{}", seg(code)), Query::new(), None).await

@@ -57,6 +57,7 @@ parse.weather(40.7128, -74.006, None).await?;
 parse.domain("example.com", None).await?;
 parse.mx("example.com").await?;
 parse.useragent(ua_string, None).await?;
+parse.vin("1HGCM82633A004352", None).await?;
 parse.emoji("rocket").await?;
 parse.emoji_search("fire", None).await?;
 ```

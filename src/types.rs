@@ -431,6 +431,64 @@ pub struct Iban {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct VinRecall {
+	/// Government campaign number.
+	pub campaign: String,
+	/// Report date, ISO YYYY-MM-DD.
+	pub date: Option<String>,
+	pub component: Option<String>,
+	/// The filed summary verbatim.
+	pub summary: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct VinDeep {
+	/// Open recall campaigns for the decoded vehicle. Empty when none,
+	/// None when the recall registry did not answer.
+	pub recalls: Option<Vec<VinRecall>>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Vin {
+	/// Normalized VIN, uppercase, no spaces. Invalid input still echoes the fold.
+	pub vin: Option<String>,
+	pub valid: bool,
+	pub year: Option<i64>,
+	pub make: Option<String>,
+	pub model: Option<String>,
+	pub trim: Option<String>,
+	pub series: Option<String>,
+	/// Body style (sedan, coupe, suv, pickup).
+	pub body: Option<String>,
+	/// Vehicle type (passenger car, truck, motorcycle, bus, trailer).
+	#[serde(rename = "type")]
+	pub kind: Option<String>,
+	pub doors: Option<i64>,
+	pub cylinders: Option<i64>,
+	/// Engine displacement in liters.
+	pub displacement: Option<f64>,
+	pub fuel: Option<String>,
+	pub horsepower: Option<f64>,
+	/// fwd, rwd, awd, 4wd.
+	pub drive: Option<String>,
+	/// automatic, manual, cvt.
+	pub transmission: Option<String>,
+	pub manufacturer: Option<String>,
+	pub plant_city: Option<String>,
+	pub plant_state: Option<String>,
+	pub plant_country: Option<String>,
+	/// Gross vehicle weight rating class as filed.
+	pub gvwr: Option<String>,
+	pub deep: Option<VinDeep>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct Phone {
 	pub phone: Option<String>,
 	pub valid: bool,
