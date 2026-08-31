@@ -534,6 +534,11 @@ impl Client {
 		self.get(&format!("/iban/{}", seg(iban)), query, None).await
 	}
 
+	/// Looks up an NPI in the CMS NPPES registry of US healthcare providers.
+	pub async fn npi(&self, npi: &str) -> Result<Npi> {
+		self.get(&format!("/npi/{}", seg(npi)), Query::new(), None).await
+	}
+
 	/// Validates and formats a phone number.
 	pub async fn phone(&self, number: &str, opts: impl Into<Option<PhoneOptions>>) -> Result<Phone> {
 		let opts = opts.into().unwrap_or_default();

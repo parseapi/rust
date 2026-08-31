@@ -23,6 +23,7 @@ parse.ip_self(None).await?;
 parse.email("hello@gmail.com", None).await?;
 parse.vat("DE136695976", None).await?;
 parse.iban("DE89370400440532013000", None).await?;
+parse.npi("1881018208").await?;
 parse.phone("+14155552671", None).await?;
 parse.carrier("+14155552671", None).await?;
 parse.caller("+14155552671", None).await?;

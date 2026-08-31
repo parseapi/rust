@@ -167,6 +167,14 @@ async fn main() {
 	s.ok("iban junk", parse.iban("hello", None).await, |r| {
 		(!r.valid).then_some(None).unwrap_or(Some("expected invalid".into()))
 	});
+	s.ok("npi", parse.npi("1881018208").await, |r| {
+		(r.valid && r.registered == Some(true))
+			.then_some(None)
+			.unwrap_or(Some("not registered".into()))
+	});
+	s.ok("npi junk", parse.npi("hello").await, |r| {
+		(!r.valid).then_some(None).unwrap_or(Some("expected invalid".into()))
+	});
 	s.ok("phone", parse.phone("+14155552671", None).await, |r| {
 		(r.phone.as_deref() == Some("+14155552671")).then_some(None).unwrap_or(Some("wrong phone".into()))
 	});

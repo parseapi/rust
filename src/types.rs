@@ -431,6 +431,37 @@ pub struct Iban {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct Npi {
+	/// Normalized 10-digit NPI. Invalid input still echoes the fold.
+	pub npi: Option<String>,
+	pub valid: bool,
+	/// Exists in the CMS NPPES registry.
+	pub registered: Option<bool>,
+	pub active: Option<bool>,
+	/// On the OIG exclusion list.
+	pub excluded: Option<bool>,
+	/// individual or organization.
+	#[serde(rename = "type")]
+	pub kind: Option<String>,
+	pub name: Option<String>,
+	pub first: Option<String>,
+	pub last: Option<String>,
+	pub credential: Option<String>,
+	pub specialty: Option<String>,
+	/// NUCC taxonomy code.
+	pub taxonomy: Option<String>,
+	pub address: Option<String>,
+	pub city: Option<String>,
+	pub state: Option<String>,
+	pub state_name: Option<String>,
+	pub postal: Option<String>,
+	pub country: Option<String>,
+	pub phone: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct VinRecall {
 	/// Government campaign number.
 	pub campaign: String,
