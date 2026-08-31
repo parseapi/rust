@@ -475,6 +475,80 @@ pub struct VinRecall {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct HtsMeasure {
+	/// Chapter 99 heading, dotted (9903.01.24).
+	pub heading: String,
+	/// The measure text verbatim.
+	pub description: String,
+	/// The rate string verbatim.
+	pub rate: Option<String>,
+	/// Effective from, ISO YYYY-MM-DD. None when the schedule states none.
+	pub from: Option<String>,
+	/// Expires, ISO YYYY-MM-DD. None when open-ended.
+	pub until: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct HtsDeep {
+	/// The origin country the measures were resolved for.
+	pub origin: Option<String>,
+	/// Composed ad valorem percent. None when the components do not compose cleanly.
+	pub effective_rate: Option<f64>,
+	/// Every Chapter 99 tariff measure that applies to this code from this origin.
+	#[serde(default, deserialize_with = "null_default")]
+	pub measures: Vec<HtsMeasure>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Hts {
+	/// Normalized code with dots (8471.30.01.00).
+	pub hts: String,
+	/// The schedule line verbatim.
+	pub description: String,
+	/// Parent descriptions from the schedule outline, outermost first.
+	#[serde(default, deserialize_with = "null_default")]
+	pub lineage: Vec<String>,
+	/// Units of quantity (No., kg).
+	#[serde(default, deserialize_with = "null_default")]
+	pub units: Vec<String>,
+	/// Column 1 general rate, verbatim.
+	pub general: Option<String>,
+	/// Column 1 special rate, verbatim.
+	pub special: Option<String>,
+	/// Column 2 rate, verbatim.
+	pub other: Option<String>,
+	/// The official release that answered (2026HTSRev17).
+	pub revision: String,
+	pub deep: Option<HtsDeep>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct HtsSearchHit {
+	pub hts: String,
+	pub description: String,
+	pub general: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct HtsSearch {
+	pub q: String,
+	pub revision: String,
+	/// Up to 20 lines, best match first.
+	#[serde(default, deserialize_with = "null_default")]
+	pub codes: Vec<HtsSearchHit>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct VinDeep {
 	/// Open recall campaigns for the decoded vehicle. Empty when none,
 	/// None when the recall registry did not answer.

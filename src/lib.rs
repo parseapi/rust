@@ -159,6 +159,14 @@ pub struct IbanOptions {
 	pub country: Option<String>,
 }
 
+/// Deep with an origin resolves the Chapter 99 tariff measures that apply
+/// to an HTS code from that country of origin.
+#[derive(Debug, Clone, Default)]
+pub struct HtsOptions {
+	pub origin: Option<String>,
+	pub deep: bool,
+}
+
 /// Narrows a phone-family lookup. Country is the default region for
 /// national formats without a leading plus.
 #[derive(Debug, Clone, Default)]
@@ -596,6 +604,23 @@ impl Client {
 		let mut query = Query::new();
 		push_deep(&mut query, opts.into().is_some_and(|o| o.deep));
 		self.get(&format!("/vin/{}", seg(vin)), query, None).await
+	}
+
+	/// Looks up a US Harmonized Tariff Schedule code. Deep with an origin
+	/// resolves the Chapter 99 tariff measures that apply from that country.
+	pub async fn hts(&self, code: &str, opts: impl Into<Option<HtsOptions>>) -> Result<Hts> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "origin", opts.origin);
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/hts/{}", seg(code)), query, None).await
+	}
+
+	/// Searches tariff schedule descriptions by product.
+	pub async fn hts_search(&self, q: &str) -> Result<HtsSearch> {
+		let mut query = Query::new();
+		push(&mut query, "q", Some(q.to_string()));
+		self.get("/hts", query, None).await
 	}
 
 	/// Looks up a currency by ISO 4217 code.
