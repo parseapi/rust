@@ -418,6 +418,8 @@ pub struct Iban {
 	pub iban: Option<String>,
 	pub valid: bool,
 	pub country: Option<String>,
+	/// Print form in groups of four, for display. None when invalid.
+	pub formatted: Option<String>,
 	pub checksum: Option<String>,
 	/// Bank identifier parsed from the number, not a name.
 	pub bank: Option<String>,
