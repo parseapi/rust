@@ -1,6 +1,6 @@
 use parseapi::{
 	CityNearbyOptions, CityOptions, CitySearchOptions, Client, CountryOptions, CurrencyRateOptions,
-	DeepOptions, Error, HolidayOptions, PhoneOptions, PostalNearbyOptions, VatOptions,
+	DeepOptions, Error, HolidayOptions, IbanOptions, PhoneOptions, PostalNearbyOptions, VatOptions,
 };
 use std::collections::HashMap;
 use std::io::{Read, Write};
@@ -173,6 +173,19 @@ url_test!(
 );
 url_test!(url_email, c => c.email("a@b.com", None), "/email/a%40b.com");
 url_test!(url_vat, c => c.vat("DE136695976", None), "/vat/DE136695976");
+url_test!(
+	url_iban,
+	c => c.iban("DE89370400440532013000", None),
+	"/iban/DE89370400440532013000"
+);
+url_test!(
+	url_iban_country,
+	c => c.iban(
+		"89370400440532013000",
+		IbanOptions { country: Some("DE".into()) }
+	),
+	"/iban/89370400440532013000?country=DE"
+);
 url_test!(
 	url_vat_from_deep,
 	c => c.vat(

@@ -153,6 +153,12 @@ pub struct VatOptions {
 	pub deep: bool,
 }
 
+/// Fills a missing country prefix on an IBAN.
+#[derive(Debug, Clone, Default)]
+pub struct IbanOptions {
+	pub country: Option<String>,
+}
+
 /// Narrows a phone-family lookup. Country is the default region for
 /// national formats without a leading plus.
 #[derive(Debug, Clone, Default)]
@@ -518,6 +524,14 @@ impl Client {
 		push(&mut query, "from", opts.from);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/vat/{}", seg(number)), query, None).await
+	}
+
+	/// Checksums an IBAN and returns the bank, branch, and account identifiers sitting inside it.
+	pub async fn iban(&self, iban: &str, opts: impl Into<Option<IbanOptions>>) -> Result<Iban> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "country", opts.country);
+		self.get(&format!("/iban/{}", seg(iban)), query, None).await
 	}
 
 	/// Validates and formats a phone number.

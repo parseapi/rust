@@ -414,6 +414,21 @@ pub struct Vat {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct Iban {
+	pub iban: Option<String>,
+	pub valid: bool,
+	pub country: Option<String>,
+	pub checksum: Option<String>,
+	/// Bank identifier parsed from the number, not a name.
+	pub bank: Option<String>,
+	/// Branch identifier when that country has one.
+	pub branch: Option<String>,
+	pub account: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct Phone {
 	pub phone: Option<String>,
 	pub valid: bool,
