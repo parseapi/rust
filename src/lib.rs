@@ -638,12 +638,6 @@ impl Client {
 		self.get(&format!("/name/{}", seg(name)), Query::new(), None).await
 	}
 
-	/// Screens a name against the official OFAC lists. Exact match after
-	/// normalization, never fuzzy. Sanctioned false is not clearance.
-	pub async fn ofac(&self, name: &str) -> Result<Sanctions> {
-		self.get(&format!("/ofac/{}", seg(name)), Query::new(), None).await
-	}
-
 	/// Returns the daily official reference rate for a currency pair.
 	pub async fn currency_rate(
 		&self,
