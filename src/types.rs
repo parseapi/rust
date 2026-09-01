@@ -217,7 +217,11 @@ pub struct District {
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
 	pub population: Option<i64>,
+	/// Total area in km2 (land + water, or the official total).
+	pub area: Option<f64>,
+	/// Land area in km2. None when the source publishes total only.
 	pub land_area: Option<f64>,
+	/// Water area in km2. None when the source publishes total only.
 	pub water_area: Option<f64>,
 	pub seat: Option<String>,
 	pub timezone: Option<String>,
@@ -233,7 +237,8 @@ pub struct City {
 	pub local_name: Option<String>,
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
-	pub capital: Option<String>,
+	/// What this city is the capital of: country, state, or none.
+	pub capital_of: Option<String>,
 	pub state: Option<String>,
 	pub state_name: Option<String>,
 	pub district: Option<String>,
@@ -245,7 +250,11 @@ pub struct City {
 	pub elevation: Option<f64>,
 	pub elevation_ft: Option<f64>,
 	pub population: Option<i64>,
+	/// Total area in km2 (land + water, or the official total).
+	pub area: Option<f64>,
+	/// Land area in km2. None when the source publishes total only.
 	pub land_area: Option<f64>,
+	/// Water area in km2. None when the source publishes total only.
 	pub water_area: Option<f64>,
 	pub timezone: Option<String>,
 	/// Minted parse id (`city_` + 12 chars). Stable pin via `/city/id/{id}`.
@@ -307,7 +316,11 @@ pub struct Postal {
 	pub elevation: Option<f64>,
 	pub elevation_ft: Option<f64>,
 	pub population: Option<i64>,
+	/// Total area in km2. None when the source has no water split.
+	pub area: Option<f64>,
+	/// Land area in km2, where the source has it.
 	pub land_area: Option<f64>,
+	/// Water area in km2, where the source has it.
 	pub water_area: Option<f64>,
 	pub timezone: Option<String>,
 	pub currency: Option<String>,
@@ -397,7 +410,8 @@ pub struct VatDeep {
 	pub name: Option<String>,
 	pub address: Option<VatAddress>,
 	pub consultation: Option<String>,
-	pub consulted: Option<String>,
+	/// Registry timestamp of this check, ISO.
+	pub consulted_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -541,9 +555,9 @@ pub struct HtsSearchHit {
 pub struct HtsSearch {
 	pub q: String,
 	pub revision: String,
-	/// Up to 20 lines, best match first.
+	/// Up to 20 tariff lines, best match first.
 	#[serde(default, deserialize_with = "null_default")]
-	pub codes: Vec<HtsSearchHit>,
+	pub lines: Vec<HtsSearchHit>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -597,13 +611,13 @@ pub struct Vin {
 pub struct Phone {
 	pub phone: Option<String>,
 	pub valid: bool,
+	pub country: Option<String>,
 	/// What the numbering plan can see: mobile, landline, toll_free, unknown. Never voip.
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
 	/// NPA-derived state code (US/CA).
 	pub state: Option<String>,
 	pub state_name: Option<String>,
-	pub country: Option<String>,
 	pub national: Option<String>,
 	pub international: Option<String>,
 	/// Always empty. The metered proves are their own endpoints: carrier, caller, hlr.
