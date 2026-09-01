@@ -452,6 +452,8 @@ pub struct Npi {
 	/// Exists in the CMS NPPES registry.
 	pub registered: Option<bool>,
 	pub active: Option<bool>,
+	/// Date CMS deactivated the NPI, YYYY-MM-DD. None when still active.
+	pub deactivated_at: Option<String>,
 	/// On the OIG exclusion list.
 	pub excluded: Option<bool>,
 	/// individual or organization.
