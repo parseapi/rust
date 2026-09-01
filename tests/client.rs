@@ -186,7 +186,12 @@ url_test!(
 	),
 	"/iban/89370400440532013000?country=DE"
 );
-url_test!(url_npi, c => c.npi("1881018208"), "/npi/1881018208");
+url_test!(url_npi, c => c.npi("1881018208", None), "/npi/1881018208");
+url_test!(
+	url_npi_deep,
+	c => c.npi("1881018208", DeepOptions { deep: true }),
+	"/npi/1881018208?deep=true"
+);
 url_test!(
 	url_vat_from_deep,
 	c => c.vat(

@@ -471,6 +471,30 @@ pub struct Npi {
 	pub postal: Option<String>,
 	pub country: Option<String>,
 	pub phone: Option<String>,
+	pub deep: Option<NpiDeep>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct NpiEnrollment {
+	/// part_a, part_b, practitioner, dme, order_refer, mdpp. None when unknown.
+	#[serde(rename = "type")]
+	pub kind: Option<String>,
+	pub specialty: Option<String>,
+	pub state: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct NpiDeep {
+	/// In the published Medicare FFS enrollment extract.
+	pub medicare: Option<bool>,
+	/// On the CMS opt-out affidavit list. Matched by NPI only.
+	pub opt_out: Option<bool>,
+	/// Enrollment rows. Empty when medicare is false.
+	pub enrollments: Option<Vec<NpiEnrollment>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

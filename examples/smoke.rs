@@ -167,12 +167,12 @@ async fn main() {
 	s.ok("iban junk", parse.iban("hello", None).await, |r| {
 		(!r.valid).then_some(None).unwrap_or(Some("expected invalid".into()))
 	});
-	s.ok("npi", parse.npi("1881018208").await, |r| {
+	s.ok("npi", parse.npi("1881018208", None).await, |r| {
 		(r.valid && r.registered == Some(true))
 			.then_some(None)
 			.unwrap_or(Some("not registered".into()))
 	});
-	s.ok("npi junk", parse.npi("hello").await, |r| {
+	s.ok("npi junk", parse.npi("hello", None).await, |r| {
 		(!r.valid).then_some(None).unwrap_or(Some("expected invalid".into()))
 	});
 	s.ok("phone", parse.phone("+14155552671", None).await, |r| {

@@ -543,8 +543,11 @@ impl Client {
 	}
 
 	/// Looks up an NPI in the CMS NPPES registry of US healthcare providers.
-	pub async fn npi(&self, npi: &str) -> Result<Npi> {
-		self.get(&format!("/npi/{}", seg(npi)), Query::new(), None).await
+	/// Deep adds Medicare enrollment on paid plans.
+	pub async fn npi(&self, npi: &str, opts: impl Into<Option<DeepOptions>>) -> Result<Npi> {
+		let mut query = Query::new();
+		push_deep(&mut query, opts.into().is_some_and(|o| o.deep));
+		self.get(&format!("/npi/{}", seg(npi)), query, None).await
 	}
 
 	/// Validates and formats a phone number.
