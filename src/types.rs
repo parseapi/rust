@@ -437,6 +437,10 @@ pub struct Iban {
 	pub checksum: Option<String>,
 	/// Bank identifier parsed from the number, not a name.
 	pub bank: Option<String>,
+	/// Institution name from the national bank-code directory. None when unsourced.
+	pub bank_name: Option<String>,
+	/// BIC from that same directory. None when unsourced or missing.
+	pub bic: Option<String>,
 	/// Branch identifier when that country has one.
 	pub branch: Option<String>,
 	pub account: Option<String>,
