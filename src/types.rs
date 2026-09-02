@@ -644,6 +644,8 @@ pub struct Phone {
 	/// NPA-derived state code (US/CA).
 	pub state: Option<String>,
 	pub state_name: Option<String>,
+	/// Numbering-plan IANA zone. None when the prefix covers more than one zone.
+	pub timezone: Option<String>,
 	pub national: Option<String>,
 	pub international: Option<String>,
 	/// Always empty. The metered proves are their own endpoints: carrier, caller, hlr.
