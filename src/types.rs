@@ -1,5 +1,4 @@
-//! Response types for the parseAPI public API. Shapes are append-only
-//! upstream, so these only ever grow. Nullable fields are `Option`.
+//! Response types for the parseAPI public API. Fields are appended as the API grows. Nullable fields are `Option`.
 //! Deep objects follow the triad: `None` when not requested, empty when
 //! requested but locked, populated when unlocked.
 
@@ -390,6 +389,7 @@ pub struct Email {
 	pub role: bool,
 	pub disposable: bool,
 	pub deep: Option<EmailDeep>,
+	pub didyoumean: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -453,10 +453,10 @@ pub struct Npi {
 	/// Normalized 10-digit NPI. Invalid input still echoes the fold.
 	pub npi: Option<String>,
 	pub valid: bool,
-	/// Exists in the CMS NPPES registry.
+	/// Exists in the healthcare provider registry.
 	pub registered: Option<bool>,
 	pub active: Option<bool>,
-	/// Date CMS deactivated the NPI, YYYY-MM-DD. None when still active.
+	/// Date the NPI was deactivated, YYYY-MM-DD. None when still active.
 	pub deactivated_at: Option<String>,
 	/// On the OIG exclusion list.
 	pub excluded: Option<bool>,
@@ -497,7 +497,7 @@ pub struct NpiEnrollment {
 pub struct NpiDeep {
 	/// In the published Medicare FFS enrollment extract.
 	pub medicare: Option<bool>,
-	/// On the CMS opt-out affidavit list. Matched by NPI only.
+	/// Has a Medicare opt-out affidavit.
 	pub opt_out: Option<bool>,
 	/// Enrollment rows. Empty when medicare is false.
 	pub enrollments: Option<Vec<NpiEnrollment>>,
@@ -519,7 +519,7 @@ pub struct VinRecall {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct HtsMeasure {
+pub struct TariffMeasure {
 	/// Chapter 99 heading, dotted (9903.01.24).
 	pub heading: String,
 	/// The measure text verbatim.
@@ -535,20 +535,20 @@ pub struct HtsMeasure {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct HtsDeep {
+pub struct TariffDeep {
 	/// The origin country the measures were resolved for.
 	pub origin: Option<String>,
 	/// Composed ad valorem percent. None when the components do not compose cleanly.
 	pub effective_rate: Option<f64>,
 	/// Every Chapter 99 tariff measure that applies to this code from this origin.
 	#[serde(default, deserialize_with = "null_default")]
-	pub measures: Vec<HtsMeasure>,
+	pub measures: Vec<TariffMeasure>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct Hts {
+pub struct Tariff {
 	/// Normalized code with dots (8471.30.01.00).
 	pub hts: String,
 	/// The schedule line verbatim.
@@ -567,13 +567,13 @@ pub struct Hts {
 	pub other: Option<String>,
 	/// The official release that answered (2026HTSRev17).
 	pub revision: String,
-	pub deep: Option<HtsDeep>,
+	pub deep: Option<TariffDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct HtsSearchHit {
+pub struct TariffSearchHit {
 	pub hts: String,
 	pub description: String,
 	pub general: Option<String>,
@@ -582,12 +582,12 @@ pub struct HtsSearchHit {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct HtsSearch {
+pub struct TariffSearch {
 	pub q: String,
 	pub revision: String,
 	/// Up to 20 tariff lines, best match first.
 	#[serde(default, deserialize_with = "null_default")]
-	pub lines: Vec<HtsSearchHit>,
+	pub lines: Vec<TariffSearchHit>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -762,6 +762,27 @@ pub struct Domain {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct Asn {
+	pub asn: u32,
+	pub name: Option<String>,
+	pub country: Option<String>,
+	pub country_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Mac {
+	pub mac: String,
+	pub valid: bool,
+	pub vendor: Option<String>,
+	pub local: Option<bool>,
+	pub multicast: Option<bool>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct Mx {
 	pub domain: String,
 	#[serde(default, deserialize_with = "null_default")]
@@ -827,6 +848,7 @@ pub struct UseragentDeep {
 	pub engine: Option<UseragentEngineDeep>,
 	pub headless: Option<bool>,
 	pub ai: Option<bool>,
+	pub bot: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -916,13 +938,41 @@ pub struct TimezoneNextDst {
 #[serde(default)]
 #[non_exhaustive]
 pub struct Timezone {
-	pub timezone: String,
+	pub timezone: Option<String>,
 	pub name: Option<String>,
-	pub abbreviation: String,
-	pub offset: String,
-	pub offset_minutes: i32,
-	pub dst: bool,
+	pub abbreviation: Option<String>,
+	pub offset: Option<String>,
+	pub offset_minutes: Option<i32>,
+	pub dst: Option<bool>,
 	pub next_dst: Option<TimezoneNextDst>,
+	pub latitude: Option<f64>,
+	pub longitude: Option<f64>,
+	pub at: Option<String>,
+	pub to: Option<TimezoneConversionTarget>,
+}
+
+/// Calendar facts for a date. Calendar fields are None when valid is false.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct DateInfo {
+	pub date: String,
+	pub valid: bool,
+	pub year: Option<i32>,
+	pub month: Option<i32>,
+	pub month_name: Option<String>,
+	pub day: Option<i32>,
+	pub weekday: Option<i32>,
+	pub weekday_name: Option<String>,
+	pub week: Option<i32>,
+	pub week_year: Option<i32>,
+	pub day_of_year: Option<i32>,
+	pub quarter: Option<i32>,
+	pub leap: Option<bool>,
+	pub days_in_month: Option<i32>,
+	pub unix: Option<i64>,
+	pub to: Option<String>,
+	pub days: Option<i32>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1043,6 +1093,10 @@ pub struct WeatherHour {
 	pub condition: Option<String>,
 	pub condition_name: Option<String>,
 	pub condition_emoji: Option<String>,
+	pub feels_like: Option<f64>,
+	pub feels_like_f: Option<f64>,
+	pub wind_gust: Option<f64>,
+	pub wind_gust_mph: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1069,6 +1123,11 @@ pub struct WeatherDay {
 	pub condition: Option<String>,
 	pub condition_name: Option<String>,
 	pub condition_emoji: Option<String>,
+	pub sunrise: Option<String>,
+	pub sunset: Option<String>,
+	pub moon_phase: Option<String>,
+	pub moon_phase_name: Option<String>,
+	pub moon_phase_emoji: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1085,6 +1144,8 @@ pub struct WeatherDeep {
 	pub hours: Vec<WeatherHour>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub days: Vec<WeatherDay>,
+	pub air: Option<WeatherAir>,
+	pub history: Option<WeatherHistory>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1180,4 +1241,145 @@ pub struct EmojiSearch {
 	pub q: String,
 	#[serde(default, deserialize_with = "null_default")]
 	pub emojis: Vec<Emoji>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimezoneConversionTarget {
+	pub timezone: String,
+	pub name: Option<String>,
+	pub abbreviation: Option<String>,
+	pub offset: String,
+	pub offset_minutes: i32,
+	pub dst: bool,
+	pub at: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct WeatherAir {
+	pub aqi: Option<f64>,
+	pub aqi_name: Option<String>,
+	pub pm2_5: Option<f64>,
+	pub pm10: Option<f64>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct WeatherHistory {
+	pub date: String,
+	pub high: Option<f64>,
+	pub high_f: Option<f64>,
+	pub low: Option<f64>,
+	pub low_f: Option<f64>,
+	pub precipitation: Option<f64>,
+	pub precipitation_in: Option<f64>,
+	pub wind_max: Option<f64>,
+	pub wind_max_mph: Option<f64>,
+	pub sunrise: Option<String>,
+	pub sunset: Option<String>,
+	pub moon_phase: Option<String>,
+	pub moon_phase_name: Option<String>,
+	pub moon_phase_emoji: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Address {
+	pub address: Option<String>,
+	pub valid: bool,
+	pub registered: Option<bool>,
+	pub number: Option<String>,
+	pub street: Option<String>,
+	pub unit: Option<String>,
+	pub city: Option<String>,
+	pub district: Option<String>,
+	pub district_name: Option<String>,
+	pub state: Option<String>,
+	pub state_name: Option<String>,
+	pub postal: Option<String>,
+	pub country: Option<String>,
+	pub country_name: Option<String>,
+	pub latitude: Option<f64>,
+	pub longitude: Option<f64>,
+	pub deep: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct AddressSuggestion {
+	pub address: String,
+	pub number: Option<String>,
+	pub street: Option<String>,
+	pub unit: Option<String>,
+	pub city: Option<String>,
+	pub state: Option<String>,
+	pub postal: Option<String>,
+	pub latitude: Option<f64>,
+	pub longitude: Option<f64>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct AddressSearch {
+	pub q: String,
+	pub postal: Option<String>,
+	pub city: Option<String>,
+	pub state: Option<String>,
+	pub country: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub addresses: Vec<AddressSuggestion>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyCountry {
+	pub name: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub blocs: Vec<String>,
+	pub tax: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyDeep {
+	pub country: Option<CompanyCountry>,
+	pub postal: Option<Postal>,
+	pub city: Option<City>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Company {
+	pub company: Option<String>,
+	pub valid: bool,
+	pub registered: Option<bool>,
+	pub country: Option<String>,
+	pub r#type: Option<String>,
+	pub name: Option<String>,
+	pub active: Option<bool>,
+	pub activity: Option<String>,
+	pub address: Option<String>,
+	pub city: Option<String>,
+	pub state: Option<String>,
+	pub state_name: Option<String>,
+	pub postal: Option<String>,
+	pub country_name: Option<String>,
+	pub vat: Option<String>,
+	pub gst: Option<bool>,
+	pub acn: Option<String>,
+	pub siren: Option<String>,
+	pub siege: Option<bool>,
+	pub kind: Option<String>,
+	pub invoice: Option<String>,
+	pub deep: Option<CompanyDeep>,
 }

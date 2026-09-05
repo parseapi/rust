@@ -1,0 +1,20 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain: ['1.86.0', stable]
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup toolchain install '${{ matrix.toolchain }}' --profile minimal
+      - run: cargo +${{ matrix.toolchain }} test --all-targets
+      - run: cargo +${{ matrix.toolchain }} test --doc
