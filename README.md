@@ -84,6 +84,6 @@ let parse = parseapi::Client::builder()
 
 `.retries(0)` disables all automatic retries. Both numeric and HTTP-date `Retry-After` values are honored, capped at five seconds. Redirects return an API error and are never followed.
 
-Requires Rust 1.86 or later and a Tokio runtime with time and I/O enabled. The minimum compiler and stable compiler run the same tests in CI.
+Requires Rust 1.88 or later and a Tokio runtime with time and I/O enabled. CI tests both the minimum and stable compiler, including a separate application's fresh dependency resolution.
 
 [Full endpoint and field reference](https://parseapi.com/docs)

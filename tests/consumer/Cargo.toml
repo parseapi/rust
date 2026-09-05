@@ -1,0 +1,11 @@
+[package]
+name = "parseapi-consumer-contract"
+version = "0.0.0"
+publish = false
+edition = "2021"
+rust-version = "1.88"
+
+[dependencies]
+parseapi = { path = "../.." }
+
+[workspace]
