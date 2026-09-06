@@ -1,4 +1,4 @@
-//! Official parseAPI client for Rust. One key, minimal JSON, fast.
+//! Official ParseAPI client for Rust. One key, minimal JSON, fast.
 //!
 //! ```no_run
 //! # async fn run() -> Result<(), parseapi::Error> {
@@ -833,7 +833,7 @@ impl Builder {
 	}
 }
 
-/// A parseAPI client. Create one and share it, the connection stays warm.
+/// A ParseAPI client. Create one and share it, the connection stays warm.
 #[derive(Clone)]
 pub struct Client {
 	api_key: String,

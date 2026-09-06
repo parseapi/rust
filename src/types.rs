@@ -1,4 +1,4 @@
-//! Response types for the parseAPI public API. Fields are appended as the API grows. Nullable fields are `Option`.
+//! Response types for the ParseAPI public API. Fields are appended as the API grows. Nullable fields are `Option`.
 //! Deep objects follow the triad: `None` when not requested, empty when
 //! requested but locked, populated when unlocked.
 
