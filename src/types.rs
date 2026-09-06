@@ -298,6 +298,20 @@ pub struct CityNearby {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct PostalMetro {
+	pub code: String,
+	pub name: String,
+	pub r#type: String,
+	/// Fraction of ZIP addresses; category shares are measured independently.
+	pub share: Option<f64>,
+	pub residential_share: Option<f64>,
+	pub business_share: Option<f64>,
+	pub other_share: Option<f64>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct Postal {
 	pub postal: String,
 	pub city: Option<String>,
@@ -325,6 +339,8 @@ pub struct Postal {
 	pub currency: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub neighbors: Vec<String>,
+	/// None is unknown; Some(empty) is observed outside all covered areas.
+	pub metros: Option<Vec<PostalMetro>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -337,6 +353,7 @@ pub struct PostalNearbyItem {
 	pub country: String,
 	pub distance: f64,
 	pub distance_mi: f64,
+	pub metros: Option<Vec<PostalMetro>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -347,6 +364,7 @@ pub struct PostalNearby {
 	pub country: String,
 	pub radius: f64,
 	pub unit: String,
+	pub metros: Option<Vec<PostalMetro>>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub nearby: Vec<PostalNearbyItem>,
 }
@@ -357,6 +375,7 @@ pub struct PostalNearby {
 pub struct PostalDistanceEnd {
 	pub postal: String,
 	pub city: Option<String>,
+	pub metros: Option<Vec<PostalMetro>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
