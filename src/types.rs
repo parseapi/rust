@@ -799,6 +799,26 @@ pub struct Mac {
 	pub multicast: Option<bool>,
 }
 
+/// A published DNS record. Value retains DNS presentation syntax, including TXT quoting.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct DnsRecord {
+	pub name: String,
+	pub r#type: String,
+	pub ttl: u32,
+	pub value: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Dns {
+	pub domain: String,
+	#[serde(default, deserialize_with = "null_default")]
+	pub records: Vec<DnsRecord>,
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]

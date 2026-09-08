@@ -685,3 +685,21 @@ async fn measure_precision_ambiguity_and_catalog() {
  assert_eq!(err.status(), Some(400));
  assert_eq!(err.code(), Some("bad_request"));
 }
+
+#[tokio::test]
+async fn dns_preserves_presentation_and_question() {
+	let server = TestServer::start(vec![
+		(200, r#"{"domain":"example.com","records":[{"name":"example.com.","type":"TXT","ttl":0,"value":"\"one\" \"two\"","future":true},{"name":"alias.example.","type":"CNAME","ttl":300,"value":"target.example."}],"future":true}"#),
+		(200, r#"{"domain":"example.com","records":[]}"#),
+	]);
+	let client = server.client();
+	let result = client.dns("_dmarc.bücher.example.", DnsOptions::default().r#type("txt")).await.unwrap();
+	assert_eq!(result.records.len(), 2);
+	assert_eq!(result.records[0].ttl, 0);
+	assert_eq!(result.records[0].value, r#""one" "two""#);
+	assert_eq!(result.records[1].r#type, "CNAME");
+	assert!(client.dns("example.com", None).await.unwrap().records.is_empty());
+	let calls = server.requests();
+	assert_eq!(calls[0].target, "/dns/_dmarc.b%C3%BCcher.example.?type=txt");
+	assert_eq!(calls[1].target, "/dns/example.com");
+}

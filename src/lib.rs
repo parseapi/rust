@@ -518,6 +518,21 @@ impl HlrOptions {
 	}
 }
 
+/// Configures `dns`. Omit type to check all ten supported record types.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct DnsOptions {
+	pub r#type: Option<String>,
+}
+
+impl DnsOptions {
+	/// Selects the DNS question. Responses may include its CNAME chain.
+	pub fn r#type(mut self, value: impl Into<String>) -> Self {
+		self.r#type = Some(value.into());
+		self
+	}
+}
+
 /// Configures `domain`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
@@ -1408,6 +1423,15 @@ impl Client {
 		push(&mut query, "type", opts.r#type);
 		push(&mut query, "unit", opts.unit);
 		self.get("/measure/units", query, None).await
+	}
+
+	/// Published DNS records with TTLs. Values retain DNS presentation syntax.
+	/// Pooled on every plan. Omit type to check all ten supported record types.
+	pub async fn dns(&self, domain: &str, opts: impl Into<Option<DnsOptions>>) -> Result<Dns> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "type", opts.r#type);
+		self.get(&format!("/dns/{}", seg(domain)), query, None).await
 	}
 
 	/// Calls `/mx/{domain}`.

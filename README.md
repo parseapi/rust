@@ -68,6 +68,8 @@ parse.vin("1HGCM82633A004352", None).await?;
 parse.carrier("+14155552671", None).await?;
 parse.caller("+18004633339", None).await?;
 parse.hlr("+447712345678", None).await?;
+parse.dns("example.com", None).await?;
+parse.dns("_dmarc.example.com", DnsOptions::default().r#type("TXT")).await?;
 parse.tariff("8471.30.01.00", TariffOptions::default().origin("DE").deep(true)).await?;
 parse.address("123 Main St", AddressOptions::default().country("US")).await?;
 parse.address_search("123 Main", AddressSearchOptions::default().country("US").state("NC")).await?;
@@ -80,6 +82,8 @@ parse.weather(40.7128, -74.006, WeatherOptions::default().deep(true).date("2026-
 ```
 
 Nullable values use `Option`. Unknown JSON fields are accepted. An omitted `deep` is `None`, and a requested empty `deep` is `Some` with empty fields. Nullable arrays are normalized to empty vectors. API fields named `type` use `r#type` where a separate `kind` field also exists.
+
+DNS uses pooled requests on every plan. Omit `type` to check A, AAAA, CNAME, MX, NS, TXT, SOA, CAA, SRV and PTR. Records contain `name`, `type`, `ttl` in seconds and a DNS presentation `value`. TXT values retain quoting and chunk boundaries. A selected question can include its CNAME chain. Empty records mean no records. Lookup failures remain errors.
 
 ## Measurements
 

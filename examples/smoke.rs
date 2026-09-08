@@ -325,6 +325,9 @@ async fn main() {
 			.then_some(None)
 			.unwrap_or(Some("missing metre".into()))
 	});
+	s.ok("dns", parse.dns("example.com", parseapi::DnsOptions::default().r#type("A")).await, |r| {
+		r.records.iter().any(|record| record.r#type == "A").then_some(None).unwrap_or(Some("no A records".into()))
+	});
 	s.ok("mx", parse.mx("gmail.com").await, |r| {
 		(!r.mx.is_empty())
 			.then_some(None)
