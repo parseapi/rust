@@ -992,7 +992,7 @@ impl Client {
 		}
 	}
 
-	/// Calls `/ip/{ip}`.
+	/// Look up an IP. Deep enrichment is included with a paid plan, without a separate check meter.
 	pub async fn ip(&self, ip: &str, opts: impl Into<Option<IpOptions>>) -> Result<Ip> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
@@ -1000,7 +1000,7 @@ impl Client {
 		self.get(&format!("/ip/{}", seg(ip)), query, None).await
 	}
 
-	/// Calls `/ip`.
+	/// Look up the public IP making this request. On a server, this is the server's IP.
 	pub async fn ip_self(&self, opts: impl Into<Option<IpSelfOptions>>) -> Result<Ip> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
@@ -1159,7 +1159,8 @@ impl Client {
 			.await
 	}
 
-	/// Calls `/postal/{code}`.
+	/// Look up a postal area. Pass country when known. Check nullable coordinates before another
+	/// location lookup.
 	pub async fn postal(
 		&self,
 		code: &str,
@@ -1209,7 +1210,9 @@ impl Client {
 		.await
 	}
 
-	/// Calls `/email/{email}`.
+	/// Parse an email and check its format and domain. Deep explicitly requests a metered
+	/// deliverability check. Deep checks use one attempt by default. An explicit retry count can
+	/// repeat paid usage.
 	pub async fn email(&self, email: &str, opts: impl Into<Option<EmailOptions>>) -> Result<Email> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
@@ -1218,7 +1221,9 @@ impl Client {
 			.await
 	}
 
-	/// Calls `/vat/{number}`.
+	/// Check VAT format and checksum. Deep requests a metered registry check where supported. Deep
+	/// checks use one attempt by default. Supply your own VAT number for a consultation reference
+	/// when supported.
 	pub async fn vat(&self, number: &str, opts: impl Into<Option<VatOptions>>) -> Result<Vat> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
@@ -1245,7 +1250,8 @@ impl Client {
 		self.get(&format!("/npi/{}", seg(npi)), query, None).await
 	}
 
-	/// Calls `/phone/{number}`.
+	/// Parse a phone number and its formats. Pass country for national numbers when needed. Deep
+	/// returns an empty object. Carrier, caller, and HLR are separate metered lookups.
 	pub async fn phone(
 		&self,
 		number: &str,
@@ -1259,7 +1265,7 @@ impl Client {
 			.await
 	}
 
-	/// Calls `/carrier/{number}`.
+	/// Request a metered carrier lookup. No automatic retries by default.
 	pub async fn carrier(
 		&self,
 		number: &str,
@@ -1272,7 +1278,7 @@ impl Client {
 			.await
 	}
 
-	/// Calls `/caller/{number}`.
+	/// Request a metered caller-name lookup for a NANP number. No automatic retries by default.
 	pub async fn caller(
 		&self,
 		number: &str,
@@ -1285,7 +1291,8 @@ impl Client {
 			.await
 	}
 
-	/// Calls `/hlr/{number}`.
+	/// Request a metered live-status lookup. Null status means unconfirmed. No automatic retries by
+	/// default.
 	pub async fn hlr(&self, number: &str, opts: impl Into<Option<HlrOptions>>) -> Result<Hlr> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
@@ -1499,7 +1506,8 @@ impl Client {
 		self.get("/point", query, None).await
 	}
 
-	/// Calls `/weather`.
+	/// Get weather for a point. Both unit systems are returned. Pass known coordinates from a
+	/// postal, city, or location result.
 	pub async fn weather(
 		&self,
 		lat: f64,
