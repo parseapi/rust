@@ -374,6 +374,21 @@ impl IbanOptions {
 	}
 }
 
+/// Configures `name_with_options`. Country is an ISO2 gender context.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct NameOptions {
+	pub country: Option<String>,
+}
+
+impl NameOptions {
+	/// Sets the country context without asserting nationality.
+	pub fn country(mut self, value: impl Into<String>) -> Self {
+		self.country = Some(value.into());
+		self
+	}
+}
+
 /// Configures `npi`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
@@ -1387,8 +1402,15 @@ impl Client {
 
 	/// Calls `/name/{name}`.
 	pub async fn name(&self, name: &str) -> Result<Name> {
-		self.get(&format!("/name/{}", seg(name)), Query::new(), None)
-			.await
+		self.name_with_options(name, None).await
+	}
+
+	/// Parses a name with an optional ISO2 country context for gender.
+	pub async fn name_with_options(&self, name: &str, opts: impl Into<Option<NameOptions>>) -> Result<Name> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "country", opts.country);
+		self.get(&format!("/name/{}", seg(name)), query, None).await
 	}
 
 	/// Calls `/currency/{base}/{quote}`.

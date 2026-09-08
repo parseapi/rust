@@ -921,6 +921,11 @@ pub struct Language {
 pub struct Name {
 	pub name: String,
 	pub valid: bool,
+	/// Name membership, independent of gender.
+	pub known: bool,
+	/// Name associations, not the person's nationality.
+	#[serde(default, deserialize_with = "null_default")]
+	pub countries: Vec<String>,
 	pub prefix: Option<String>,
 	pub first: Option<String>,
 	pub middle: Option<String>,

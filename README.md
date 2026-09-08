@@ -62,6 +62,8 @@ parse.iban("DE89370400440532013000", None).await?;
 parse.npi("1881018208", None).await?;
 parse.asn("AS13335").await?;
 parse.mac("00:1B:63:84:45:E6").await?;
+parse.name("Andrea").await?;
+parse.name_with_options("Andrea", NameOptions::default().country("IT")).await?;
 parse.vin("1HGCM82633A004352", None).await?;
 parse.carrier("+14155552671", None).await?;
 parse.caller("+18004633339", None).await?;

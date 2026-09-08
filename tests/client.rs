@@ -110,6 +110,22 @@ macro_rules! url_test {
 	};
 }
 
+#[tokio::test]
+async fn name_country_and_known_are_additive() {
+	let server = TestServer::start(vec![(200, r#"{"name":"王","valid":true,"known":true,"countries":["CN","TW"],"gender":null,"future":true}"#), (200, r#"{"name":"Andrea","valid":true,"gender":null}"#)]);
+	let client = server.client();
+	let result = client.name_with_options("王", NameOptions::default().country("CN")).await.unwrap();
+	assert!(result.known);
+	assert_eq!(result.countries, vec!["CN", "TW"]);
+	assert_eq!(result.gender, None);
+	let old = client.name("Andrea").await.unwrap();
+	assert!(!old.known && old.countries.is_empty());
+	assert_eq!(server.requests()[0].target, "/name/%E7%8E%8B?country=CN");
+	assert_eq!(server.requests()[1].target, "/name/Andrea");
+	let nullable: Name = serde_json::from_str(r#"{"countries":null}"#).unwrap();
+	assert!(nullable.countries.is_empty());
+}
+
 url_test!(url_ip, c => c.ip("8.8.8.8", None), "/ip/8.8.8.8");
 url_test!(url_ip_self, c => c.ip_self(None), "/ip");
 url_test!(
