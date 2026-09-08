@@ -81,6 +81,17 @@ parse.weather(40.7128, -74.006, WeatherOptions::default().deep(true).date("2026-
 
 Nullable values use `Option`. Unknown JSON fields are accepted. An omitted `deep` is `None`, and a requested empty `deep` is `Some` with empty fields. Nullable arrays are normalized to empty vectors. API fields named `type` use `r#type` where a separate `kind` field also exists.
 
+## Measurements
+
+```rust
+let result = parse.measure("5 ft 11 in", parseapi::MeasureOptions::default().to("cm")).await?;
+let units = parse.measure_units(parseapi::MeasureUnitsOptions::default().unit("m")).await?;
+```
+
+`amount` is a decimal string, such as `"180.34"`. Without `to`, the API returns the canonical unit for the measurement type. Pass `locale` for number formatting and `system` (`us` or `imperial`) when a customary unit needs context. Ambiguous input returns `valid: false`, a `reason`, and available `choices`. Invalid or incompatible target units use the normal API error.
+
+Unit discovery accepts optional `query`, `type`, and `unit` filters. `unit` selects compatible targets. Omit the filters for the reviewed catalog. Both operations use pooled requests.
+
 ## Deep
 
 Choose enrichment for the question you need answered.

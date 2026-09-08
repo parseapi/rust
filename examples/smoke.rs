@@ -315,6 +315,16 @@ async fn main() {
 		.then_some(None)
 		.unwrap_or(Some("wrong MAC".into()))
 	});
+	s.ok("measure", parse.measure("5 ft 11 in", parseapi::MeasureOptions::default().to("cm")).await, |r| {
+		(r.valid && r.amount.as_deref() == Some("180.34") && r.unit.as_deref() == Some("cm"))
+			.then_some(None)
+			.unwrap_or(Some("wrong conversion".into()))
+	});
+	s.ok("measure_units", parse.measure_units(parseapi::MeasureUnitsOptions::default().unit("m")).await, |r| {
+		(r.units.iter().any(|unit| unit.unit == "m"))
+			.then_some(None)
+			.unwrap_or(Some("missing metre".into()))
+	});
 	s.ok("mx", parse.mx("gmail.com").await, |r| {
 		(!r.mx.is_empty())
 			.then_some(None)

@@ -92,6 +92,54 @@ impl std::error::Error for Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// Options for measurement conversion.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct MeasureOptions {
+	pub to: Option<String>,
+	pub locale: Option<String>,
+	pub system: Option<String>,
+}
+
+impl MeasureOptions {
+	pub fn to(mut self, value: impl Into<String>) -> Self {
+		self.to = Some(value.into());
+		self
+	}
+	pub fn locale(mut self, value: impl Into<String>) -> Self {
+		self.locale = Some(value.into());
+		self
+	}
+	pub fn system(mut self, value: impl Into<String>) -> Self {
+		self.system = Some(value.into());
+		self
+	}
+}
+
+/// Options for reviewed unit discovery.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct MeasureUnitsOptions {
+	pub query: Option<String>,
+	pub r#type: Option<String>,
+	pub unit: Option<String>,
+}
+
+impl MeasureUnitsOptions {
+	pub fn query(mut self, value: impl Into<String>) -> Self {
+		self.query = Some(value.into());
+		self
+	}
+	pub fn r#type(mut self, value: impl Into<String>) -> Self {
+		self.r#type = Some(value.into());
+		self
+	}
+	pub fn unit(mut self, value: impl Into<String>) -> Self {
+		self.unit = Some(value.into());
+		self
+	}
+}
+
 /// Configures `ip`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
@@ -1339,6 +1387,27 @@ impl Client {
 	pub async fn mac(&self, mac: &str) -> Result<Mac> {
 		self.get(&format!("/mac/{}", seg(mac)), Query::new(), None)
 			.await
+	}
+
+	/// Parse or convert a measurement. Amount is a decimal string. Without to, use the
+	/// type's canonical unit. Locale and system (us or imperial) resolve explicit ambiguity.
+	pub async fn measure(&self, measure: &str, opts: impl Into<Option<MeasureOptions>>) -> Result<Measure> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "to", opts.to);
+		push(&mut query, "locale", opts.locale);
+		push(&mut query, "system", opts.system);
+		self.get(&format!("/measure/{}", seg(measure)), query, None).await
+	}
+
+	/// Discover reviewed units. unit filters compatible conversion targets.
+	pub async fn measure_units(&self, opts: impl Into<Option<MeasureUnitsOptions>>) -> Result<MeasureUnits> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "q", opts.query);
+		push(&mut query, "type", opts.r#type);
+		push(&mut query, "unit", opts.unit);
+		self.get("/measure/units", query, None).await
 	}
 
 	/// Calls `/mx/{domain}`.

@@ -656,3 +656,32 @@ async fn network_records_preserve_nulls_and_tolerate_future_fields() {
 	assert_eq!(local.local, Some(true));
 	assert_eq!(local.multicast, Some(false));
 }
+
+url_test!(url_measure, c => c.measure("5 ft 11 in", MeasureOptions::default().to("cm").locale("en-US").system("us")), "/measure/5%20ft%2011%20in?to=cm&locale=en-US&system=us");
+url_test!(url_measure_compound, c => c.measure("1 kg/m^3", MeasureOptions::default().to("g/L")), "/measure/1%20kg%2Fm%5E3?to=g%2FL");
+url_test!(url_measure_units, c => c.measure_units(MeasureUnitsOptions::default().query("US gallon").r#type("volume").unit("L")), "/measure/units?q=US+gallon&type=volume&unit=L");
+url_test!(url_measure_units_all, c => c.measure_units(None), "/measure/units");
+
+#[tokio::test]
+async fn measure_precision_ambiguity_and_catalog() {
+ let server = TestServer::start(vec![
+  (200, r#"{"measure":"0 m","valid":true,"type":"future-type","amount":"0.00000000000000000001","unit":"m","reason":null,"choices":[],"future":null}"#),
+  (200, r#"{"measure":"1 gallon","valid":false,"type":null,"amount":null,"unit":null,"reason":"ambiguous_unit","choices":[{"unit":"us_gal","name":"US liquid gallon"}]}"#),
+  (200, r#"{"units":[{"unit":"m","name":"metre","type":"length","aliases":["meter"],"future":null}]}"#),
+  (400, r#"{"code":"bad_request","message":"Incompatible units","request_id":"req_measure"}"#),
+ ]);
+ let c = server.client();
+ let good = c.measure("0 m", None).await.unwrap();
+ assert_eq!(good.amount.as_deref(), Some("0.00000000000000000001"));
+ assert_eq!(good.r#type.as_deref(), Some("future-type"));
+ let unknown = c.measure("1 gallon", None).await.unwrap();
+ assert!(!unknown.valid);
+ assert_eq!(unknown.amount, None);
+ assert_eq!(unknown.reason.as_deref(), Some("ambiguous_unit"));
+ assert_eq!(unknown.choices[0].unit, "us_gal");
+ let units = c.measure_units(None).await.unwrap();
+ assert_eq!(units.units[0].aliases, ["meter"]);
+ let err = c.measure("1 m", MeasureOptions::default().to("kg")).await.unwrap_err();
+ assert_eq!(err.status(), Some(400));
+ assert_eq!(err.code(), Some("bad_request"));
+}

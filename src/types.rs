@@ -1407,3 +1407,45 @@ pub struct Company {
 	pub invoice: Option<String>,
 	pub deep: Option<CompanyDeep>,
 }
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct MeasureChoice {
+	pub unit: String,
+	pub name: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Measure {
+	pub measure: String,
+	pub valid: bool,
+	pub r#type: Option<String>,
+	/// Decimal string preserving the API's precision.
+	pub amount: Option<String>,
+	pub unit: Option<String>,
+	pub reason: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub choices: Vec<MeasureChoice>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct MeasureUnit {
+	pub unit: String,
+	pub name: String,
+	pub r#type: String,
+	#[serde(default, deserialize_with = "null_default")]
+	pub aliases: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct MeasureUnits {
+	#[serde(default, deserialize_with = "null_default")]
+	pub units: Vec<MeasureUnit>,
+}
