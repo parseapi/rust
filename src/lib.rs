@@ -1637,11 +1637,6 @@ impl Client {
 		self.get(&format!("/bin/{}", seg(bin)), query, None).await
 	}
 
-	/// Calls `/swift/{code}`. Valid checks syntax, not payment reachability.
-	pub async fn swift(&self, code: &str) -> Result<SwiftCode> {
-		self.get(&format!("/swift/{}", seg(code)), Query::new(), None)
-			.await
-	}
 
 	/// Parse or convert a measurement. Amount is a decimal string. Without to, use the
 	/// type's canonical unit. Locale and system (us or imperial) resolve explicit ambiguity.

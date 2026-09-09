@@ -735,16 +735,6 @@ pub struct Bin {
 	pub deep: Option<serde_json::Value>,
 }
 
-/// A SWIFT/BIC format check and partial institution lookup. Valid means syntax only.
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct SwiftCode {
-	pub swift: String,
-	pub valid: bool,
-	pub country: Option<String>,
-	pub name: Option<String>,
-}
 
 /// A published DNS record. Value retains DNS presentation syntax, including TXT quoting.
 #[derive(Debug, Clone, Default, Deserialize)]

@@ -230,7 +230,6 @@ url_test!(url_hlr, c => c.hlr("+447712345678", None), "/hlr/%2B447712345678");
 url_test!(url_domain, c => c.domain("example.com", None), "/domain/example.com");
 url_test!(url_asn, c => c.asn("AS13335"), "/asn/AS13335");
 url_test!(url_mac, c => c.mac("00:1B:63:84:45:E6"), "/mac/00%3A1B%3A63%3A84%3A45%3AE6");
-url_test!(url_swift, c => c.swift("CHAS/US33 ?#"), "/swift/CHAS%2FUS33%20%3F%23");
 url_test!(url_mx, c => c.mx("example.com"), "/mx/example.com");
 url_test!(url_useragent, c => c.useragent("TestUA/1.0", None), "/useragent");
 url_test!(url_vin, c => c.vin("1HGCM82633A004352", None), "/vin/1HGCM82633A004352");
@@ -658,23 +657,6 @@ async fn network_records_preserve_nulls_and_tolerate_future_fields() {
 	assert_eq!(local.multicast, Some(false));
 }
 
-#[tokio::test]
-async fn swift_preserves_syntax_and_nullable_identity_without_guessing() {
-	let server = TestServer::start(vec![
-		(200, r#"{"swift":"CHASUS33","valid":true,"country":"US","name":"JPMORGAN CHASE BANK, N.A.","future":true}"#),
-		(200, r#"{"swift":"ZZZZZZ99","valid":true,"country":"ZZ","name":null,"future":{}}"#),
-		(200, r#"{"swift":"JUNK","valid":false,"country":null,"name":null}"#),
-	]);
-	let client = server.client();
-	let known: SwiftCode = client.swift("CHASUS33").await.unwrap();
-	assert_eq!(known.name.as_deref(), Some("JPMORGAN CHASE BANK, N.A."));
-	assert!(known.valid);
-	let unknown = client.swift("ZZZZZZ99").await.unwrap();
-	assert!(unknown.valid && unknown.name.is_none());
-	assert_eq!(unknown.country.as_deref(), Some("ZZ"));
-	let invalid = client.swift("JUNK").await.unwrap();
-	assert!(!invalid.valid && invalid.country.is_none() && invalid.name.is_none());
-}
 
 url_test!(url_measure, c => c.measure("5 ft 11 in", MeasureOptions::default().to("cm").locale("en-US").system("us")), "/measure/5%20ft%2011%20in?to=cm&locale=en-US&system=us");
 url_test!(url_measure_compound, c => c.measure("1 kg/m^3", MeasureOptions::default().to("g/L")), "/measure/1%20kg%2Fm%5E3?to=g%2FL");

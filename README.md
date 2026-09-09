@@ -60,7 +60,6 @@ parse.email("hello@example.com", EmailOptions::default().deep(true)).await?;
 parse.vat("DE136695976", VatOptions::default().deep(true)).await?;
 parse.iban("DE89370400440532013000", None).await?;
 parse.bin("424242", None).await?;
-parse.swift("CHASUS33").await?;
 parse.npi("1881018208", None).await?;
 parse.asn("AS13335").await?;
 parse.mac("00:1B:63:84:45:E6").await?;
