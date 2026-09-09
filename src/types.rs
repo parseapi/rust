@@ -381,7 +381,7 @@ pub struct VatDeep {
 	pub name: Option<String>,
 	pub address: Option<VatAddress>,
 	pub consultation: Option<String>,
-	/// Registry timestamp of this check, ISO.
+	/// Registry-provided check time, or None when unavailable.
 	pub consulted_at: Option<String>,
 }
 
@@ -1282,6 +1282,7 @@ pub struct CompanyCountry {
 	pub name: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub blocs: Vec<String>,
+	/// Levy name, such as VAT, GST or sales tax. Null when unknown or not applicable.
 	pub tax: Option<String>,
 }
 
