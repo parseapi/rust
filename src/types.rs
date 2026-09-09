@@ -49,6 +49,8 @@ pub struct Continent {
 	pub region: String,
 	pub subregion: String,
 	pub population: Option<i64>,
+	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	pub population_period: Option<String>,
 	pub area: Option<f64>,
 	pub emoji: String,
 }
@@ -651,9 +653,9 @@ pub struct Hlr {
 	pub phone: Option<String>,
 	pub valid: bool,
 	pub country: Option<String>,
-	/// Assigned to a subscriber.
+	/// Assigned to a subscriber at the last check.
 	pub live: Option<bool>,
-	/// Handset reachable right now. None means unconfirmed, never no.
+	/// Handset reachable at the last check. None means unconfirmed, never no.
 	pub connected: Option<bool>,
 	pub deep: Option<HlrDeep>,
 }
@@ -1279,6 +1281,8 @@ pub struct AddressSearch {
 	pub country: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub addresses: Vec<AddressSuggestion>,
+	/// Why suggestions are empty: more_input, missing_context or no_matches. Null with suggestions. Open to future values. Operational failures are errors.
+	pub reason: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1449,6 +1453,8 @@ pub struct CountryDeep {
 	pub region: Option<String>,
 	pub subregion: Option<String>,
 	pub population: Option<i64>,
+	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	pub population_period: Option<String>,
 	pub area: Option<f64>,
 	pub tld: Option<String>,
 	pub borders: Option<Vec<String>>,
@@ -1481,6 +1487,8 @@ pub struct CountryDeep {
 #[non_exhaustive]
 pub struct StateDeep {
 	pub population: Option<i64>,
+	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	pub population_period: Option<String>,
 	pub area: Option<f64>,
 	pub fips: Option<String>,
 	pub capital: Option<String>,
@@ -1498,6 +1506,8 @@ pub struct StateDeep {
 #[non_exhaustive]
 pub struct DistrictDeep {
 	pub population: Option<i64>,
+	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	pub population_period: Option<String>,
 	/// Total area in km2 (land + water, or the official total).
 	pub area: Option<f64>,
 	/// Land area in km2. None when the source publishes total only.
@@ -1505,6 +1515,8 @@ pub struct DistrictDeep {
 	/// Water area in km2. None when the source publishes total only.
 	pub water_area: Option<f64>,
 	pub seat: Option<String>,
+	/// Median annual property tax payable on owner-occupied homes in this statistical area. Null when unsupported, missing or censored.
+	pub property_tax: Option<PropertyTax>,
 }
 
 
@@ -1517,6 +1529,8 @@ pub struct CityDeep {
 	pub elevation: Option<f64>,
 	pub elevation_ft: Option<f64>,
 	pub population: Option<i64>,
+	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	pub population_period: Option<String>,
 	/// Total area in km2 (land + water, or the official total).
 	pub area: Option<f64>,
 	/// Land area in km2. None when the source publishes total only.
@@ -1533,6 +1547,8 @@ pub struct PostalDeep {
 	pub elevation: Option<f64>,
 	pub elevation_ft: Option<f64>,
 	pub population: Option<i64>,
+	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	pub population_period: Option<String>,
 	/// Total area in km2. None when the source has no water split.
 	pub area: Option<f64>,
 	/// Land area in km2, where the source has it.
@@ -1556,6 +1572,8 @@ pub struct PostalDeep {
 	pub tax_rate_city: Option<f64>,
 	/// Special component of the ZIP reference rate, in percent. Null when unknown.
 	pub tax_rate_special: Option<f64>,
+	/// Median annual property tax payable on owner-occupied homes in this statistical area. Null when unsupported, missing or censored.
+	pub property_tax: Option<PropertyTax>,
 }
 
 
@@ -1597,12 +1615,12 @@ pub struct CarrierDeep {
 #[serde(default)]
 #[non_exhaustive]
 pub struct HlrDeep {
-	/// The six network extras fill on live HLR dips only. None elsewhere (NANP, failover).
+	/// Network diagnostics available from the last check. None when unconfirmed.
 	pub roaming: Option<bool>,
 	pub roaming_network: Option<String>,
 	/// ISO2, uppercase.
 	pub roaming_country: Option<String>,
-	/// Current serving network name.
+	/// Serving network name at the last check.
 	pub network: Option<String>,
 	pub original_network: Option<String>,
 	pub mcc: Option<String>,
@@ -1761,6 +1779,9 @@ pub struct PostalMetroDeep {
 #[non_exhaustive]
 pub struct StateDistrictItemDeep {
 	pub population: Option<i64>,
+	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	pub population_period: Option<String>,
+
 }
 
 
@@ -1786,4 +1807,16 @@ pub struct NaicsSearchResult {
 	/// Search evidence, absent on direct lookup and older responses.
 	pub r#match: Option<NaicsMatch>,
 	pub deep: Option<NaicsDeep>,
+}
+
+/// Property-tax estimate for an area, not a specific property.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[non_exhaustive]
+pub struct PropertyTax {
+	/// Median annual tax payable, in currency units adjusted to the final year of period. Not a tax rate or an individual property bill.
+	pub annual_median: f64,
+	/// ISO 4217 currency code, currently USD.
+	pub currency: String,
+	/// Reporting period, YYYY-YYYY. Monetary amounts use the final year of this period.
+	pub period: String,
 }

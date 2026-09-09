@@ -635,17 +635,19 @@ impl VinOptions {
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct TariffOptions {
+	/// Add units and the special and other schedule columns on paid plans.
 	pub deep: bool,
+	/// ISO 3166-1 alpha-2 origin. With paid deep, resolves country-specific measures. Optional for schedule detail.
 	pub origin: Option<String>,
 }
 
 impl TariffOptions {
-	/// Sets the `deep` query option.
+	/// Add units and the special and other schedule columns on paid plans.
 	pub fn deep(mut self, value: bool) -> Self {
 		self.deep = value;
 		self
 	}
-	/// Sets the `origin` query option.
+	/// ISO 3166-1 alpha-2 origin. With paid deep, resolves country-specific measures. Optional for schedule detail.
 	pub fn origin(mut self, value: impl Into<String>) -> Self {
 		self.origin = Some(value.into());
 		self
@@ -825,11 +827,12 @@ impl HolidayOptions {
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct PointOptions {
+	/// Add terrain and compact nearest-city context on every plan. The timezone ID stays in core.
 	pub deep: bool,
 }
 
 impl PointOptions {
-	/// Sets the `deep` query option.
+	/// Add terrain and compact nearest-city context on every plan. The timezone ID stays in core.
 	pub fn deep(mut self, value: bool) -> Self {
 		self.deep = value;
 		self
@@ -840,17 +843,19 @@ impl PointOptions {
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct WeatherOptions {
+	/// Add specialist current measurements, forecasts and related detail on paid plans.
 	pub deep: bool,
+	/// Past UTC day (YYYY-MM-DD). Requires paid deep and adds deep.history alongside current conditions.
 	pub date: Option<String>,
 }
 
 impl WeatherOptions {
-	/// Sets the `deep` query option.
+	/// Add specialist current measurements, forecasts and related detail on paid plans.
 	pub fn deep(mut self, value: bool) -> Self {
 		self.deep = value;
 		self
 	}
-	/// Sets the `date` query option.
+	/// Past UTC day (YYYY-MM-DD). Requires paid deep and adds deep.history alongside current conditions.
 	pub fn date(mut self, value: impl Into<String>) -> Self {
 		self.date = Some(value.into());
 		self
@@ -1586,8 +1591,9 @@ impl Client {
 			.await
 	}
 
-	/// Request a metered live-status lookup. Null status means unconfirmed. No automatic retries by
-	/// default.
+	/// Look up phone status at the last check. Live means assigned and connected means reachable at
+	/// that check. Cached results may be returned. Null means unconfirmed. Deep adds network
+	/// diagnostics within the same metered lookup. No automatic retries by default.
 	pub async fn hlr(&self, number: &str, opts: impl Into<Option<HlrOptions>>) -> Result<Hlr> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
@@ -1715,7 +1721,10 @@ impl Client {
 		self.get("/naics", params, None).await
 	}
 
-	/// Calls `/tariff/{code}`.
+	/// Look up the general US duty schedule line. Paid deep adds units and the special and other
+	/// schedule columns. Add origin with deep to resolve country-specific measures. Without origin,
+	/// schedule detail remains available and origin-dependent fields are null. A null effective rate
+	/// is not a zero rate.
 	pub async fn tariff(
 		&self,
 		code: &str,
@@ -1915,7 +1924,9 @@ impl Client {
 		self.get("/elevation", query, None).await
 	}
 
-	/// Calls `/point`.
+	/// Resolve the country, state, district and timezone at coordinates. Deep adds terrain and compact
+	/// nearest-city context on every plan. The timezone ID stays in core. The nearest city is null
+	/// when none is within 200 km.
 	pub async fn point(
 		&self,
 		lat: f64,
@@ -1930,8 +1941,9 @@ impl Client {
 		self.get("/point", query, None).await
 	}
 
-	/// Get weather for a point. Both unit systems are returned. Pass known coordinates from a
-	/// postal, city, or location result.
+	/// Get current conditions in metric and imperial units. Paid deep adds specialist current
+	/// measurements, forecasts and related detail. With deep, date selects a past UTC day (YYYY-MM-DD)
+	/// in deep.history alongside current conditions. Date alone does not request history.
 	pub async fn weather(
 		&self,
 		lat: f64,
@@ -1993,7 +2005,10 @@ impl Client {
 			.await
 	}
 
-	/// Calls `/address`.
+	/// Find address suggestions using the context supplied. Prefer postal, or city and state, from the
+	/// form; ip is an optional end-user locality hint for server-side calls. An empty result has
+	/// reason more_input, missing_context or no_matches. Suggestions have reason null. Operational
+	/// failures are errors.
 	pub async fn address_search(
 		&self,
 		query: &str,
