@@ -244,6 +244,9 @@ async fn main() {
 			.then_some(None)
 			.unwrap_or(Some("not valid DE".into()))
 	});
+	s.ok("bin", parse.bin("00 0000", BinOptions::default().deep(true)).await, |r| {
+		if r.bin == "000000" && r.deep == Some(serde_json::json!({})) { None } else { Some("BIN echo or deep mismatch".into()) }
+	});
 	s.ok(
 		"iban",
 		parse.iban("DE89370400440532013000", None).await,

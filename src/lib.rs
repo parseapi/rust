@@ -407,6 +407,20 @@ impl VatOptions {
 	}
 }
 
+/// Configures `bin`. Deep requests an empty object on every plan.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct BinOptions {
+	pub deep: bool,
+}
+
+impl BinOptions {
+	pub fn deep(mut self, value: bool) -> Self {
+		self.deep = value;
+		self
+	}
+}
+
 /// Configures `iban`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
@@ -1459,6 +1473,14 @@ impl Client {
 	pub async fn mac(&self, mac: &str) -> Result<Mac> {
 		self.get(&format!("/mac/{}", seg(mac)), Query::new(), None)
 			.await
+	}
+
+	/// Look up a 6-11 digit card prefix. Preserve leading zeros in the string.
+	pub async fn bin(&self, bin: &str, opts: impl Into<Option<BinOptions>>) -> Result<Bin> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/bin/{}", seg(bin)), query, None).await
 	}
 
 	/// Parse or convert a measurement. Amount is a decimal string. Without to, use the

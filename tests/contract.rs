@@ -14,6 +14,7 @@ async fn frozen_consumer_calls(client: &Client) -> Result<()> {
 	let _: BlocCountries = client.bloc_countries("example").await?;
 	let _: Asn = client.asn("AS13335").await?;
 	let _: Mac = client.mac("00:1B:63:84:45:E6").await?;
+	let _: Bin = client.bin("001234", BinOptions::default().deep(true)).await?;
 	let _: Country = client.country("example").await?;
 	let _: CountryStates = client.country_states("example").await?;
 	let _: State = client

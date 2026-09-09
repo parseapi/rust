@@ -59,6 +59,7 @@ parse.ip("8.8.8.8", IpOptions::default().deep(true)).await?;
 parse.email("hello@example.com", EmailOptions::default().deep(true)).await?;
 parse.vat("DE136695976", VatOptions::default().deep(true)).await?;
 parse.iban("DE89370400440532013000", None).await?;
+parse.bin("424242", None).await?;
 parse.npi("1881018208", None).await?;
 parse.asn("AS13335").await?;
 parse.mac("00:1B:63:84:45:E6").await?;
@@ -152,3 +153,5 @@ let parse = parseapi::Client::builder()
 Requires Rust 1.88 or later and a Tokio runtime with time and I/O enabled. CI tests both the minimum and stable compiler, including a separate application's fresh dependency resolution.
 
 [Full endpoint and field reference](https://parseapi.com/docs)
+
+BIN lookup accepts 6-11 digits as a string, including leading zeros. Spaces and hyphens are accepted. `prefix` is the actual longest match and can be shorter than the input. Unknown reference fields are null. `deep` adds an empty object on every plan.

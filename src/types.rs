@@ -799,6 +799,22 @@ pub struct Mac {
 	pub multicast: Option<bool>,
 }
 
+/// Card-prefix reference data. None means unknown.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Bin {
+	pub bin: String,
+	/// Actual longest matched prefix, which may be shorter than the input.
+	pub prefix: Option<String>,
+	pub country: Option<String>,
+	pub issuer: Option<String>,
+	pub brand: Option<String>,
+	pub r#type: Option<String>,
+	pub prepaid: Option<bool>,
+	pub deep: Option<serde_json::Value>,
+}
+
 /// A published DNS record. Value retains DNS presentation syntax, including TXT quoting.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]

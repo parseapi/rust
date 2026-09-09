@@ -760,3 +760,25 @@ fn naics_exclusions_and_match_preserve_older_responses() {
  assert_eq!(evidence.corrections[0].from, "sofware");
  assert_eq!(evidence.corrections[0].to, "software");
 }
+
+url_test!(url_bin, c => c.bin("001234", None), "/bin/001234");
+url_test!(url_bin_deep, c => c.bin("00 1234-56", BinOptions::default().deep(true)), "/bin/00%201234-56?deep=true");
+
+#[tokio::test]
+async fn bin_preserves_prefix_null_false_and_empty_deep() {
+	let server = TestServer::start(vec![
+		(200, r#"{"bin":"00123456","prefix":"001234","country":null,"issuer":"Fixture Bank","brand":"future-brand","type":null,"prepaid":false,"deep":{},"future":true}"#),
+		(200, r#"{"bin":"000000","prefix":null,"country":null,"issuer":null,"brand":null,"type":null,"prepaid":null}"#),
+		(400, r#"{"code":"invalid_input","message":"Expected 6-11 digits"}"#),
+	]);
+	let client = server.client();
+	let known = client.bin("00123456", BinOptions::default().deep(true)).await.unwrap();
+	assert_eq!(known.bin, "00123456");
+	assert_eq!(known.prefix.as_deref(), Some("001234"));
+	assert_eq!(known.prepaid, Some(false));
+	assert!(known.country.is_none());
+	assert_eq!(known.deep, Some(serde_json::json!({})));
+	let unknown = client.bin("000000", None).await.unwrap();
+	assert!(unknown.prefix.is_none() && unknown.prepaid.is_none() && unknown.deep.is_none());
+	assert!(client.bin("junk", None).await.is_err());
+}
