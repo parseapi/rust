@@ -1383,6 +1383,12 @@ impl Client {
 			.await
 	}
 
+	/// Calls `/swift/{code}`. Valid checks syntax, not payment reachability.
+	pub async fn swift(&self, code: &str) -> Result<SwiftCode> {
+		self.get(&format!("/swift/{}", seg(code)), Query::new(), None)
+			.await
+	}
+
 	/// Calls `/iban/{iban}`.
 	pub async fn iban(&self, iban: &str, opts: impl Into<Option<IbanOptions>>) -> Result<Iban> {
 		let opts = opts.into().unwrap_or_default();

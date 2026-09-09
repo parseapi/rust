@@ -782,3 +782,23 @@ async fn bin_preserves_prefix_null_false_and_empty_deep() {
 	assert!(unknown.prefix.is_none() && unknown.prepaid.is_none() && unknown.deep.is_none());
 	assert!(client.bin("junk", None).await.is_err());
 }
+
+url_test!(url_swift, c => c.swift("CHAS/US33 ?#"), "/swift/CHAS%2FUS33%20%3F%23");
+
+#[tokio::test]
+async fn swift_preserves_syntax_and_nullable_identity_without_guessing() {
+	let server = TestServer::start(vec![
+		(200, r#"{"swift":"CHASUS33","valid":true,"country":"US","name":"JPMORGAN CHASE BANK, N.A.","future":true}"#),
+		(200, r#"{"swift":"ZZZZZZ99","valid":true,"country":"ZZ","name":null,"future":{}}"#),
+		(200, r#"{"swift":"JUNK","valid":false,"country":null,"name":null}"#),
+	]);
+	let client = server.client();
+	let known: SwiftCode = client.swift("CHASUS33").await.unwrap();
+	assert_eq!(known.name.as_deref(), Some("JPMORGAN CHASE BANK, N.A."));
+	assert!(known.valid);
+	let unknown = client.swift("ZZZZZZ99").await.unwrap();
+	assert!(unknown.valid && unknown.name.is_none());
+	assert_eq!(unknown.country.as_deref(), Some("ZZ"));
+	let invalid = client.swift("JUNK").await.unwrap();
+	assert!(!invalid.valid && invalid.country.is_none() && invalid.name.is_none());
+}

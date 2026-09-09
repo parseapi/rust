@@ -1563,3 +1563,14 @@ pub struct NaicsSearch {
 	#[serde(default, deserialize_with = "null_default")]
 	pub results: Vec<Naics>,
 }
+
+/// A SWIFT/BIC format check and partial institution lookup. Valid means syntax only.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct SwiftCode {
+	pub swift: String,
+	pub valid: bool,
+	pub country: Option<String>,
+	pub name: Option<String>,
+}
