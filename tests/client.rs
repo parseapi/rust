@@ -722,3 +722,20 @@ async fn dns_preserves_presentation_and_question() {
 	assert_eq!(calls[0].target, "/dns/_dmarc.b%C3%BCcher.example.?type=txt");
 	assert_eq!(calls[1].target, "/dns/example.com");
 }
+
+url_test!(url_time_utc, c => c.time("", None), "/time");
+url_test!(url_time_conversion, c => c.time("America/New_York", TimeOptions::default().at("2026-09-05T15:00:00").to("Asia/Tokyo")), "/time/America%2FNew_York?at=2026-09-05T15%3A00%3A00&to=Asia%2FTokyo");
+url_test!(url_time_coordinates, c => c.time_at(0.0, 0.0, TimeAtOptions::default().at("1970-01-01T00:00:00Z").to("UTC")), "/time?lat=0&lon=0&at=1970-01-01T00%3A00%3A00Z&to=UTC");
+#[test]
+fn time_keeps_epoch_zero_and_unknown() {
+ let historical: Time = serde_json::from_str(r#"{"offset_seconds":-17762,"offset_minutes":-296,"at":"1880-01-01T00:00:00-04:56:02"}"#).unwrap();
+ assert_eq!(historical.offset_seconds, Some(-17762));
+ assert_eq!(historical.offset_minutes, Some(-296));
+ let clock: Time = serde_json::from_str(r#"{"timezone":"UTC","at":"1970-01-01T00:00:00+00:00","unix":0,"to":{"timezone":"UTC","unix":0}}"#).unwrap();
+ assert_eq!(clock.unix, Some(0));
+ assert_eq!(clock.to.unwrap().unix, Some(0));
+ let unknown: Time = serde_json::from_str(r#"{"timezone":null,"at":null,"unix":null,"to":null}"#).unwrap();
+ assert_eq!(unknown.at, None);
+ assert_eq!(unknown.unix, None);
+ assert!(unknown.to.is_none());
+}

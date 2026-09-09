@@ -620,6 +620,49 @@ impl CurrencyRateOptions {
 	}
 }
 
+/// Configures `time`. Omitted fields use API defaults.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct TimeOptions {
+	pub at: Option<String>,
+	pub to: Option<String>,
+}
+
+impl TimeOptions {
+	/// Sets the `at` query option.
+	pub fn at(mut self, value: impl Into<String>) -> Self {
+		self.at = Some(value.into());
+		self
+	}
+	/// Sets the `to` query option.
+	pub fn to(mut self, value: impl Into<String>) -> Self {
+		self.to = Some(value.into());
+		self
+	}
+}
+
+/// Configures `time_at`. Omitted fields use API defaults.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct TimeAtOptions {
+	pub at: Option<String>,
+	pub to: Option<String>,
+}
+
+impl TimeAtOptions {
+	/// Sets the destination IANA timezone.
+	pub fn to(mut self, value: impl Into<String>) -> Self {
+		self.to = Some(value.into());
+		self
+	}
+
+	/// Sets the `at` query option.
+	pub fn at(mut self, value: impl Into<String>) -> Self {
+		self.at = Some(value.into());
+		self
+	}
+}
+
 /// Configures `timezone`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
@@ -1555,6 +1598,37 @@ impl Client {
 			None,
 		)
 		.await
+	}
+
+	/// Calls `/time/{timezone}`.
+	pub async fn time(
+		&self,
+		timezone: &str,
+		opts: impl Into<Option<TimeOptions>>,
+	) -> Result<Time> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "at", opts.at);
+		push(&mut query, "to", opts.to);
+		let path = if timezone.is_empty() { "/time".to_string() } else { format!("/time/{}", seg(timezone)) };
+		self.get(&path, query, None)
+			.await
+	}
+
+	/// Calls `/time`.
+	pub async fn time_at(
+		&self,
+		lat: f64,
+		lon: f64,
+		opts: impl Into<Option<TimeAtOptions>>,
+	) -> Result<Time> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lat", Some(lat.to_string()));
+		push(&mut query, "lon", Some(lon.to_string()));
+		push(&mut query, "at", opts.at);
+		push(&mut query, "to", opts.to);
+		self.get("/time", query, None).await
 	}
 
 	/// Calls `/timezone/{timezone}`.

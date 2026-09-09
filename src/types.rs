@@ -978,6 +978,9 @@ pub struct TimezoneNextDst {
 	pub abbreviation: String,
 }
 
+/// Local clock and timezone facts. Missing clock fields remain unknown.
+pub type Time = Timezone;
+
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
@@ -986,12 +989,14 @@ pub struct Timezone {
 	pub name: Option<String>,
 	pub abbreviation: Option<String>,
 	pub offset: Option<String>,
+	pub offset_seconds: Option<i32>,
 	pub offset_minutes: Option<i32>,
 	pub dst: Option<bool>,
 	pub next_dst: Option<TimezoneNextDst>,
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
 	pub at: Option<String>,
+	pub unix: Option<i64>,
 	pub to: Option<TimezoneConversionTarget>,
 }
 
@@ -1295,9 +1300,11 @@ pub struct TimezoneConversionTarget {
 	pub name: Option<String>,
 	pub abbreviation: Option<String>,
 	pub offset: String,
+	pub offset_seconds: Option<i32>,
 	pub offset_minutes: i32,
 	pub dst: bool,
 	pub at: String,
+	pub unix: Option<i64>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

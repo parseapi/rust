@@ -78,14 +78,19 @@ parse.address_search("123 Main", AddressSearchOptions::default().country("US").s
 parse.company("123456789", CompanyOptions::default().country("FR")).await?;
 parse.date("03/04/2026", DateOptions::default().format("mdy")).await?;
 parse.date_today(DateTodayOptions::default().to("2026-12-25")).await?;
-parse.timezone("America/New_York", TimezoneOptions::default().at("2026-09-05T15:00:00").to("Asia/Tokyo")).await?;
-parse.timezone_at(40.7128, -74.006, None).await?;
+parse.time("", None).await?; // UTC now
+parse.time("America/New_York", TimeOptions::default().at("2026-09-05T15:00:00").to("Asia/Tokyo")).await?;
+parse.time_at(40.7128, -74.006, None).await?;
 parse.weather(40.7128, -74.006, WeatherOptions::default().deep(true).date("2026-09-01")).await?;
 ```
 
 Nullable values use `Option`. Unknown JSON fields are accepted. An omitted `deep` is `None`, and a requested empty `deep` is `Some` with empty fields. Nullable arrays are normalized to empty vectors. API fields named `type` use `r#type` where a separate `kind` field also exists.
 
 DNS uses pooled requests on every plan. Omit `type` to check A, AAAA, CNAME, MX, NS, TXT, SOA, CAA, SRV and PTR. Records contain `name`, `type`, `ttl` in seconds and a DNS presentation `value`. TXT values retain quoting and chunk boundaries. A selected question can include its CNAME chain. Empty records mean no records. Lookup failures remain errors.
+
+## Time
+
+`time` returns local ISO `at` with its UTC offset and integer Unix seconds in `unix`. `offset_seconds` is the exact offset, while `offset_minutes` is whole minutes. Historical offsets and ISO times can include offset seconds. Omitted `at` means now. With `to`, an offsetless `at` is source wall time. Otherwise it is UTC. Include an offset for repeated local times around a clock change. Current time and conversion use pooled requests on every plan. Coordinate clock fields can be null when the timezone is unknown. Existing `timezone` methods remain supported.
 
 ## Measurements
 
