@@ -743,6 +743,20 @@ impl WeatherOptions {
 	}
 }
 
+/// Configures `naics_search`. Limit defaults to 10 and accepts 1-50.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct NaicsSearchOptions {
+	pub limit: Option<u32>,
+}
+
+impl NaicsSearchOptions {
+	pub fn limit(mut self, value: u32) -> Self {
+		self.limit = Some(value);
+		self
+	}
+}
+
 /// Configures `emoji_search`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
@@ -1458,6 +1472,20 @@ impl Client {
 		let mut query = Query::new();
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/vin/{}", seg(vin)), query, None).await
+	}
+
+	/// Looks up a US NAICS 2022 code and its hierarchy.
+	pub async fn naics(&self, code: &str) -> Result<Naics> {
+		self.get(&format!("/naics/{}", seg(code)), Query::new(), None).await
+	}
+
+	/// Searches US NAICS 2022 industry names and activity terms.
+	pub async fn naics_search(&self, query: &str, opts: impl Into<Option<NaicsSearchOptions>>) -> Result<NaicsSearch> {
+		let opts = opts.into().unwrap_or_default();
+		let mut params = Query::new();
+		params.push(("q", query.into()));
+		push(&mut params, "limit", opts.limit.map(|value| value.to_string()));
+		self.get("/naics", params, None).await
 	}
 
 	/// Calls `/tariff/{code}`.

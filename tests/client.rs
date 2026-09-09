@@ -687,6 +687,25 @@ async fn measure_precision_ambiguity_and_catalog() {
 }
 
 #[tokio::test]
+async fn naics_hierarchy_and_keyword_search() {
+ let server = TestServer::start(vec![
+  (200, r#"{"naics":"31-33","name":"Manufacturing","description":null,"level":2,"parent":null,"parent_name":null,"children":[{"naics":"311","name":"Food Manufacturing"}],"year":2022,"country":"US","future":true}"#),
+  (200, r#"{"q":"coffee & tea","year":2022,"country":"US","results":[]}"#),
+ ]);
+ let client = Client::builder().api_key("test_key").base_url(&server.base_url).retries(0).build().unwrap();
+ let industry = client.naics("31-33").await.unwrap();
+ assert_eq!(industry.naics, "31-33");
+ assert!(industry.description.is_none() && industry.parent.is_none());
+ assert_eq!(industry.children[0].naics, "311");
+ let search = client.naics_search("coffee & tea", NaicsSearchOptions::default().limit(5)).await.unwrap();
+ assert_eq!(search.year, 2022);
+ assert!(search.results.is_empty());
+ let requests = server.requests.lock().unwrap();
+ assert_eq!(requests[0].target, "/naics/31-33");
+ assert_eq!(requests[1].target, "/naics?q=coffee+%26+tea&limit=5");
+}
+
+#[tokio::test]
 async fn dns_preserves_presentation_and_question() {
 	let server = TestServer::start(vec![
 		(200, r#"{"domain":"example.com","records":[{"name":"example.com.","type":"TXT","ttl":0,"value":"\"one\" \"two\"","future":true},{"name":"alias.example.","type":"CNAME","ttl":300,"value":"target.example."}],"future":true}"#),

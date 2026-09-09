@@ -70,6 +70,8 @@ parse.caller("+18004633339", None).await?;
 parse.hlr("+447712345678", None).await?;
 parse.dns("example.com", None).await?;
 parse.dns("_dmarc.example.com", DnsOptions::default().r#type("TXT")).await?;
+parse.naics("541511").await?;
+parse.naics_search("coffee shop", NaicsSearchOptions::default().limit(5)).await?;
 parse.tariff("8471.30.01.00", TariffOptions::default().origin("DE").deep(true)).await?;
 parse.address("123 Main St", AddressOptions::default().country("US")).await?;
 parse.address_search("123 Main", AddressSearchOptions::default().country("US").state("NC")).await?;

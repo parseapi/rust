@@ -1469,3 +1469,38 @@ pub struct MeasureUnits {
 	#[serde(default, deserialize_with = "null_default")]
 	pub units: Vec<MeasureUnit>,
 }
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct NaicsChild {
+	pub naics: String,
+	pub name: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Naics {
+	pub naics: String,
+	pub name: String,
+	pub description: Option<String>,
+	pub level: u32,
+	pub parent: Option<String>,
+	pub parent_name: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub children: Vec<NaicsChild>,
+	pub year: u32,
+	pub country: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct NaicsSearch {
+	pub q: String,
+	pub year: u32,
+	pub country: String,
+	#[serde(default, deserialize_with = "null_default")]
+	pub results: Vec<Naics>,
+}
