@@ -1252,20 +1252,11 @@ pub struct WeatherStation {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct WeatherSource {
-	pub id: String,
-	pub name: Option<String>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
 pub struct Weather {
 	pub latitude: f64,
 	pub longitude: f64,
 	pub current: WeatherCurrent,
 	pub station: Option<WeatherStation>,
-	pub source: WeatherSource,
 	pub deep: Option<WeatherDeep>,
 }
 
