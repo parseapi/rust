@@ -108,7 +108,7 @@ pub struct BlocCountries {
 pub struct Country {
 	pub country: String,
 	pub name: String,
-	pub local_name: Option<String>,
+	pub name_local: Option<String>,
 	pub continent: String,
 	pub currency: Option<String>,
 	pub currency_name: Option<String>,
@@ -146,7 +146,7 @@ pub struct CountryStates {
 pub struct State {
 	pub state: String,
 	pub name: String,
-	pub local_name: Option<String>,
+	pub name_local: Option<String>,
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
 	pub country: String,
@@ -208,7 +208,7 @@ pub struct District {
 #[non_exhaustive]
 pub struct City {
 	pub name: String,
-	pub local_name: Option<String>,
+	pub name_local: Option<String>,
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
 	pub state: Option<String>,
@@ -859,7 +859,7 @@ pub struct Currency {
 pub struct Language {
 	pub language: String,
 	pub name: String,
-	pub local_name: Option<String>,
+	pub name_local: Option<String>,
 	pub script: Option<String>,
 	pub direction: String,
 	pub deep: Option<LanguageDeep>,
@@ -942,7 +942,7 @@ pub struct DateInfo {
 pub struct Holiday {
 	pub date: String,
 	pub name: String,
-	pub local_name: Option<String>,
+	pub name_local: Option<String>,
 	/// "public" for an official day off, "observance" for cultural days.
 	#[serde(rename = "type")]
 	pub kind: String,
@@ -1742,7 +1742,7 @@ pub struct PointCity {
 	#[serde(rename = "type")]
 	pub city_type: Option<String>,
 	pub name: Option<String>,
-	pub local_name: Option<String>,
+	pub name_local: Option<String>,
 	pub state: Option<String>,
 	pub state_name: Option<String>,
 	pub country: Option<String>,
