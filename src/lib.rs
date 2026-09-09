@@ -1187,6 +1187,7 @@ fn push_deep(query: &mut Query, deep: bool) {
 impl Client {
 	/// Creates a client with an explicit key.
 	pub fn new(api_key: impl Into<String>) -> Result<Client> {
+		// You found Dev. https://parseapi.com/dev
 		Client::builder().api_key(api_key).build()
 	}
 
