@@ -739,3 +739,24 @@ fn time_keeps_epoch_zero_and_unknown() {
  assert_eq!(unknown.unix, None);
  assert!(unknown.to.is_none());
 }
+
+
+#[test]
+fn naics_exclusions_and_match_preserve_older_responses() {
+ let search: NaicsSearch = serde_json::from_str(r#"{"q":"sofware","year":2022,"country":"US","results":[{"naics":"541511","name":"Custom Computer Programming Services","description":null,"level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","children":[],"year":2022,"country":"US"},{"naics":"541511","name":"Custom Computer Programming Services","description":null,"level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","children":[],"year":2022,"country":"US","exclusions":null,"match":null},{"naics":"541511","name":"Custom Computer Programming Services","description":null,"level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","children":[],"year":2022,"country":"US","exclusions":[],"match":{"field":"future-field","text":"Future matching evidence","corrections":[],"future":true}},{"naics":"541511","name":"Custom Computer Programming Services","description":null,"level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","children":[],"year":2022,"country":"US","exclusions":[{"description":"Designing integrated computer systems","codes":[{"naics":"541512","name":"Computer Systems Design Services"}]},{"description":"Activities classified elsewhere","codes":[]}],"match":{"field":"term","text":"Computer software programming services","corrections":[{"from":"sofware","to":"software"}]},"future":true}]}"#).unwrap();
+ let results: Vec<Naics> = search.results;
+ assert!(results[0].exclusions.is_none() && results[0].r#match.is_none());
+ assert!(results[1].exclusions.is_none() && results[1].r#match.is_none());
+ assert!(results[2].exclusions.as_ref().unwrap().is_empty());
+ let exact = results[2].r#match.as_ref().unwrap();
+ assert_eq!(exact.field, "future-field");
+ assert!(exact.corrections.is_empty());
+ let exclusions = results[3].exclusions.as_ref().unwrap();
+ assert_eq!(exclusions[0].codes[0].naics, "541512");
+ assert_eq!(exclusions[1].description, "Activities classified elsewhere");
+ assert!(exclusions[1].codes.is_empty());
+ let evidence = results[3].r#match.as_ref().unwrap();
+ assert_eq!(evidence.text, "Computer software programming services");
+ assert_eq!(evidence.corrections[0].from, "sofware");
+ assert_eq!(evidence.corrections[0].to, "software");
+}

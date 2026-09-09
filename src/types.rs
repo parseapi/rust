@@ -1488,6 +1488,38 @@ pub struct NaicsChild {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct NaicsExclusion {
+	pub description: String,
+	/// Generic exclusions can have no linked codes.
+	#[serde(default, deserialize_with = "null_default")]
+	pub codes: Vec<NaicsChild>,
+}
+
+/// A query token corrected only during typo fallback.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct NaicsCorrection {
+	pub from: String,
+	pub to: String,
+}
+
+/// The actual title, activity term or code that matched a search.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct NaicsMatch {
+	/// Currently name, term or naics. Future fields remain decodable.
+	pub field: String,
+	pub text: String,
+	/// Empty for exact, plural and prefix matches.
+	#[serde(default, deserialize_with = "null_default")]
+	pub corrections: Vec<NaicsCorrection>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct Naics {
 	pub naics: String,
 	pub name: String,
@@ -1497,6 +1529,10 @@ pub struct Naics {
 	pub parent_name: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub children: Vec<NaicsChild>,
+	/// Classification exclusions. None for omitted/null older responses.
+	pub exclusions: Option<Vec<NaicsExclusion>>,
+	/// Search evidence, absent on direct lookup and older responses.
+	pub r#match: Option<NaicsMatch>,
 	pub year: u32,
 	pub country: String,
 }
