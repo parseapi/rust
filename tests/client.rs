@@ -112,18 +112,18 @@ macro_rules! url_test {
 
 #[tokio::test]
 async fn name_country_and_known_are_additive() {
-	let server = TestServer::start(vec![(200, r#"{"name":"王","valid":true,"known":true,"countries":["CN","TW"],"gender":null,"future":true}"#), (200, r#"{"name":"Andrea","valid":true,"gender":null}"#)]);
+	let server = TestServer::start(vec![(200, r#"{"name":"王","valid":true,"future":true,"deep":{"known":true,"countries":["CN","TW"],"gender":null}}"#), (200, r#"{"name":"Andrea","valid":true,"deep":{"gender":null}}"#)]);
 	let client = server.client();
-	let result = client.name_with_options("王", NameOptions::default().country("CN")).await.unwrap();
-	assert!(result.known);
-	assert_eq!(result.countries, vec!["CN", "TW"]);
-	assert_eq!(result.gender, None);
+	let result = client.name_with_options("王", NameOptions::default().country("CN").deep(true)).await.unwrap();
+	assert_eq!(result.deep.as_ref().unwrap().known, Some(true));
+	assert_eq!(result.deep.as_ref().unwrap().countries.as_ref().unwrap(), &vec!["CN", "TW"]);
+	assert_eq!(result.deep.as_ref().unwrap().gender, None);
 	let old = client.name("Andrea").await.unwrap();
-	assert!(!old.known && old.countries.is_empty());
-	assert_eq!(server.requests()[0].target, "/name/%E7%8E%8B?country=CN");
+	assert!(old.deep.as_ref().unwrap().known.is_none() && old.deep.as_ref().unwrap().countries.is_none());
+	assert_eq!(server.requests()[0].target, "/name/%E7%8E%8B?country=CN&deep=true");
 	assert_eq!(server.requests()[1].target, "/name/Andrea");
 	let nullable: Name = serde_json::from_str(r#"{"countries":null}"#).unwrap();
-	assert!(nullable.countries.is_empty());
+	assert!(nullable.deep.is_none());
 }
 
 url_test!(url_ip, c => c.ip("8.8.8.8", None), "/ip/8.8.8.8");
@@ -230,6 +230,7 @@ url_test!(url_hlr, c => c.hlr("+447712345678", None), "/hlr/%2B447712345678");
 url_test!(url_domain, c => c.domain("example.com", None), "/domain/example.com");
 url_test!(url_asn, c => c.asn("AS13335"), "/asn/AS13335");
 url_test!(url_mac, c => c.mac("00:1B:63:84:45:E6"), "/mac/00%3A1B%3A63%3A84%3A45%3AE6");
+url_test!(url_swift, c => c.swift("CHAS/US33 ?#"), "/swift/CHAS%2FUS33%20%3F%23");
 url_test!(url_mx, c => c.mx("example.com"), "/mx/example.com");
 url_test!(url_useragent, c => c.useragent("TestUA/1.0", None), "/useragent");
 url_test!(url_vin, c => c.vin("1HGCM82633A004352", None), "/vin/1HGCM82633A004352");
@@ -381,7 +382,7 @@ async fn non_json_error_body() {
 async fn retries_500_then_succeeds() {
 	let server = TestServer::start(vec![
 		(500, r#"{"code":"server_error","message":"boom"}"#),
-		(200, r#"{"country":"us","iso3":"USA"}"#),
+		(200, r#"{"country":"us","deep":{"iso3":"USA"}}"#),
 	]);
 	let client = Client::builder()
 		.api_key("test_key_123")
@@ -390,7 +391,7 @@ async fn retries_500_then_succeeds() {
 		.build()
 		.expect("client");
 	let country = client.country("US").await.expect("retried response");
-	assert_eq!(country.iso3, "USA");
+	assert_eq!(country.deep.as_ref().unwrap().iso3.as_deref(), Some("USA"));
 	assert_eq!(server.requests().len(), 2);
 }
 
@@ -482,22 +483,22 @@ async fn date_and_timezone_preserve_nulls_and_accept_new_fields() {
 	let server = TestServer::start(vec![
 		(
 			200,
-			r#"{"date":"03/04/2026","valid":false,"year":null,"leap":null,"future_field":{"value":true}}"#,
+			r#"{"date":"03/04/2026","valid":false,"future_field":{"value":true},"deep":{"year":null,"leap":null}}"#,
 		),
 		(
 			200,
-			r#"{"latitude":0,"longitude":180,"timezone":null,"name":null,"abbreviation":null,"offset":null,"offset_minutes":null,"dst":null,"next_dst":null,"future_field":true}"#,
+			r#"{"latitude":0,"longitude":180,"timezone":null,"abbreviation":null,"offset":null,"dst":null,"future_field":true,"deep":{"name":null,"offset_minutes":null,"next_dst":null}}"#,
 		),
 	]);
 	let client = server.client();
 	let date = client.date("03/04/2026", None).await.expect("date");
 	assert!(!date.valid);
-	assert_eq!(date.year, None);
-	assert_eq!(date.leap, None);
+	assert_eq!(date.deep.as_ref().unwrap().year, None);
+	assert_eq!(date.deep.as_ref().unwrap().leap, None);
 	let zone = client.timezone_at(0.0, 180.0, None).await.expect("zone");
 	assert_eq!(zone.timezone, None);
 	assert_eq!(zone.dst, None);
-	assert_eq!(zone.offset_minutes, None);
+	assert_eq!(zone.deep.as_ref().unwrap().offset_minutes, None);
 }
 
 #[tokio::test]
@@ -600,13 +601,13 @@ async fn metered_retry_defaults_and_explicit_override() {
 
 #[test]
 fn complete_response_fields_preserve_unknown_values() {
-	let company:Company=serde_json::from_str(r#"{"company":"x","registered":null,"active":null,"gst":null,"siege":null,"type":"company","kind":"LIMITED","deep":{},"future":true}"#).unwrap();
+	let company:Company=serde_json::from_str(r#"{"company":"x","registered":null,"active":null,"type":"company","deep":{"gst":null,"siege":null,"kind":"LIMITED"},"future":true}"#).unwrap();
 	assert_eq!(company.registered, None);
 	assert_eq!(company.active, None);
-	assert_eq!(company.gst, None);
-	assert_eq!(company.siege, None);
+	assert_eq!(company.deep.as_ref().unwrap().gst, None);
+	assert_eq!(company.deep.as_ref().unwrap().siege, None);
 	assert_eq!(company.r#type.as_deref(), Some("company"));
-	assert_eq!(company.kind.as_deref(), Some("LIMITED"));
+	assert_eq!(company.deep.as_ref().unwrap().kind.as_deref(), Some("LIMITED"));
 	assert!(company.deep.is_some());
 	let weather:Weather=serde_json::from_str(r#"{"deep":{"hours":[{"feels_like":22,"wind_gust":4}],"days":[{"sunrise":"06:00"}],"air":{"aqi":10},"history":{"date":"2026-09-01","high":24}}}"#).unwrap();
 	let deep = weather.deep.unwrap();
@@ -657,6 +658,24 @@ async fn network_records_preserve_nulls_and_tolerate_future_fields() {
 	assert_eq!(local.multicast, Some(false));
 }
 
+#[tokio::test]
+async fn swift_preserves_syntax_and_nullable_identity_without_guessing() {
+	let server = TestServer::start(vec![
+		(200, r#"{"swift":"CHASUS33","valid":true,"country":"US","name":"JPMORGAN CHASE BANK, N.A.","future":true}"#),
+		(200, r#"{"swift":"ZZZZZZ99","valid":true,"country":"ZZ","name":null,"future":{}}"#),
+		(200, r#"{"swift":"JUNK","valid":false,"country":null,"name":null}"#),
+	]);
+	let client = server.client();
+	let known: SwiftCode = client.swift("CHASUS33").await.unwrap();
+	assert_eq!(known.name.as_deref(), Some("JPMORGAN CHASE BANK, N.A."));
+	assert!(known.valid);
+	let unknown = client.swift("ZZZZZZ99").await.unwrap();
+	assert!(unknown.valid && unknown.name.is_none());
+	assert_eq!(unknown.country.as_deref(), Some("ZZ"));
+	let invalid = client.swift("JUNK").await.unwrap();
+	assert!(!invalid.valid && invalid.country.is_none() && invalid.name.is_none());
+}
+
 url_test!(url_measure, c => c.measure("5 ft 11 in", MeasureOptions::default().to("cm").locale("en-US").system("us")), "/measure/5%20ft%2011%20in?to=cm&locale=en-US&system=us");
 url_test!(url_measure_compound, c => c.measure("1 kg/m^3", MeasureOptions::default().to("g/L")), "/measure/1%20kg%2Fm%5E3?to=g%2FL");
 url_test!(url_measure_units, c => c.measure_units(MeasureUnitsOptions::default().query("US gallon").r#type("volume").unit("L")), "/measure/units?q=US+gallon&type=volume&unit=L");
@@ -689,14 +708,14 @@ async fn measure_precision_ambiguity_and_catalog() {
 #[tokio::test]
 async fn naics_hierarchy_and_keyword_search() {
  let server = TestServer::start(vec![
-  (200, r#"{"naics":"31-33","name":"Manufacturing","description":null,"level":2,"parent":null,"parent_name":null,"children":[{"naics":"311","name":"Food Manufacturing"}],"year":2022,"country":"US","future":true}"#),
+  (200, r#"{"naics":"31-33","name":"Manufacturing","level":2,"parent":null,"parent_name":null,"year":2022,"country":"US","future":true,"deep":{"description":null,"children":[{"naics":"311","name":"Food Manufacturing"}]}}"#),
   (200, r#"{"q":"coffee & tea","year":2022,"country":"US","results":[]}"#),
  ]);
  let client = Client::builder().api_key("test_key").base_url(&server.base_url).retries(0).build().unwrap();
  let industry = client.naics("31-33").await.unwrap();
  assert_eq!(industry.naics, "31-33");
- assert!(industry.description.is_none() && industry.parent.is_none());
- assert_eq!(industry.children[0].naics, "311");
+ assert!(industry.deep.as_ref().unwrap().description.is_none() && industry.parent.is_none());
+ assert_eq!(industry.deep.as_ref().unwrap().children.as_ref().unwrap()[0].naics, "311");
  let search = client.naics_search("coffee & tea", NaicsSearchOptions::default().limit(5)).await.unwrap();
  assert_eq!(search.year, 2022);
  assert!(search.results.is_empty());
@@ -728,9 +747,9 @@ url_test!(url_time_conversion, c => c.time("America/New_York", TimeOptions::defa
 url_test!(url_time_coordinates, c => c.time_at(0.0, 0.0, TimeAtOptions::default().at("1970-01-01T00:00:00Z").to("UTC")), "/time?lat=0&lon=0&at=1970-01-01T00%3A00%3A00Z&to=UTC");
 #[test]
 fn time_keeps_epoch_zero_and_unknown() {
- let historical: Time = serde_json::from_str(r#"{"offset_seconds":-17762,"offset_minutes":-296,"at":"1880-01-01T00:00:00-04:56:02"}"#).unwrap();
- assert_eq!(historical.offset_seconds, Some(-17762));
- assert_eq!(historical.offset_minutes, Some(-296));
+ let historical: Time = serde_json::from_str(r#"{"deep":{"offset_seconds":-17762,"offset_minutes":-296},"at":"1880-01-01T00:00:00-04:56:02"}"#).unwrap();
+ assert_eq!(historical.deep.as_ref().unwrap().offset_seconds, Some(-17762));
+ assert_eq!(historical.deep.as_ref().unwrap().offset_minutes, Some(-296));
  let clock: Time = serde_json::from_str(r#"{"timezone":"UTC","at":"1970-01-01T00:00:00+00:00","unix":0,"to":{"timezone":"UTC","unix":0}}"#).unwrap();
  assert_eq!(clock.unix, Some(0));
  assert_eq!(clock.to.unwrap().unix, Some(0));
@@ -743,15 +762,15 @@ fn time_keeps_epoch_zero_and_unknown() {
 
 #[test]
 fn naics_exclusions_and_match_preserve_older_responses() {
- let search: NaicsSearch = serde_json::from_str(r#"{"q":"sofware","year":2022,"country":"US","results":[{"naics":"541511","name":"Custom Computer Programming Services","description":null,"level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","children":[],"year":2022,"country":"US"},{"naics":"541511","name":"Custom Computer Programming Services","description":null,"level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","children":[],"year":2022,"country":"US","exclusions":null,"match":null},{"naics":"541511","name":"Custom Computer Programming Services","description":null,"level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","children":[],"year":2022,"country":"US","exclusions":[],"match":{"field":"future-field","text":"Future matching evidence","corrections":[],"future":true}},{"naics":"541511","name":"Custom Computer Programming Services","description":null,"level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","children":[],"year":2022,"country":"US","exclusions":[{"description":"Designing integrated computer systems","codes":[{"naics":"541512","name":"Computer Systems Design Services"}]},{"description":"Activities classified elsewhere","codes":[]}],"match":{"field":"term","text":"Computer software programming services","corrections":[{"from":"sofware","to":"software"}]},"future":true}]}"#).unwrap();
- let results: Vec<Naics> = search.results;
- assert!(results[0].exclusions.is_none() && results[0].r#match.is_none());
- assert!(results[1].exclusions.is_none() && results[1].r#match.is_none());
- assert!(results[2].exclusions.as_ref().unwrap().is_empty());
+ let search: NaicsSearch = serde_json::from_str(r#"{"q":"sofware","year":2022,"country":"US","results":[{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","deep":{"description":null,"children":[]}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":null,"deep":{"description":null,"children":[],"exclusions":null}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"future-field","text":"Future matching evidence","corrections":[],"future":true},"deep":{"description":null,"children":[],"exclusions":[]}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"term","text":"Computer software programming services","corrections":[{"from":"sofware","to":"software"}]},"future":true,"deep":{"description":null,"children":[],"exclusions":[{"description":"Designing integrated computer systems","codes":[{"naics":"541512","name":"Computer Systems Design Services"}]},{"description":"Activities classified elsewhere","codes":[]}]}}]}"#).unwrap();
+ let results: Vec<NaicsSearchResult> = search.results;
+ assert!(results[0].deep.as_ref().unwrap().exclusions.is_none() && results[0].r#match.is_none());
+ assert!(results[1].deep.as_ref().unwrap().exclusions.is_none() && results[1].r#match.is_none());
+ assert!(results[2].deep.as_ref().unwrap().exclusions.as_ref().unwrap().is_empty());
  let exact = results[2].r#match.as_ref().unwrap();
  assert_eq!(exact.field, "future-field");
  assert!(exact.corrections.is_empty());
- let exclusions = results[3].exclusions.as_ref().unwrap();
+ let exclusions = results[3].deep.as_ref().unwrap().exclusions.as_ref().unwrap();
  assert_eq!(exclusions[0].codes[0].naics, "541512");
  assert_eq!(exclusions[1].description, "Activities classified elsewhere");
  assert!(exclusions[1].codes.is_empty());
@@ -783,22 +802,228 @@ async fn bin_preserves_prefix_null_false_and_empty_deep() {
 	assert!(client.bin("junk", None).await.is_err());
 }
 
-url_test!(url_swift, c => c.swift("CHAS/US33 ?#"), "/swift/CHAS%2FUS33%20%3F%23");
-
+// Reviewed ADP options remain one operation with one explicit deep query.
 #[tokio::test]
-async fn swift_preserves_syntax_and_nullable_identity_without_guessing() {
-	let server = TestServer::start(vec![
-		(200, r#"{"swift":"CHASUS33","valid":true,"country":"US","name":"JPMORGAN CHASE BANK, N.A.","future":true}"#),
-		(200, r#"{"swift":"ZZZZZZ99","valid":true,"country":"ZZ","name":null,"future":{}}"#),
-		(200, r#"{"swift":"JUNK","valid":false,"country":null,"name":null}"#),
-	]);
-	let client = server.client();
-	let known: SwiftCode = client.swift("CHASUS33").await.unwrap();
-	assert_eq!(known.name.as_deref(), Some("JPMORGAN CHASE BANK, N.A."));
-	assert!(known.valid);
-	let unknown = client.swift("ZZZZZZ99").await.unwrap();
-	assert!(unknown.valid && unknown.name.is_none());
-	assert_eq!(unknown.country.as_deref(), Some("ZZ"));
-	let invalid = client.swift("JUNK").await.unwrap();
-	assert!(!invalid.valid && invalid.country.is_none() && invalid.name.is_none());
+async fn adp_country_with_options_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.country_with_options("US", CountryOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_state_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.state("NC", StateOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_state_districts_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.state_districts("NC", StateDistrictsOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_district_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.district("37081", DistrictOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_city_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.city("Charlotte", CityOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_city_id_with_options_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.city_id_with_options("city_123", CityIdOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_city_search_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.city_search("char", CitySearchOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_city_nearest_with_options_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.city_nearest_with_options(0.0, 0.0, CityNearestOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_city_nearby_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.city_nearby("Charlotte", CityNearbyOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_postal_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.postal("28202", PostalOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_postal_nearby_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.postal_nearby("28202", PostalNearbyOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_postal_distance_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.postal_distance("28202", "10001", PostalDistanceOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_iban_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.iban("DE89370400440532013000", IbanOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_carrier_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.carrier("+14155552671", CarrierOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_hlr_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.hlr("+14155552671", HlrOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_naics_with_options_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.naics_with_options("541511", NaicsOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_naics_search_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.naics_search("software", NaicsSearchOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_currency_with_options_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.currency_with_options("USD", CurrencyOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_language_with_options_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.language_with_options("en", LanguageOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_name_with_options_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.name_with_options("Andrea", NameOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_time_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.time("UTC", TimeOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_time_at_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.time_at(0.0, 0.0, TimeAtOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_timezone_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.timezone("UTC", TimezoneOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_timezone_at_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.timezone_at(0.0, 0.0, TimezoneAtOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_date_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.date("1970-01-01", DateOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_date_today_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.date_today(DateTodayOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_emoji_with_options_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.emoji_with_options("😀", EmojiOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+}
+#[tokio::test]
+async fn adp_emoji_search_option() {
+ let server=TestServer::start(vec![(200,"{}")]);
+ let client=server.client();
+ let _=client.emoji_search("smile", EmojiSearchOptions::default().deep(true)).await;
+ assert_eq!(server.requests().len(),1);
+ assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
 }

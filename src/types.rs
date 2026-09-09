@@ -1,4 +1,4 @@
-//! Response types for the ParseAPI public API. Fields are appended as the API grows. Nullable fields are `Option`.
+//! Response types for the ParseAPI public API. Nullable fields are `Option`.
 //! Deep objects follow the triad: `None` when not requested, empty when
 //! requested but locked, populated when unlocked.
 
@@ -105,32 +105,18 @@ pub struct BlocCountries {
 #[non_exhaustive]
 pub struct Country {
 	pub country: String,
-	pub iso3: String,
-	pub numeric: i32,
 	pub name: String,
-	pub full_name: Option<String>,
 	pub local_name: Option<String>,
-	pub demonym: Option<String>,
-	pub capital: Option<String>,
-	pub capital_lat: Option<f64>,
-	pub capital_lon: Option<f64>,
 	pub continent: String,
-	pub region: Option<String>,
-	pub subregion: Option<String>,
-	pub population: Option<i64>,
-	pub area: Option<f64>,
 	pub currency: Option<String>,
 	pub currency_name: Option<String>,
 	pub currency_symbol: Option<String>,
-	pub tld: Option<String>,
 	pub calling_code: Option<String>,
 	pub emoji: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub languages: Vec<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub borders: Vec<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub blocs: Vec<String>,
+	pub deep: Option<CountryDeep>,
+	pub timezones: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -165,18 +151,11 @@ pub struct State {
 	pub country_name: Option<String>,
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
-	pub population: Option<i64>,
-	pub area: Option<f64>,
 	pub timezone: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub timezones: Vec<String>,
 	pub iso_3166_2: Option<String>,
-	pub fips: Option<String>,
-	pub capital: Option<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub area_codes: Vec<String>,
-	pub tax: Option<String>,
-	pub tax_rate: Option<f64>,
+	pub deep: Option<StateDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -187,6 +166,7 @@ pub struct StateDistrictItem {
 	pub name: String,
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
+	pub deep: Option<StateDistrictItemDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -215,17 +195,10 @@ pub struct District {
 	pub country_name: Option<String>,
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
-	pub population: Option<i64>,
-	/// Total area in km2 (land + water, or the official total).
-	pub area: Option<f64>,
-	/// Land area in km2. None when the source publishes total only.
-	pub land_area: Option<f64>,
-	/// Water area in km2. None when the source publishes total only.
-	pub water_area: Option<f64>,
-	pub seat: Option<String>,
 	pub timezone: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub timezones: Vec<String>,
+	pub deep: Option<DistrictDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -236,8 +209,6 @@ pub struct City {
 	pub local_name: Option<String>,
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
-	/// What this city is the capital of: country, state, or none.
-	pub capital_of: Option<String>,
 	pub state: Option<String>,
 	pub state_name: Option<String>,
 	pub district: Option<String>,
@@ -246,18 +217,10 @@ pub struct City {
 	pub country_name: Option<String>,
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
-	pub elevation: Option<f64>,
-	pub elevation_ft: Option<f64>,
-	pub population: Option<i64>,
-	/// Total area in km2 (land + water, or the official total).
-	pub area: Option<f64>,
-	/// Land area in km2. None when the source publishes total only.
-	pub land_area: Option<f64>,
-	/// Water area in km2. None when the source publishes total only.
-	pub water_area: Option<f64>,
 	pub timezone: Option<String>,
 	/// Minted parse id (`city_` + 12 chars). Stable pin via `/city/id/{id}`.
 	pub id: String,
+	pub deep: Option<CityDeep>,
 }
 
 /// A [`City`] plus the distance from the query point.
@@ -326,21 +289,8 @@ pub struct Postal {
 	pub country_name: Option<String>,
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
-	pub elevation: Option<f64>,
-	pub elevation_ft: Option<f64>,
-	pub population: Option<i64>,
-	/// Total area in km2. None when the source has no water split.
-	pub area: Option<f64>,
-	/// Land area in km2, where the source has it.
-	pub land_area: Option<f64>,
-	/// Water area in km2, where the source has it.
-	pub water_area: Option<f64>,
 	pub timezone: Option<String>,
-	pub currency: Option<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub neighbors: Vec<String>,
-	/// None is unknown; Some(empty) is observed outside all covered areas.
-	pub metros: Option<Vec<PostalMetro>>,
+	pub deep: Option<PostalDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -353,7 +303,7 @@ pub struct PostalNearbyItem {
 	pub country: String,
 	pub distance: f64,
 	pub distance_mi: f64,
-	pub metros: Option<Vec<PostalMetro>>,
+	pub deep: Option<PostalMetroDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -364,9 +314,9 @@ pub struct PostalNearby {
 	pub country: String,
 	pub radius: f64,
 	pub unit: String,
-	pub metros: Option<Vec<PostalMetro>>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub nearby: Vec<PostalNearbyItem>,
+	pub deep: Option<PostalMetroDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -375,7 +325,7 @@ pub struct PostalNearby {
 pub struct PostalDistanceEnd {
 	pub postal: String,
 	pub city: Option<String>,
-	pub metros: Option<Vec<PostalMetro>>,
+	pub deep: Option<PostalMetroDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -453,16 +403,13 @@ pub struct Iban {
 	pub country: Option<String>,
 	/// Print form in groups of four, for display. None when invalid.
 	pub formatted: Option<String>,
-	pub checksum: Option<String>,
 	/// Bank identifier parsed from the number, not a name.
 	pub bank: Option<String>,
 	/// Institution name from the national bank-code directory. None when unsourced.
 	pub bank_name: Option<String>,
 	/// BIC from that same directory. None when unsourced or missing.
 	pub bic: Option<String>,
-	/// Branch identifier when that country has one.
-	pub branch: Option<String>,
-	pub account: Option<String>,
+	pub deep: Option<IbanDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -475,8 +422,6 @@ pub struct Npi {
 	/// Exists in the healthcare provider registry.
 	pub registered: Option<bool>,
 	pub active: Option<bool>,
-	/// Date the NPI was deactivated, YYYY-MM-DD. None when still active.
-	pub deactivated_at: Option<String>,
 	/// On the OIG exclusion list.
 	pub excluded: Option<bool>,
 	/// individual or organization.
@@ -520,6 +465,8 @@ pub struct NpiDeep {
 	pub opt_out: Option<bool>,
 	/// Enrollment rows. Empty when medicare is false.
 	pub enrollments: Option<Vec<NpiEnrollment>>,
+	/// Date the NPI was deactivated, YYYY-MM-DD. None when still active.
+	pub deactivated_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -549,6 +496,7 @@ pub struct TariffMeasure {
 	pub from: Option<String>,
 	/// Expires, ISO YYYY-MM-DD. None when open-ended.
 	pub until: Option<String>,
+	pub conditional: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -562,6 +510,12 @@ pub struct TariffDeep {
 	/// Every Chapter 99 tariff measure that applies to this code from this origin.
 	#[serde(default, deserialize_with = "null_default")]
 	pub measures: Vec<TariffMeasure>,
+	/// Units of quantity (No., kg).
+	pub units: Option<Vec<String>>,
+	/// Column 1 special rate, verbatim.
+	pub special: Option<String>,
+	/// Column 2 rate, verbatim.
+	pub other: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -575,15 +529,8 @@ pub struct Tariff {
 	/// Parent descriptions from the schedule outline, outermost first.
 	#[serde(default, deserialize_with = "null_default")]
 	pub lineage: Vec<String>,
-	/// Units of quantity (No., kg).
-	#[serde(default, deserialize_with = "null_default")]
-	pub units: Vec<String>,
 	/// Column 1 general rate, verbatim.
 	pub general: Option<String>,
-	/// Column 1 special rate, verbatim.
-	pub special: Option<String>,
-	/// Column 2 rate, verbatim.
-	pub other: Option<String>,
 	/// The official release that answered (2026HTSRev17).
 	pub revision: String,
 	pub deep: Option<TariffDeep>,
@@ -616,25 +563,7 @@ pub struct VinDeep {
 	/// Open recall campaigns for the decoded vehicle. Empty when none,
 	/// None when the recall registry did not answer.
 	pub recalls: Option<Vec<VinRecall>>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct Vin {
-	/// Normalized VIN, uppercase, no spaces. Invalid input still echoes the fold.
-	pub vin: Option<String>,
-	pub valid: bool,
-	pub year: Option<i64>,
-	pub make: Option<String>,
-	pub model: Option<String>,
-	pub trim: Option<String>,
 	pub series: Option<String>,
-	/// Body style (sedan, coupe, suv, pickup).
-	pub body: Option<String>,
-	/// Vehicle type (passenger car, truck, motorcycle, bus, trailer).
-	#[serde(rename = "type")]
-	pub kind: Option<String>,
 	pub doors: Option<i64>,
 	pub cylinders: Option<i64>,
 	/// Engine displacement in liters.
@@ -651,6 +580,24 @@ pub struct Vin {
 	pub plant_country: Option<String>,
 	/// Gross vehicle weight rating class as filed.
 	pub gvwr: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Vin {
+	/// Normalized VIN, uppercase, no spaces. Invalid input still echoes the fold.
+	pub vin: Option<String>,
+	pub valid: bool,
+	pub year: Option<i64>,
+	pub make: Option<String>,
+	pub model: Option<String>,
+	pub trim: Option<String>,
+	/// Body style (sedan, coupe, suv, pickup).
+	pub body: Option<String>,
+	/// Vehicle type (passenger car, truck, motorcycle, bus, trailer).
+	#[serde(rename = "type")]
+	pub kind: Option<String>,
 	pub deep: Option<VinDeep>,
 }
 
@@ -664,15 +611,9 @@ pub struct Phone {
 	/// What the numbering plan can see: mobile, landline, toll_free, unknown. Never voip.
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
-	/// NPA-derived state code (US/CA).
-	pub state: Option<String>,
-	pub state_name: Option<String>,
-	/// Numbering-plan IANA zone. None when the prefix covers more than one zone.
-	pub timezone: Option<String>,
 	pub national: Option<String>,
 	pub international: Option<String>,
-	/// Always empty. The metered proves are their own endpoints: carrier, caller, hlr.
-	pub deep: Option<serde_json::Value>,
+	pub deep: Option<PhoneDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -689,10 +630,7 @@ pub struct Carrier {
 	pub carrier: Option<String>,
 	/// Carrier is a known burner number app. None when carrier is unknown.
 	pub burner: Option<bool>,
-	/// Issuing rate-center city.
-	pub city: Option<String>,
-	pub state: Option<String>,
-	pub state_name: Option<String>,
+	pub deep: Option<CarrierDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -717,16 +655,7 @@ pub struct Hlr {
 	pub live: Option<bool>,
 	/// Handset reachable right now. None means unconfirmed, never no.
 	pub connected: Option<bool>,
-	/// The six network extras fill on live HLR dips only. None elsewhere (NANP, failover).
-	pub roaming: Option<bool>,
-	pub roaming_network: Option<String>,
-	/// ISO2, uppercase.
-	pub roaming_country: Option<String>,
-	/// Current serving network name.
-	pub network: Option<String>,
-	pub original_network: Option<String>,
-	pub mcc: Option<String>,
-	pub mnc: Option<String>,
+	pub deep: Option<HlrDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -755,17 +684,6 @@ pub struct DomainRegistration {
 #[serde(default)]
 #[non_exhaustive]
 pub struct DomainDeep {
-	#[serde(default, deserialize_with = "null_default")]
-	pub a: Vec<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub aaaa: Vec<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub ns: Vec<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub mx: Vec<MxRecord>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub txt: Vec<String>,
-	pub mailhost: Option<String>,
 	pub registration: Option<DomainRegistration>,
 }
 
@@ -813,6 +731,17 @@ pub struct Bin {
 	pub r#type: Option<String>,
 	pub prepaid: Option<bool>,
 	pub deep: Option<serde_json::Value>,
+}
+
+/// A SWIFT/BIC format check and partial institution lookup. Valid means syntax only.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct SwiftCode {
+	pub swift: String,
+	pub valid: bool,
+	pub country: Option<String>,
+	pub name: Option<String>,
 }
 
 /// A published DNS record. Value retains DNS presentation syntax, including TXT quoting.
@@ -924,14 +853,11 @@ pub struct Useragent {
 #[non_exhaustive]
 pub struct Currency {
 	pub currency: String,
-	pub numeric: Option<i32>,
 	pub name: String,
-	pub name_plural: Option<String>,
 	pub symbol: Option<String>,
 	pub symbol_native: Option<String>,
 	pub digits: Option<i32>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub countries: Vec<String>,
+	pub deep: Option<CurrencyDeep>,
 }
 
 /// One language by BCP 47 shortest code or ISO 639-3. Codes are lowercase.
@@ -940,13 +866,11 @@ pub struct Currency {
 #[non_exhaustive]
 pub struct Language {
 	pub language: String,
-	pub iso3: Option<String>,
 	pub name: String,
 	pub local_name: Option<String>,
 	pub script: Option<String>,
 	pub direction: String,
-	#[serde(default, deserialize_with = "null_default")]
-	pub countries: Vec<String>,
+	pub deep: Option<LanguageDeep>,
 }
 
 /// A parsed person name. Junk input returns valid false, never an error.
@@ -957,18 +881,12 @@ pub struct Language {
 pub struct Name {
 	pub name: String,
 	pub valid: bool,
-	/// Name membership, independent of gender.
-	pub known: bool,
-	/// Name associations, not the person's nationality.
-	#[serde(default, deserialize_with = "null_default")]
-	pub countries: Vec<String>,
 	pub prefix: Option<String>,
 	pub first: Option<String>,
 	pub middle: Option<String>,
 	pub last: Option<String>,
 	pub suffix: Option<String>,
-	pub gender: Option<String>,
-	pub salutation: Option<String>,
+	pub deep: Option<NameDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1002,18 +920,15 @@ pub type Time = Timezone;
 #[non_exhaustive]
 pub struct Timezone {
 	pub timezone: Option<String>,
-	pub name: Option<String>,
 	pub abbreviation: Option<String>,
 	pub offset: Option<String>,
-	pub offset_seconds: Option<i32>,
-	pub offset_minutes: Option<i32>,
 	pub dst: Option<bool>,
-	pub next_dst: Option<TimezoneNextDst>,
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
 	pub at: Option<String>,
 	pub unix: Option<i64>,
 	pub to: Option<TimezoneConversionTarget>,
+	pub deep: Option<TimezoneDeep>,
 }
 
 /// Calendar facts for a date. Calendar fields are None when valid is false.
@@ -1023,21 +938,10 @@ pub struct Timezone {
 pub struct DateInfo {
 	pub date: String,
 	pub valid: bool,
-	pub year: Option<i32>,
-	pub month: Option<i32>,
-	pub month_name: Option<String>,
-	pub day: Option<i32>,
-	pub weekday: Option<i32>,
-	pub weekday_name: Option<String>,
-	pub week: Option<i32>,
-	pub week_year: Option<i32>,
-	pub day_of_year: Option<i32>,
-	pub quarter: Option<i32>,
-	pub leap: Option<bool>,
-	pub days_in_month: Option<i32>,
 	pub unix: Option<i64>,
 	pub to: Option<String>,
 	pub days: Option<i32>,
+	pub deep: Option<DateInfoDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1089,8 +993,9 @@ pub struct Elevation {
 #[serde(default)]
 #[non_exhaustive]
 pub struct PointDeep {
-	pub city: Option<CityNearest>,
-	pub timezone: Option<Timezone>,
+	pub city: Option<PointCity>,
+	pub elevation_ft: Option<f64>,
+	pub resolution: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1105,10 +1010,8 @@ pub struct Point {
 	pub state_name: Option<String>,
 	pub district: Option<String>,
 	pub district_name: Option<String>,
-	pub elevation: Option<f64>,
-	pub elevation_ft: Option<f64>,
-	pub resolution: Option<f64>,
 	pub deep: Option<PointDeep>,
+	pub timezone: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1211,6 +1114,7 @@ pub struct WeatherDeep {
 	pub days: Vec<WeatherDay>,
 	pub air: Option<WeatherAir>,
 	pub history: Option<WeatherHistory>,
+	pub current: Option<WeatherCurrentDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1221,18 +1125,10 @@ pub struct WeatherCurrent {
 	pub temperature_f: Option<f64>,
 	pub feels_like: Option<f64>,
 	pub feels_like_f: Option<f64>,
-	pub dewpoint: Option<f64>,
-	pub dewpoint_f: Option<f64>,
 	pub humidity: Option<f64>,
 	pub wind_speed: Option<f64>,
 	pub wind_speed_mph: Option<f64>,
-	pub wind_gust: Option<f64>,
-	pub wind_gust_mph: Option<f64>,
 	pub wind_direction: Option<f64>,
-	pub pressure: Option<f64>,
-	pub pressure_inhg: Option<f64>,
-	pub visibility: Option<f64>,
-	pub visibility_mi: Option<f64>,
 	pub condition: Option<String>,
 	pub condition_name: Option<String>,
 	pub condition_emoji: Option<String>,
@@ -1278,16 +1174,8 @@ pub struct Emoji {
 	pub name: String,
 	#[serde(default, deserialize_with = "null_default")]
 	pub shortcodes: Vec<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub codepoints: Vec<String>,
-	pub hex: String,
 	pub category: Option<String>,
-	pub status: Option<String>,
-	pub version: Option<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub keywords: Vec<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub skins: Vec<EmojiSkin>,
+	pub deep: Option<EmojiDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1304,14 +1192,12 @@ pub struct EmojiSearch {
 #[non_exhaustive]
 pub struct TimezoneConversionTarget {
 	pub timezone: String,
-	pub name: Option<String>,
 	pub abbreviation: Option<String>,
 	pub offset: String,
-	pub offset_seconds: Option<i32>,
-	pub offset_minutes: i32,
 	pub dst: bool,
 	pub at: String,
 	pub unix: Option<i64>,
+	pub deep: Option<TimezoneConversionTargetDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1409,9 +1295,16 @@ pub struct CompanyCountry {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CompanyDeep {
-	pub country: Option<CompanyCountry>,
-	pub postal: Option<Postal>,
-	pub city: Option<City>,
+	pub activity: Option<String>,
+	pub state_name: Option<String>,
+	pub country_name: Option<String>,
+	pub vat: Option<String>,
+	pub gst: Option<bool>,
+	pub acn: Option<String>,
+	pub siren: Option<String>,
+	pub siege: Option<bool>,
+	pub kind: Option<String>,
+	pub invoice: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1425,20 +1318,10 @@ pub struct Company {
 	pub r#type: Option<String>,
 	pub name: Option<String>,
 	pub active: Option<bool>,
-	pub activity: Option<String>,
 	pub address: Option<String>,
 	pub city: Option<String>,
 	pub state: Option<String>,
-	pub state_name: Option<String>,
 	pub postal: Option<String>,
-	pub country_name: Option<String>,
-	pub vat: Option<String>,
-	pub gst: Option<bool>,
-	pub acn: Option<String>,
-	pub siren: Option<String>,
-	pub siege: Option<bool>,
-	pub kind: Option<String>,
-	pub invoice: Option<String>,
 	pub deep: Option<CompanyDeep>,
 }
 
@@ -1530,18 +1413,14 @@ pub struct NaicsMatch {
 pub struct Naics {
 	pub naics: String,
 	pub name: String,
-	pub description: Option<String>,
 	pub level: u32,
 	pub parent: Option<String>,
 	pub parent_name: Option<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub children: Vec<NaicsChild>,
-	/// Classification exclusions. None for omitted/null older responses.
-	pub exclusions: Option<Vec<NaicsExclusion>>,
 	/// Search evidence, absent on direct lookup and older responses.
 	pub r#match: Option<NaicsMatch>,
 	pub year: u32,
 	pub country: String,
+	pub deep: Option<NaicsDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1552,16 +1431,359 @@ pub struct NaicsSearch {
 	pub year: u32,
 	pub country: String,
 	#[serde(default, deserialize_with = "null_default")]
-	pub results: Vec<Naics>,
+	pub results: Vec<NaicsSearchResult>,
 }
 
-/// A SWIFT/BIC format check and partial institution lookup. Valid means syntax only.
+
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct SwiftCode {
-	pub swift: String,
-	pub valid: bool,
-	pub country: Option<String>,
+pub struct CountryDeep {
+	pub iso3: Option<String>,
+	pub numeric: Option<i32>,
+	pub full_name: Option<String>,
+	pub demonym: Option<String>,
+	pub capital: Option<String>,
+	pub capital_lat: Option<f64>,
+	pub capital_lon: Option<f64>,
+	pub region: Option<String>,
+	pub subregion: Option<String>,
+	pub population: Option<i64>,
+	pub area: Option<f64>,
+	pub tld: Option<String>,
+	pub borders: Option<Vec<String>>,
+	pub blocs: Option<Vec<String>>,
+	/// Levy name, such as VAT, GST or sales tax. Null when unknown or not applicable.
+	pub tax: Option<String>,
+	/// Standard country reference rate in percent (19 means 19%). Null is unknown, zero is known zero.
+	pub tax_rate: Option<f64>,
+	/// Tax registration number mask (9 is a digit, A is a letter). Describes format only.
+	pub tax_id_format: Option<String>,
+	/// Anchored tax registration number format regex. A match does not establish registration.
+	pub tax_id_regex: Option<String>,
+	pub week_start: Option<String>,
+	pub units: Option<String>,
+	pub driving_side: Option<String>,
+	pub plugs: Option<Vec<String>>,
+	pub voltage: Option<i32>,
+	pub frequency: Option<i32>,
+	pub emergency: Option<CountryEmergency>,
+	pub postal_format: Option<String>,
+	pub postal_regex: Option<String>,
+	pub ioc: Option<String>,
+	pub fifa: Option<String>,
+	pub plate: Option<String>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct StateDeep {
+	pub population: Option<i64>,
+	pub area: Option<f64>,
+	pub fips: Option<String>,
+	pub capital: Option<String>,
+
+	pub area_codes: Option<Vec<String>>,
+	/// Levy name, such as VAT, GST or sales tax. Null when unknown or not applicable.
+	pub tax: Option<String>,
+	/// State or province reference rate in percent. Country, state and postal rates are alternative references, not additive.
+	pub tax_rate: Option<f64>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct DistrictDeep {
+	pub population: Option<i64>,
+	/// Total area in km2 (land + water, or the official total).
+	pub area: Option<f64>,
+	/// Land area in km2. None when the source publishes total only.
+	pub land_area: Option<f64>,
+	/// Water area in km2. None when the source publishes total only.
+	pub water_area: Option<f64>,
+	pub seat: Option<String>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CityDeep {
+	/// What this city is the capital of: country, state, or none.
+	pub capital_of: Option<String>,
+	pub elevation: Option<f64>,
+	pub elevation_ft: Option<f64>,
+	pub population: Option<i64>,
+	/// Total area in km2 (land + water, or the official total).
+	pub area: Option<f64>,
+	/// Land area in km2. None when the source publishes total only.
+	pub land_area: Option<f64>,
+	/// Water area in km2. None when the source publishes total only.
+	pub water_area: Option<f64>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct PostalDeep {
+	pub elevation: Option<f64>,
+	pub elevation_ft: Option<f64>,
+	pub population: Option<i64>,
+	/// Total area in km2. None when the source has no water split.
+	pub area: Option<f64>,
+	/// Land area in km2, where the source has it.
+	pub land_area: Option<f64>,
+	/// Water area in km2, where the source has it.
+	pub water_area: Option<f64>,
+	pub currency: Option<String>,
+
+	pub neighbors: Option<Vec<String>>,
+	/// None is unknown; Some(empty) is observed outside all covered areas.
+	pub metros: Option<Vec<PostalMetro>>,
+	/// Levy name, such as VAT, GST or sales tax. Null when unknown or not applicable.
+	pub tax: Option<String>,
+	/// Combined US ZIP reference rate in percent (7.9 means 7.9%). An exact address can differ. Null is unknown, zero is known zero.
+	pub tax_rate: Option<f64>,
+	/// State component of the ZIP reference rate, in percent. Null when unknown.
+	pub tax_rate_state: Option<f64>,
+	/// County component of the ZIP reference rate, in percent. Null when unknown.
+	pub tax_rate_county: Option<f64>,
+	/// City component of the ZIP reference rate, in percent. Null when unknown.
+	pub tax_rate_city: Option<f64>,
+	/// Special component of the ZIP reference rate, in percent. Null when unknown.
+	pub tax_rate_special: Option<f64>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct IbanDeep {
+	pub checksum: Option<String>,
+	/// Branch identifier when that country has one.
+	pub branch: Option<String>,
+	pub account: Option<String>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct PhoneDeep {
+	/// NPA-derived state code (US/CA).
+	pub state: Option<String>,
+	pub state_name: Option<String>,
+	/// Numbering-plan IANA zone. None when the prefix covers more than one zone.
+	pub timezone: Option<String>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CarrierDeep {
+	/// Issuing rate-center city.
+	pub city: Option<String>,
+	pub state: Option<String>,
+	pub state_name: Option<String>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct HlrDeep {
+	/// The six network extras fill on live HLR dips only. None elsewhere (NANP, failover).
+	pub roaming: Option<bool>,
+	pub roaming_network: Option<String>,
+	/// ISO2, uppercase.
+	pub roaming_country: Option<String>,
+	/// Current serving network name.
+	pub network: Option<String>,
+	pub original_network: Option<String>,
+	pub mcc: Option<String>,
+	pub mnc: Option<String>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct NaicsDeep {
+	pub description: Option<String>,
+
+	pub children: Option<Vec<NaicsChild>>,
+	/// Classification exclusions. None for omitted/null older responses.
+	pub exclusions: Option<Vec<NaicsExclusion>>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CurrencyDeep {
+	pub numeric: Option<i32>,
+	pub name_plural: Option<String>,
+
+	pub countries: Option<Vec<String>>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct LanguageDeep {
+	pub iso3: Option<String>,
+
+	pub countries: Option<Vec<String>>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct NameDeep {
+	/// Name membership, independent of gender.
+	pub known: Option<bool>,
+	/// Name associations, not the person's nationality.
+	pub countries: Option<Vec<String>>,
+	pub gender: Option<String>,
+	pub salutation: Option<String>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimezoneDeep {
 	pub name: Option<String>,
+	pub offset_seconds: Option<i32>,
+	pub offset_minutes: Option<i32>,
+	pub next_dst: Option<TimezoneNextDst>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimezoneConversionTargetDeep {
+	pub name: Option<String>,
+	pub offset_seconds: Option<i32>,
+	pub offset_minutes: Option<i32>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct DateInfoDeep {
+	pub year: Option<i32>,
+	pub month: Option<i32>,
+	pub month_name: Option<String>,
+	pub day: Option<i32>,
+	pub weekday: Option<i32>,
+	pub weekday_name: Option<String>,
+	pub week: Option<i32>,
+	pub week_year: Option<i32>,
+	pub day_of_year: Option<i32>,
+	pub quarter: Option<i32>,
+	pub leap: Option<bool>,
+	pub days_in_month: Option<i32>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiDeep {
+
+	pub codepoints: Option<Vec<String>>,
+	pub hex: Option<String>,
+	pub status: Option<String>,
+	pub version: Option<String>,
+
+	pub keywords: Option<Vec<String>>,
+
+	pub skins: Option<Vec<EmojiSkin>>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct WeatherCurrentDeep {
+	pub dewpoint: Option<f64>,
+	pub dewpoint_f: Option<f64>,
+	pub wind_gust: Option<f64>,
+	pub wind_gust_mph: Option<f64>,
+	pub pressure: Option<f64>,
+	pub pressure_inhg: Option<f64>,
+	pub visibility: Option<f64>,
+	pub visibility_mi: Option<f64>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct PointCity {
+	#[serde(rename = "type")]
+	pub city_type: Option<String>,
+	pub name: Option<String>,
+	pub local_name: Option<String>,
+	pub state: Option<String>,
+	pub state_name: Option<String>,
+	pub country: Option<String>,
+	pub country_name: Option<String>,
+	pub latitude: Option<f64>,
+	pub longitude: Option<f64>,
+	/// Minted parse id (`city_` + 12 chars). Stable pin via `/city/id/{id}`.
+	pub id: Option<String>,
+	pub distance: Option<f64>,
+	pub distance_mi: Option<f64>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct PostalMetroDeep {
+	pub metros: Option<Vec<PostalMetro>>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct StateDistrictItemDeep {
+	pub population: Option<i64>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CountryEmergency {
+	pub police: Option<String>,
+	pub ambulance: Option<String>,
+	pub fire: Option<String>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct NaicsSearchResult {
+	pub naics: String,
+	pub name: String,
+	pub level: u32,
+	pub parent: Option<String>,
+	pub parent_name: Option<String>,
+	/// Search evidence, absent on direct lookup and older responses.
+	pub r#match: Option<NaicsMatch>,
+	pub deep: Option<NaicsDeep>,
 }

@@ -100,9 +100,9 @@ async fn main() {
 		},
 	);
 	s.ok("country", parse.country("US").await, |r| {
-		(r.iso3 == "USA")
+		(r.country == "US")
 			.then_some(None)
-			.unwrap_or(Some("wrong iso3".into()))
+			.unwrap_or(Some("wrong country".into()))
 	});
 	s.ok("country_states", parse.country_states("US").await, |r| {
 		(r.states.len() >= 50)
@@ -375,7 +375,7 @@ async fn main() {
 			.unwrap_or(Some("wrong language".into()))
 	});
 	s.ok("name", parse.name("BILLY O'SHALL").await, |r| {
-		(r.name == "Billy O'Shall" && r.valid && r.gender.as_deref() == Some("male"))
+		(r.name == "Billy O'Shall" && r.valid)
 			.then_some(None)
 			.unwrap_or(Some("wrong name".into()))
 	});
@@ -383,9 +383,9 @@ async fn main() {
 		"timezone",
 		parse.timezone("America/New_York", None).await,
 		|r| {
-			(r.offset_minutes == Some(-240) || r.offset_minutes == Some(-300))
+			(r.offset.as_deref() == Some("-04:00") || r.offset.as_deref() == Some("-05:00"))
 				.then_some(None)
-				.unwrap_or(Some(format!("offset {:?}", r.offset_minutes)))
+				.unwrap_or(Some(format!("offset {:?}", r.offset)))
 		},
 	);
 	s.ok("holiday", parse.holiday("US", None).await, |r| {

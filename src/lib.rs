@@ -175,6 +175,7 @@ impl IpSelfOptions {
 #[non_exhaustive]
 pub struct StateOptions {
 	pub country: Option<String>,
+	pub deep: bool,
 }
 
 impl StateOptions {
@@ -183,6 +184,8 @@ impl StateOptions {
 		self.country = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `state_districts`. Omitted fields use API defaults.
@@ -190,6 +193,7 @@ impl StateOptions {
 #[non_exhaustive]
 pub struct StateDistrictsOptions {
 	pub country: Option<String>,
+	pub deep: bool,
 }
 
 impl StateDistrictsOptions {
@@ -198,6 +202,8 @@ impl StateDistrictsOptions {
 		self.country = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `district`. Omitted fields use API defaults.
@@ -206,6 +212,7 @@ impl StateDistrictsOptions {
 pub struct DistrictOptions {
 	pub country: Option<String>,
 	pub state: Option<String>,
+	pub deep: bool,
 }
 
 impl DistrictOptions {
@@ -219,6 +226,8 @@ impl DistrictOptions {
 		self.state = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `city`. Omitted fields use API defaults.
@@ -227,6 +236,7 @@ impl DistrictOptions {
 pub struct CityOptions {
 	pub country: Option<String>,
 	pub state: Option<String>,
+	pub deep: bool,
 }
 
 impl CityOptions {
@@ -240,6 +250,8 @@ impl CityOptions {
 		self.state = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `city_search`. Omitted fields use API defaults.
@@ -249,6 +261,7 @@ pub struct CitySearchOptions {
 	pub country: Option<String>,
 	pub state: Option<String>,
 	pub limit: Option<u32>,
+	pub deep: bool,
 }
 
 impl CitySearchOptions {
@@ -267,6 +280,8 @@ impl CitySearchOptions {
 		self.limit = Some(value);
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `city_nearby`. Omitted fields use API defaults.
@@ -278,6 +293,7 @@ pub struct CityNearbyOptions {
 	pub radius: Option<f64>,
 	pub unit: Option<String>,
 	pub limit: Option<u32>,
+	pub deep: bool,
 }
 
 impl CityNearbyOptions {
@@ -306,6 +322,8 @@ impl CityNearbyOptions {
 		self.limit = Some(value);
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `postal`. Omitted fields use API defaults.
@@ -313,6 +331,7 @@ impl CityNearbyOptions {
 #[non_exhaustive]
 pub struct PostalOptions {
 	pub country: Option<String>,
+	pub deep: bool,
 }
 
 impl PostalOptions {
@@ -321,6 +340,8 @@ impl PostalOptions {
 		self.country = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `postal_nearby`. Omitted fields use API defaults.
@@ -330,6 +351,7 @@ pub struct PostalNearbyOptions {
 	pub country: Option<String>,
 	pub radius: Option<f64>,
 	pub unit: Option<String>,
+	pub deep: bool,
 }
 
 impl PostalNearbyOptions {
@@ -348,6 +370,8 @@ impl PostalNearbyOptions {
 		self.unit = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `postal_distance`. Omitted fields use API defaults.
@@ -355,6 +379,7 @@ impl PostalNearbyOptions {
 #[non_exhaustive]
 pub struct PostalDistanceOptions {
 	pub country: Option<String>,
+	pub deep: bool,
 }
 
 impl PostalDistanceOptions {
@@ -363,6 +388,8 @@ impl PostalDistanceOptions {
 		self.country = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `email`. Omitted fields use API defaults.
@@ -426,6 +453,7 @@ impl BinOptions {
 #[non_exhaustive]
 pub struct IbanOptions {
 	pub country: Option<String>,
+	pub deep: bool,
 }
 
 impl IbanOptions {
@@ -434,6 +462,8 @@ impl IbanOptions {
 		self.country = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `name_with_options`. Country is an ISO2 gender context.
@@ -441,6 +471,7 @@ impl IbanOptions {
 #[non_exhaustive]
 pub struct NameOptions {
 	pub country: Option<String>,
+	pub deep: bool,
 }
 
 impl NameOptions {
@@ -449,6 +480,8 @@ impl NameOptions {
 		self.country = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `npi`. Omitted fields use API defaults.
@@ -492,6 +525,7 @@ impl PhoneOptions {
 #[non_exhaustive]
 pub struct CarrierOptions {
 	pub country: Option<String>,
+	pub deep: bool,
 }
 
 impl CarrierOptions {
@@ -500,6 +534,8 @@ impl CarrierOptions {
 		self.country = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `caller`. Omitted fields use API defaults.
@@ -522,6 +558,7 @@ impl CallerOptions {
 #[non_exhaustive]
 pub struct HlrOptions {
 	pub country: Option<String>,
+	pub deep: bool,
 }
 
 impl HlrOptions {
@@ -530,6 +567,8 @@ impl HlrOptions {
 		self.country = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `dns`. Omit type to check all ten supported record types.
@@ -640,6 +679,7 @@ impl CurrencyRateOptions {
 pub struct TimeOptions {
 	pub at: Option<String>,
 	pub to: Option<String>,
+	pub deep: bool,
 }
 
 impl TimeOptions {
@@ -653,6 +693,8 @@ impl TimeOptions {
 		self.to = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `time_at`. Omitted fields use API defaults.
@@ -661,6 +703,7 @@ impl TimeOptions {
 pub struct TimeAtOptions {
 	pub at: Option<String>,
 	pub to: Option<String>,
+	pub deep: bool,
 }
 
 impl TimeAtOptions {
@@ -675,6 +718,8 @@ impl TimeAtOptions {
 		self.at = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `timezone`. Omitted fields use API defaults.
@@ -683,6 +728,7 @@ impl TimeAtOptions {
 pub struct TimezoneOptions {
 	pub at: Option<String>,
 	pub to: Option<String>,
+	pub deep: bool,
 }
 
 impl TimezoneOptions {
@@ -696,6 +742,8 @@ impl TimezoneOptions {
 		self.to = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `timezone_at`. Omitted fields use API defaults.
@@ -703,6 +751,7 @@ impl TimezoneOptions {
 #[non_exhaustive]
 pub struct TimezoneAtOptions {
 	pub at: Option<String>,
+	pub deep: bool,
 }
 
 impl TimezoneAtOptions {
@@ -711,6 +760,8 @@ impl TimezoneAtOptions {
 		self.at = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `date`. Omitted fields use API defaults.
@@ -719,6 +770,7 @@ impl TimezoneAtOptions {
 pub struct DateOptions {
 	pub format: Option<String>,
 	pub to: Option<String>,
+	pub deep: bool,
 }
 
 impl DateOptions {
@@ -732,6 +784,8 @@ impl DateOptions {
 		self.to = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `date_today`. Omitted fields use API defaults.
@@ -739,6 +793,7 @@ impl DateOptions {
 #[non_exhaustive]
 pub struct DateTodayOptions {
 	pub to: Option<String>,
+	pub deep: bool,
 }
 
 impl DateTodayOptions {
@@ -747,6 +802,8 @@ impl DateTodayOptions {
 		self.to = Some(value.into());
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `holiday`. Omitted fields use API defaults.
@@ -805,6 +862,7 @@ impl WeatherOptions {
 #[non_exhaustive]
 pub struct NaicsSearchOptions {
 	pub limit: Option<u32>,
+	pub deep: bool,
 }
 
 impl NaicsSearchOptions {
@@ -812,6 +870,8 @@ impl NaicsSearchOptions {
 		self.limit = Some(value);
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `emoji_search`. Omitted fields use API defaults.
@@ -819,6 +879,7 @@ impl NaicsSearchOptions {
 #[non_exhaustive]
 pub struct EmojiSearchOptions {
 	pub limit: Option<u32>,
+	pub deep: bool,
 }
 
 impl EmojiSearchOptions {
@@ -827,6 +888,8 @@ impl EmojiSearchOptions {
 		self.limit = Some(value);
 		self
 	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `address`. Omitted fields use API defaults.
@@ -909,6 +972,55 @@ impl CompanyOptions {
 		self
 	}
 }
+
+
+/// Options for `country`. Deep reveals the same question in more detail.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CountryOptions { pub deep: bool }
+impl CountryOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+
+
+/// Options for `city_id`. Deep reveals the same question in more detail.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CityIdOptions { pub deep: bool }
+impl CityIdOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+
+
+/// Options for `city_nearest`. Deep reveals the same question in more detail.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CityNearestOptions { pub deep: bool }
+impl CityNearestOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+
+
+/// Options for `naics`. Deep reveals the same question in more detail.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct NaicsOptions { pub deep: bool }
+impl NaicsOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+
+
+/// Options for `currency`. Deep reveals the same question in more detail.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CurrencyOptions { pub deep: bool }
+impl CurrencyOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+
+
+/// Options for `language`. Deep reveals the same question in more detail.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct LanguageOptions { pub deep: bool }
+impl LanguageOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+
+
+/// Options for `emoji`. Deep reveals the same question in more detail.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct EmojiOptions { pub deep: bool }
+impl EmojiOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
 
 /// Configures a [`Client`].
 #[derive(Default)]
@@ -1191,7 +1303,15 @@ impl Client {
 
 	/// Calls `/country/{code}`.
 	pub async fn country(&self, code: &str) -> Result<Country> {
-		self.get(&format!("/country/{}", seg(code)), Query::new(), None)
+		self.country_with_options(code, None).await
+	}
+
+	/// Calls the same operation with optional detail.
+	pub async fn country_with_options(&self, code: &str, opts: impl Into<Option<CountryOptions>>) -> Result<Country> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/country/{}", seg(code)), query, None)
 			.await
 	}
 
@@ -1210,6 +1330,7 @@ impl Client {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "country", opts.country);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/state/{}", seg(code)), query, None)
 			.await
 	}
@@ -1223,6 +1344,7 @@ impl Client {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "country", opts.country);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/state/{}/districts", seg(code)), query, None)
 			.await
 	}
@@ -1237,6 +1359,7 @@ impl Client {
 		let mut query = Query::new();
 		push(&mut query, "country", opts.country);
 		push(&mut query, "state", opts.state);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/district/{}", seg(code)), query, None)
 			.await
 	}
@@ -1247,12 +1370,21 @@ impl Client {
 		let mut query = Query::new();
 		push(&mut query, "country", opts.country);
 		push(&mut query, "state", opts.state);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/city/{}", seg(name)), query, None).await
 	}
 
 	/// Calls `/city/id/{id}`.
 	pub async fn city_id(&self, id: &str) -> Result<City> {
-		self.get(&format!("/city/id/{}", seg(id)), Query::new(), None)
+		self.city_id_with_options(id, None).await
+	}
+
+	/// Calls the same operation with optional detail.
+	pub async fn city_id_with_options(&self, id: &str, opts: impl Into<Option<CityIdOptions>>) -> Result<City> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/city/id/{}", seg(id)), query, None)
 			.await
 	}
 
@@ -1272,14 +1404,22 @@ impl Client {
 			"limit",
 			opts.limit.map(|value| value.to_string()),
 		);
+		push_deep(&mut params, opts.deep);
 		self.get("/city", params, None).await
 	}
 
 	/// Calls `/city`.
 	pub async fn city_nearest(&self, lat: f64, lon: f64) -> Result<CityNearest> {
+		self.city_nearest_with_options(lat, lon, None).await
+	}
+
+	/// Calls the same operation with optional detail.
+	pub async fn city_nearest_with_options(&self, lat: f64, lon: f64, opts: impl Into<Option<CityNearestOptions>>) -> Result<CityNearest> {
+		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "lat", Some(lat.to_string()));
 		push(&mut query, "lon", Some(lon.to_string()));
+		push_deep(&mut query, opts.deep);
 		self.get("/city", query, None).await
 	}
 
@@ -1304,6 +1444,7 @@ impl Client {
 			"limit",
 			opts.limit.map(|value| value.to_string()),
 		);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/city/{}/nearby", seg(name)), query, None)
 			.await
 	}
@@ -1318,6 +1459,7 @@ impl Client {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "country", opts.country);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/postal/{}", seg(code)), query, None)
 			.await
 	}
@@ -1337,6 +1479,7 @@ impl Client {
 			opts.radius.map(|value| value.to_string()),
 		);
 		push(&mut query, "unit", opts.unit);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/postal/{}/nearby", seg(code)), query, None)
 			.await
 	}
@@ -1351,6 +1494,7 @@ impl Client {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "country", opts.country);
+		push_deep(&mut query, opts.deep);
 		self.get(
 			&format!("/postal/{}/distance/{}", seg(code), seg(other)),
 			query,
@@ -1383,17 +1527,12 @@ impl Client {
 			.await
 	}
 
-	/// Calls `/swift/{code}`. Valid checks syntax, not payment reachability.
-	pub async fn swift(&self, code: &str) -> Result<SwiftCode> {
-		self.get(&format!("/swift/{}", seg(code)), Query::new(), None)
-			.await
-	}
-
 	/// Calls `/iban/{iban}`.
 	pub async fn iban(&self, iban: &str, opts: impl Into<Option<IbanOptions>>) -> Result<Iban> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "country", opts.country);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/iban/{}", seg(iban)), query, None).await
 	}
 
@@ -1406,7 +1545,7 @@ impl Client {
 	}
 
 	/// Parse a phone number and its formats. Pass country for national numbers when needed. Deep
-	/// returns an empty object. Carrier, caller, and HLR are separate metered lookups.
+	/// reveals numbering-plan location and timezone on every plan. Carrier, caller, and HLR are separate metered lookups.
 	pub async fn phone(
 		&self,
 		number: &str,
@@ -1429,6 +1568,7 @@ impl Client {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "country", opts.country);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/carrier/{}", seg(number)), query, None)
 			.await
 	}
@@ -1452,11 +1592,12 @@ impl Client {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "country", opts.country);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/hlr/{}", seg(number)), query, None)
 			.await
 	}
 
-	/// Calls `/domain/{domain}`.
+	/// Check whether a domain is registered. Deep adds registration dates, registrar, status and DNSSEC on paid plans.
 	pub async fn domain(
 		&self,
 		domain: &str,
@@ -1487,6 +1628,12 @@ impl Client {
 		let mut query = Query::new();
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/bin/{}", seg(bin)), query, None).await
+	}
+
+	/// Calls `/swift/{code}`. Valid checks syntax, not payment reachability.
+	pub async fn swift(&self, code: &str) -> Result<SwiftCode> {
+		self.get(&format!("/swift/{}", seg(code)), Query::new(), None)
+			.await
 	}
 
 	/// Parse or convert a measurement. Amount is a decimal string. Without to, use the
@@ -1547,7 +1694,15 @@ impl Client {
 
 	/// Looks up a US NAICS 2022 code and its hierarchy.
 	pub async fn naics(&self, code: &str) -> Result<Naics> {
-		self.get(&format!("/naics/{}", seg(code)), Query::new(), None).await
+		self.naics_with_options(code, None).await
+	}
+
+	/// Calls the same operation with optional detail.
+	pub async fn naics_with_options(&self, code: &str, opts: impl Into<Option<NaicsOptions>>) -> Result<Naics> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/naics/{}", seg(code)), query, None).await
 	}
 
 	/// Searches US NAICS 2022 industry names and activity terms.
@@ -1556,6 +1711,7 @@ impl Client {
 		let mut params = Query::new();
 		params.push(("q", query.into()));
 		push(&mut params, "limit", opts.limit.map(|value| value.to_string()));
+		push_deep(&mut params, opts.deep);
 		self.get("/naics", params, None).await
 	}
 
@@ -1582,13 +1738,29 @@ impl Client {
 
 	/// Calls `/currency/{code}`.
 	pub async fn currency(&self, code: &str) -> Result<Currency> {
-		self.get(&format!("/currency/{}", seg(code)), Query::new(), None)
+		self.currency_with_options(code, None).await
+	}
+
+	/// Calls the same operation with optional detail.
+	pub async fn currency_with_options(&self, code: &str, opts: impl Into<Option<CurrencyOptions>>) -> Result<Currency> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/currency/{}", seg(code)), query, None)
 			.await
 	}
 
 	/// Calls `/language/{code}`.
 	pub async fn language(&self, code: &str) -> Result<Language> {
-		self.get(&format!("/language/{}", seg(code)), Query::new(), None)
+		self.language_with_options(code, None).await
+	}
+
+	/// Calls the same operation with optional detail.
+	pub async fn language_with_options(&self, code: &str, opts: impl Into<Option<LanguageOptions>>) -> Result<Language> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/language/{}", seg(code)), query, None)
 			.await
 	}
 
@@ -1602,6 +1774,7 @@ impl Client {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "country", opts.country);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/name/{}", seg(name)), query, None).await
 	}
 
@@ -1639,6 +1812,7 @@ impl Client {
 		push(&mut query, "at", opts.at);
 		push(&mut query, "to", opts.to);
 		let path = if timezone.is_empty() { "/time".to_string() } else { format!("/time/{}", seg(timezone)) };
+		push_deep(&mut query, opts.deep);
 		self.get(&path, query, None)
 			.await
 	}
@@ -1656,6 +1830,7 @@ impl Client {
 		push(&mut query, "lon", Some(lon.to_string()));
 		push(&mut query, "at", opts.at);
 		push(&mut query, "to", opts.to);
+		push_deep(&mut query, opts.deep);
 		self.get("/time", query, None).await
 	}
 
@@ -1669,6 +1844,7 @@ impl Client {
 		let mut query = Query::new();
 		push(&mut query, "at", opts.at);
 		push(&mut query, "to", opts.to);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/timezone/{}", seg(timezone)), query, None)
 			.await
 	}
@@ -1685,6 +1861,7 @@ impl Client {
 		push(&mut query, "lat", Some(lat.to_string()));
 		push(&mut query, "lon", Some(lon.to_string()));
 		push(&mut query, "at", opts.at);
+		push_deep(&mut query, opts.deep);
 		self.get("/timezone", query, None).await
 	}
 
@@ -1694,6 +1871,7 @@ impl Client {
 		let mut query = Query::new();
 		push(&mut query, "format", opts.format);
 		push(&mut query, "to", opts.to);
+		push_deep(&mut query, opts.deep);
 		self.get(&format!("/date/{}", seg(date)), query, None).await
 	}
 
@@ -1702,6 +1880,7 @@ impl Client {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "to", opts.to);
+		push_deep(&mut query, opts.deep);
 		self.get("/date", query, None).await
 	}
 
@@ -1770,7 +1949,15 @@ impl Client {
 
 	/// Calls `/emoji/{emoji}`.
 	pub async fn emoji(&self, emoji: &str) -> Result<Emoji> {
-		self.get(&format!("/emoji/{}", seg(emoji)), Query::new(), None)
+		self.emoji_with_options(emoji, None).await
+	}
+
+	/// Calls the same operation with optional detail.
+	pub async fn emoji_with_options(&self, emoji: &str, opts: impl Into<Option<EmojiOptions>>) -> Result<Emoji> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/emoji/{}", seg(emoji)), query, None)
 			.await
 	}
 
@@ -1788,6 +1975,7 @@ impl Client {
 			"limit",
 			opts.limit.map(|value| value.to_string()),
 		);
+		push_deep(&mut params, opts.deep);
 		self.get("/emoji", params, None).await
 	}
 
