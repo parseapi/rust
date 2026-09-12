@@ -1658,8 +1658,6 @@ pub struct LanguageDeep {
 pub struct NameDeep {
 	/// Name membership, independent of gender.
 	pub known: Option<bool>,
-	/// Name associations, not the person's nationality.
-	pub countries: Option<Vec<String>>,
 	pub gender: Option<String>,
 	pub salutation: Option<String>,
 }

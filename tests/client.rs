@@ -112,17 +112,16 @@ macro_rules! url_test {
 
 #[tokio::test]
 async fn name_country_and_known_are_additive() {
-	let server = TestServer::start(vec![(200, r#"{"name":"王","valid":true,"future":true,"deep":{"known":true,"countries":["CN","TW"],"gender":null}}"#), (200, r#"{"name":"Andrea","valid":true,"deep":{"gender":null}}"#)]);
+	let server = TestServer::start(vec![(200, r#"{"name":"王","valid":true,"future":true,"deep":{"known":true,"gender":null}}"#), (200, r#"{"name":"Andrea","valid":true,"deep":{"gender":null}}"#)]);
 	let client = server.client();
 	let result = client.name_with_options("王", NameOptions::default().country("CN").deep(true)).await.unwrap();
 	assert_eq!(result.deep.as_ref().unwrap().known, Some(true));
-	assert_eq!(result.deep.as_ref().unwrap().countries.as_ref().unwrap(), &vec!["CN", "TW"]);
 	assert_eq!(result.deep.as_ref().unwrap().gender, None);
 	let old = client.name("Andrea").await.unwrap();
-	assert!(old.deep.as_ref().unwrap().known.is_none() && old.deep.as_ref().unwrap().countries.is_none());
+	assert!(old.deep.as_ref().unwrap().known.is_none());
 	assert_eq!(server.requests()[0].target, "/name/%E7%8E%8B?country=CN&deep=true");
 	assert_eq!(server.requests()[1].target, "/name/Andrea");
-	let nullable: Name = serde_json::from_str(r#"{"countries":null}"#).unwrap();
+	let nullable: Name = serde_json::from_str(r#"{}"#).unwrap();
 	assert!(nullable.deep.is_none());
 }
 
