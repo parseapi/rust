@@ -730,6 +730,7 @@ pub struct Bin {
 	pub country: Option<String>,
 	pub issuer: Option<String>,
 	pub brand: Option<String>,
+	pub brand_name: Option<String>,
 	pub r#type: Option<String>,
 	pub prepaid: Option<bool>,
 	pub deep: Option<serde_json::Value>,
