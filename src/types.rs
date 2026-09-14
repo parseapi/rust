@@ -49,8 +49,6 @@ pub struct Continent {
 	pub region: String,
 	pub subregion: String,
 	pub population: Option<i64>,
-	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
-	pub population_period: Option<String>,
 	pub area: Option<f64>,
 	pub emoji: String,
 }
@@ -1448,6 +1446,16 @@ pub struct CountryDeep {
 	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
 	pub population_period: Option<String>,
 	pub area: Option<f64>,
+	/// Land area in km2.
+	pub land_area: Option<f64>,
+	/// Water area in km2.
+	pub water_area: Option<f64>,
+	/// Coastline length in km. Zero is a known landlocked coastline.
+	pub coastline: Option<f64>,
+	/// Mean elevation in metres above sea level.
+	pub elevation: Option<f64>,
+	pub lowest_point: Option<CountryElevationPoint>,
+	pub highest_point: Option<CountryElevationPoint>,
 	pub tld: Option<String>,
 	pub borders: Option<Vec<String>>,
 	pub blocs: Option<Vec<String>>,
@@ -1471,6 +1479,14 @@ pub struct CountryDeep {
 	pub ioc: Option<String>,
 	pub fifa: Option<String>,
 	pub plate: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[non_exhaustive]
+pub struct CountryElevationPoint {
+	pub name: Option<String>,
+	/// Elevation in metres above sea level. Values below sea level are negative.
+	pub elevation: f64,
 }
 
 
