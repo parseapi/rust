@@ -20,6 +20,8 @@ use std::fmt;
 use std::time::Duration;
 
 const DEFAULT_BASE_URL: &str = "https://api.parseapi.com";
+// The response types' wire contract. Changes require a reviewed major SDK release.
+const API_VERSION: &str = "2.0.0";
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 const DEFAULT_RETRIES: u32 = 2;
 const RETRY_STATUS: [u16; 5] = [429, 500, 502, 503, 504];
@@ -1355,6 +1357,7 @@ impl Client {
 				.http
 				.get(&url)
 				.header("X-API-Key", &self.api_key)
+				.header("Parse-Version", API_VERSION)
 				.header(reqwest::header::USER_AGENT, ua.unwrap_or(USER_AGENT));
 			if !query.is_empty() {
 				request = request.query(&query);

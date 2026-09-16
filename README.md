@@ -17,11 +17,13 @@ Get a key at [parseapi.com](https://parseapi.com). `Client::from_env()` reads `P
 
 ## API versions
 
-Choose your team's API version in [Dashboard → API version](https://parseapi.com/dashboard/versions). One setting applies to every key, including new and replacement keys. Existing teams keep `1.0.0`; new teams start on `2.0.0`. Keep the same keys and lookup URLs. Installing or upgrading the package does not change the team's setting.
+**Unreleased: planned for the next major SDK release.** This source candidate sends `Parse-Version: 2.0.0` on every request, including retries. Its response types match API `2.0.0`, and the client selects that contract automatically. No extra constructor setting or key change is needed. This behavior requires the matching API request-version release.
 
-SDK `0.3.2` targets API `1.0.0`. SDK `0.4.0` and the examples and response types in this source tree target API `2.0.0`. Use a package release documented for your team's version. These types do not model every historical response; moving to `2.0.0` may require updating code that reads renamed, moved or removed fields.
+The team setting in [Dashboard API version](https://parseapi.com/dashboard/versions) is the default for requests without a version header. This SDK's header takes precedence without changing that saved default. Existing published packages keep their documented behavior.
 
-Test the target contract in a separate development team before changing your production team's version. A change applies to every integration in that team. See [API versions and migration](https://parseapi.com/docs/versioning).
+Test the new SDK dependency in staging, then deploy the same locked dependency with your application code and existing production key. Future major SDK upgrades can deliberately select a newer API contract, so review their migration notes before upgrading. Rolling back the code and dependency restores the contract selected by that SDK release. If the older SDK does not send a version header, its requests use the team default, which must stay unchanged through that rollback window.
+
+Keep the package version locked in your dependency configuration or lockfile. The selected API contract stays fixed across releases within this planned SDK major. See [API versions and migration](https://parseapi.com/docs/versioning).
 
 ## Weather from a postal code
 

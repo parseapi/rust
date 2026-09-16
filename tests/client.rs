@@ -311,6 +311,7 @@ async fn sends_key_and_user_agent() {
 	let _ = client.country("US").await;
 	let recorded = server.requests();
 	assert_eq!(recorded[0].headers["x-api-key"], "test_key_123");
+	assert_eq!(recorded[0].headers["parse-version"], "2.0.0");
 	let ua = &recorded[0].headers["user-agent"];
 	assert!(ua.starts_with("parseapi-rust/0."), "unexpected UA {ua}");
 }
@@ -324,6 +325,56 @@ async fn useragent_overrides_ua_header() {
 		server.requests()[0].headers["user-agent"],
 		"Mozilla/5.0 (Test)"
 	);
+	assert_eq!(server.requests()[0].headers["parse-version"], "2.0.0");
+	assert_eq!(server.requests()[0].headers["x-api-key"], "test_key_123");
+}
+
+#[tokio::test]
+async fn api_contract_pin_survives_retries_and_self_lookup() {
+	let server = TestServer::start_with_headers(vec![
+		(503, r#"{"code":"unavailable","message":"Try again"}"#, "Retry-After: 0\r\n".into()),
+		(200, r#"{"ip":"192.0.2.1","country":null,"deep":{"datacenter":null},"future":true}"#, String::new()),
+	]);
+	let client = Client::builder()
+		.api_key("test_key_123")
+		.base_url(&server.base_url)
+		.retries(1)
+		.build()
+		.unwrap();
+	let result = client.ip_self(IpSelfOptions::default().deep(true)).await.unwrap();
+	assert_eq!(result.ip, "192.0.2.1");
+	assert_eq!(result.country, None);
+	assert_eq!(result.deep.unwrap().datacenter, None);
+	let requests = server.requests();
+	assert_eq!(requests.len(), 2);
+	for request in requests {
+		assert_eq!(request.target, "/ip?deep=true");
+		assert_eq!(request.headers["parse-version"], "2.0.0");
+		assert_eq!(request.headers["x-api-key"], "test_key_123");
+		assert_eq!(request.headers["user-agent"], concat!("parseapi-rust/", env!("CARGO_PKG_VERSION")));
+	}
+}
+
+#[tokio::test]
+async fn api_version_errors_do_not_retry_or_fall_back() {
+	for status in [400, 410] {
+		let server = TestServer::start(vec![(status, r#"{"code":"invalid_request","message":"Unsupported API version","request_id":"req_version"}"#)]);
+		let client = Client::builder()
+			.api_key("test_key_123")
+			.base_url(&server.base_url)
+			.retries(2)
+			.build()
+			.unwrap();
+		let error = client.ip_self(None).await.unwrap_err();
+		assert_eq!(error.status(), Some(status));
+		assert_eq!(error.code(), Some("invalid_request"));
+		match error {
+			Error::Api { request_id, .. } => assert_eq!(request_id.as_deref(), Some("req_version")),
+			other => panic!("expected API error, got {other}"),
+		}
+		assert_eq!(server.requests().len(), 1);
+		assert_eq!(server.requests()[0].headers["parse-version"], "2.0.0");
+	}
 }
 
 #[test]
