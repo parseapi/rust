@@ -102,7 +102,7 @@ fn adp_models_decode_absent_locked_and_populated_depth() {
  assert!(plain.deep.is_none());
  let rich: Name = serde_json::from_str(r#"{"name":"Andrea","valid":true,"first":"Andrea","deep":{}}"#).unwrap();
  assert!(rich.deep.is_some());
- let rich: Name = serde_json::from_str(r#"{"name":"Andrea","valid":true,"first":"Andrea","deep":{"known":false,"gender":null}}"#).unwrap();
+ let rich: Name = serde_json::from_str(r#"{"name":"Andrea","valid":true,"first":"Andrea","deep":{"gender":null,"salutation":null}}"#).unwrap();
  assert!(rich.deep.is_some());
  let plain: Timezone = serde_json::from_str(r#"{"timezone":"UTC","unix":0,"at":"1970-01-01T00:00:00+00:00","offset":"+00:00","dst":false}"#).unwrap();
  assert!(plain.deep.is_none());

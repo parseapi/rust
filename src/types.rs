@@ -1673,10 +1673,11 @@ pub struct LanguageDeep {
 #[serde(default)]
 #[non_exhaustive]
 pub struct NameDeep {
-	/// Name membership, independent of gender.
-	pub known: Option<bool>,
 	pub gender: Option<String>,
 	pub salutation: Option<String>,
+	pub short: Option<String>,
+	pub directory: Option<String>,
+	pub initials: Option<String>,
 }
 
 

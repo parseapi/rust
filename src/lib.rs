@@ -472,9 +472,16 @@ impl IbanOptions {
 pub struct NameOptions {
 	pub country: Option<String>,
 	pub deep: bool,
+	/// CLDR formatting locale, default en. Parsing stays unchanged.
+	pub name_locale: Option<String>,
 }
 
 impl NameOptions {
+	/// Sets the CLDR name-formatting locale without changing parsing or gender context.
+	pub fn name_locale(mut self, value: impl Into<String>) -> Self {
+		self.name_locale = Some(value.into());
+		self
+	}
 	/// Sets the country context without asserting nationality.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
@@ -1780,6 +1787,7 @@ impl Client {
 		let mut query = Query::new();
 		push(&mut query, "country", opts.country);
 		push_deep(&mut query, opts.deep);
+		push(&mut query, "name_locale", opts.name_locale);
 		self.get(&format!("/name/{}", seg(name)), query, None).await
 	}
 

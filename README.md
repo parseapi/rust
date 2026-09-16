@@ -47,6 +47,8 @@ Pass `country` when a postal code or national phone number needs disambiguation.
 
 Results are plain data. Pass a returned code or coordinate to another operation when the task needs it. Check nullable values before composing the next call.
 
+Name paid deep includes flat `short`, `directory`, and `initials` fields beside `gender` and `salutation`. `name_locale` selects CLDR formatting rules and defaults to `en`. It changes formatting only. Country remains gender context, and unavailable formatting is null. Older responses may omit these fields.
+
 ## Calls
 
 Choose the operation and pass what you have. Related operations are separate direct calls, and results are plain typed data.
@@ -72,6 +74,7 @@ parse.npi("1881018208", None).await?;
 parse.asn("AS13335").await?;
 parse.mac("00:1B:63:84:45:E6").await?;
 parse.name("Andrea").await?;
+parse.name_with_options("Robert James Smith", NameOptions::default().deep(true).name_locale("en")).await?;
 parse.name_with_options("Andrea", NameOptions::default().country("IT")).await?;
 parse.vin("1HGCM82633A004352", None).await?;
 parse.carrier("+14155552671", None).await?;

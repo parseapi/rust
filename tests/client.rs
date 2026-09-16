@@ -111,14 +111,15 @@ macro_rules! url_test {
 }
 
 #[tokio::test]
-async fn name_country_and_known_are_additive() {
-	let server = TestServer::start(vec![(200, r#"{"name":"王","valid":true,"future":true,"deep":{"known":true,"gender":null}}"#), (200, r#"{"name":"Andrea","valid":true,"deep":{"gender":null}}"#)]);
+async fn name_country_and_nullable_evidence() {
+	let server = TestServer::start(vec![(200, r#"{"name":"王","valid":true,"future":true,"deep":{"gender":null,"salutation":null}}"#), (200, r#"{"name":"Andrea","valid":true,"deep":{"known":true,"gender":null,"future":true}}"#)]);
 	let client = server.client();
 	let result = client.name_with_options("王", NameOptions::default().country("CN").deep(true)).await.unwrap();
-	assert_eq!(result.deep.as_ref().unwrap().known, Some(true));
 	assert_eq!(result.deep.as_ref().unwrap().gender, None);
+	assert_eq!(result.deep.as_ref().unwrap().salutation, None);
 	let old = client.name("Andrea").await.unwrap();
-	assert!(old.deep.as_ref().unwrap().known.is_none());
+	assert!(old.deep.as_ref().unwrap().gender.is_none());
+	assert!(old.deep.as_ref().unwrap().salutation.is_none());
 	assert_eq!(server.requests()[0].target, "/name/%E7%8E%8B?country=CN&deep=true");
 	assert_eq!(server.requests()[1].target, "/name/Andrea");
 	let nullable: Name = serde_json::from_str(r#"{}"#).unwrap();
@@ -126,6 +127,22 @@ async fn name_country_and_known_are_additive() {
 }
 
 url_test!(url_ip, c => c.ip("8.8.8.8", None), "/ip/8.8.8.8");
+
+#[tokio::test]
+async fn name_formatting_locale_and_nullable_results() {
+	let server = TestServer::start(vec![(200, r#"{"name":"Robert James Smith","deep":{"gender":"male","salutation":"Mr","short":"R.J. Smith","directory":"Smith, Robert James","initials":"RJS"}}"#)]);
+	let result = server.client().name_with_options("Robert James Smith", NameOptions::default().country("US").deep(true).name_locale("en-GB")).await.unwrap();
+	let detail = result.deep.unwrap();
+	assert_eq!(detail.short.as_deref(), Some("R.J. Smith"));
+	assert_eq!(detail.directory.as_deref(), Some("Smith, Robert James"));
+	assert_eq!(detail.initials.as_deref(), Some("RJS"));
+	assert_eq!(server.requests()[0].target, "/name/Robert%20James%20Smith?country=US&deep=true&name_locale=en-GB");
+	for body in [r#"{"deep":{"short":null,"directory":null,"initials":null}}"#, r#"{"deep":{"gender":null,"salutation":null}}"#, r#"{"deep":{}}"#] {
+		let nullable: Name = serde_json::from_str(body).unwrap();
+		let detail = nullable.deep.unwrap();
+		assert!(detail.short.is_none() && detail.directory.is_none() && detail.initials.is_none());
+	}
+}
 url_test!(url_ip_self, c => c.ip_self(None), "/ip");
 url_test!(
 	url_ip_deep,
