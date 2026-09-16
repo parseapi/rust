@@ -313,7 +313,7 @@ async fn sends_key_and_user_agent() {
 	assert_eq!(recorded[0].headers["x-api-key"], "test_key_123");
 	assert_eq!(recorded[0].headers["parse-version"], "2.0.0");
 	let ua = &recorded[0].headers["user-agent"];
-	assert!(ua.starts_with("parseapi-rust/0."), "unexpected UA {ua}");
+	assert_eq!(ua, concat!("parseapi-rust/", env!("CARGO_PKG_VERSION")));
 }
 
 #[tokio::test]
