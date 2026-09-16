@@ -1025,3 +1025,86 @@ async fn adp_emoji_search_option() {
  assert_eq!(server.requests().len(),1);
  assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
 }
+
+
+// Pair every localized operation with its unchanged default request. Existing
+// frozen consumer tests also compile the original short methods and builders.
+macro_rules! language_request_test {
+ ($name:ident, $client:ident => $localized:expr, $default:expr, $path:expr, $query:expr) => {
+  #[tokio::test]
+  async fn $name() {
+   let server = TestServer::start(vec![(200, "{}"), (200, "{}")]);
+   let $client = server.client();
+   $localized.await.unwrap();
+   $default.await.unwrap();
+   let calls = server.requests();
+   assert_eq!(calls.len(), 2);
+   let expected = reqwest::Url::parse(&format!("http://fixture{}?{}", $path, $query)).unwrap();
+   let baseline: std::collections::BTreeMap<String,String> = expected.query_pairs().into_owned().collect();
+   for (index, language) in [Some("fr-CA"), None].iter().enumerate() {
+    let actual = reqwest::Url::parse(&format!("http://fixture{}", calls[index].target)).unwrap();
+    assert_eq!(actual.path(), $path);
+    let pairs: Vec<_> = actual.query_pairs().into_owned().collect();
+    let mut want = baseline.clone();
+    if let Some(value) = language { want.insert("lang".into(), (*value).into()); }
+    assert_eq!(pairs.len(), want.len(), "duplicate or leaked parameter");
+    assert_eq!(pairs.into_iter().collect::<std::collections::BTreeMap<_,_>>(), want);
+   }
+  }
+ };
+}
+language_request_test!(language_ip, c => c.ip("8.8.8.8", IpOptions::default().deep(true).lang("fr-CA")), c.ip("8.8.8.8", IpOptions::default().deep(true)), "/ip/8.8.8.8", "deep=true");
+language_request_test!(language_ip_self, c => c.ip_self(IpSelfOptions::default().deep(true).lang("fr-CA")), c.ip_self(IpSelfOptions::default().deep(true)), "/ip", "deep=true");
+language_request_test!(language_continent, c => c.continent_with_options("EU", ContinentOptions::default().lang("fr-CA")), c.continent("EU"), "/continent/EU", "");
+language_request_test!(language_continent_countries, c => c.continent_countries_with_options("EU", ContinentCountriesOptions::default().lang("fr-CA")), c.continent_countries("EU"), "/continent/EU/countries", "");
+language_request_test!(language_bloc_countries, c => c.bloc_countries_with_options("EU", BlocCountriesOptions::default().lang("fr-CA")), c.bloc_countries("EU"), "/bloc/EU/countries", "");
+language_request_test!(language_country, c => c.country_with_options("DE", CountryOptions::default().deep(true).lang("fr-CA")), c.country_with_options("DE", CountryOptions::default().deep(true)), "/country/DE", "deep=true");
+language_request_test!(language_country_states, c => c.country_states_with_options("DE", CountryStatesOptions::default().lang("fr-CA")), c.country_states("DE"), "/country/DE/states", "");
+language_request_test!(language_state, c => c.state("CA", StateOptions::default().country("US").lang("fr-CA")), c.state("CA", StateOptions::default().country("US")), "/state/CA", "country=US");
+language_request_test!(language_state_districts, c => c.state_districts("CA", StateDistrictsOptions::default().country("US").deep(true).lang("fr-CA")), c.state_districts("CA", StateDistrictsOptions::default().country("US").deep(true)), "/state/CA/districts", "country=US&deep=true");
+language_request_test!(language_district, c => c.district("37081", DistrictOptions::default().country("US").state("NC").lang("fr-CA")), c.district("37081", DistrictOptions::default().country("US").state("NC")), "/district/37081", "country=US&state=NC");
+language_request_test!(language_city, c => c.city("München", CityOptions::default().country("DE").lang("fr-CA")), c.city("München", CityOptions::default().country("DE")), "/city/M%C3%BCnchen", "country=DE");
+language_request_test!(language_city_id, c => c.city_id_with_options("city_fixture", CityIdOptions::default().deep(true).lang("fr-CA")), c.city_id_with_options("city_fixture", CityIdOptions::default().deep(true)), "/city/id/city_fixture", "deep=true");
+language_request_test!(language_city_search, c => c.city_search("Mün", CitySearchOptions::default().limit(2).lang("fr-CA")), c.city_search("Mün", CitySearchOptions::default().limit(2)), "/city", "limit=2&q=M%C3%BCn");
+language_request_test!(language_city_nearest, c => c.city_nearest_with_options(0.0, 0.0, CityNearestOptions::default().lang("fr-CA")), c.city_nearest_with_options(0.0, 0.0, CityNearestOptions::default()), "/city", "lat=0&lon=0");
+language_request_test!(language_city_nearby, c => c.city_nearby("München", CityNearbyOptions::default().radius(8.0).unit("km").lang("fr-CA")), c.city_nearby("München", CityNearbyOptions::default().radius(8.0).unit("km")), "/city/M%C3%BCnchen/nearby", "radius=8&unit=km");
+language_request_test!(language_postal, c => c.postal("SW1A 1AA", PostalOptions::default().country("GB").lang("fr-CA")), c.postal("SW1A 1AA", PostalOptions::default().country("GB")), "/postal/SW1A%201AA", "country=GB");
+language_request_test!(language_postal_nearby, c => c.postal_nearby("28202", PostalNearbyOptions::default().country("US").radius(8.0).lang("fr-CA")), c.postal_nearby("28202", PostalNearbyOptions::default().country("US").radius(8.0)), "/postal/28202/nearby", "country=US&radius=8");
+language_request_test!(language_postal_distance, c => c.postal_distance("28202", "10001", PostalDistanceOptions::default().country("US").lang("fr-CA")), c.postal_distance("28202", "10001", PostalDistanceOptions::default().country("US")), "/postal/28202/distance/10001", "country=US");
+language_request_test!(language_company, c => c.company("732829320", CompanyOptions::default().country("FR").deep(true).lang("fr-CA")), c.company("732829320", CompanyOptions::default().country("FR").deep(true)), "/company/732829320", "country=FR&deep=true");
+language_request_test!(language_npi, c => c.npi("1881018208", NpiOptions::default().deep(true).lang("fr-CA")), c.npi("1881018208", NpiOptions::default().deep(true)), "/npi/1881018208", "deep=true");
+language_request_test!(language_asn, c => c.asn_with_options("AS13335", AsnOptions::default().lang("fr-CA")), c.asn("AS13335"), "/asn/AS13335", "");
+language_request_test!(language_currency, c => c.currency_with_options("USD", CurrencyOptions::default().deep(true).lang("fr-CA")), c.currency_with_options("USD", CurrencyOptions::default().deep(true)), "/currency/USD", "deep=true");
+language_request_test!(language_language, c => c.language_with_options("ja", LanguageOptions::default().lang("fr-CA")), c.language_with_options("ja", LanguageOptions::default()), "/language/ja", "");
+language_request_test!(language_time, c => c.time("America/New_York", TimeOptions::default().at("2026-01-01T12:00").to("UTC").deep(true).lang("fr-CA")), c.time("America/New_York", TimeOptions::default().at("2026-01-01T12:00").to("UTC").deep(true)), "/time/America%2FNew_York", "at=2026-01-01T12%3A00&deep=true&to=UTC");
+language_request_test!(language_time_at, c => c.time_at(0.0, 0.0, TimeAtOptions::default().at("2026-01-01T12:00Z").lang("fr-CA")), c.time_at(0.0, 0.0, TimeAtOptions::default().at("2026-01-01T12:00Z")), "/time", "at=2026-01-01T12%3A00Z&lat=0&lon=0");
+language_request_test!(language_timezone, c => c.timezone("UTC", TimezoneOptions::default().deep(true).lang("fr-CA")), c.timezone("UTC", TimezoneOptions::default().deep(true)), "/timezone/UTC", "deep=true");
+language_request_test!(language_timezone_at, c => c.timezone_at(0.0, 0.0, TimezoneAtOptions::default().deep(true).lang("fr-CA")), c.timezone_at(0.0, 0.0, TimezoneAtOptions::default().deep(true)), "/timezone", "deep=true&lat=0&lon=0");
+language_request_test!(language_date, c => c.date("03/04/2026", DateOptions::default().format("dmy").to("2026-05-01").deep(true).lang("fr-CA")), c.date("03/04/2026", DateOptions::default().format("dmy").to("2026-05-01").deep(true)), "/date/03%2F04%2F2026", "deep=true&format=dmy&to=2026-05-01");
+language_request_test!(language_date_today, c => c.date_today(DateTodayOptions::default().to("2026-05-01").lang("fr-CA")), c.date_today(DateTodayOptions::default().to("2026-05-01")), "/date", "to=2026-05-01");
+language_request_test!(language_point, c => c.point(0.0, 0.0, PointOptions::default().deep(true).lang("fr-CA")), c.point(0.0, 0.0, PointOptions::default().deep(true)), "/point", "deep=true&lat=0&lon=0");
+language_request_test!(language_emoji, c => c.emoji_with_options("😀", EmojiOptions::default().deep(true).lang("fr-CA")), c.emoji_with_options("😀", EmojiOptions::default().deep(true)), "/emoji/%F0%9F%98%80", "deep=true");
+language_request_test!(language_emoji_search, c => c.emoji_search("visage", EmojiSearchOptions::default().limit(2).lang("fr-CA")), c.emoji_search("visage", EmojiSearchOptions::default().limit(2)), "/emoji", "limit=2&q=visage");
+language_request_test!(language_measure_units, c => c.measure_units(MeasureUnitsOptions::default().query("meter").unit("m").lang("fr-CA")), c.measure_units(MeasureUnitsOptions::default().query("meter").unit("m")), "/measure/units", "q=meter&unit=m");
+
+#[tokio::test]
+async fn language_preserves_native_null_and_measure_input() {
+ let server = TestServer::start(vec![
+  (200, r#"{"country":"DE","name":"Allemagne","name_local":"Deutschland","currency_name":null,"future":true}"#),
+  (200, "{}"),
+  (200, "{}"),
+ ]);
+ let client = server.client();
+ let country = client.country_with_options("DE", CountryOptions::default().lang("fr")).await.unwrap();
+ assert_eq!(country.country, "DE");
+ assert_eq!(country.name, "Allemagne");
+ assert_eq!(country.name_local.as_deref(), Some("Deutschland"));
+ assert!(country.currency_name.is_none() && country.deep.is_none());
+ client.date("03/04/2026", DateOptions::default().format("dmy").lang("en-US")).await.unwrap();
+ client.measure("1,5 m", MeasureOptions::default().locale("de-DE").to("cm")).await.unwrap();
+ let calls=server.requests();
+ let date=reqwest::Url::parse(&format!("http://fixture{}",calls[1].target)).unwrap();
+ assert_eq!(date.path(), "/date/03%2F04%2F2026");
+ assert_eq!(date.query_pairs().collect::<HashMap<_,_>>().get("format").unwrap(), "dmy");
+ assert_eq!(calls[2].target, "/measure/1%2C5%20m?to=cm&locale=de-DE");
+}

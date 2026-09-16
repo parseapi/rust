@@ -123,9 +123,12 @@ pub struct MeasureUnitsOptions {
 	pub query: Option<String>,
 	pub r#type: Option<String>,
 	pub unit: Option<String>,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl MeasureUnitsOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	pub fn query(mut self, value: impl Into<String>) -> Self {
 		self.query = Some(value.into());
 		self
@@ -145,9 +148,12 @@ impl MeasureUnitsOptions {
 #[non_exhaustive]
 pub struct IpOptions {
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl IpOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `deep` query option.
 	pub fn deep(mut self, value: bool) -> Self {
 		self.deep = value;
@@ -160,9 +166,12 @@ impl IpOptions {
 #[non_exhaustive]
 pub struct IpSelfOptions {
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl IpSelfOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `deep` query option.
 	pub fn deep(mut self, value: bool) -> Self {
 		self.deep = value;
@@ -176,9 +185,12 @@ impl IpSelfOptions {
 pub struct StateOptions {
 	pub country: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl StateOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
@@ -194,9 +206,12 @@ impl StateOptions {
 pub struct StateDistrictsOptions {
 	pub country: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl StateDistrictsOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
@@ -213,9 +228,12 @@ pub struct DistrictOptions {
 	pub country: Option<String>,
 	pub state: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl DistrictOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
@@ -237,9 +255,12 @@ pub struct CityOptions {
 	pub country: Option<String>,
 	pub state: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl CityOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
@@ -262,9 +283,12 @@ pub struct CitySearchOptions {
 	pub state: Option<String>,
 	pub limit: Option<u32>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl CitySearchOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
@@ -294,9 +318,12 @@ pub struct CityNearbyOptions {
 	pub unit: Option<String>,
 	pub limit: Option<u32>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl CityNearbyOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
@@ -332,9 +359,12 @@ impl CityNearbyOptions {
 pub struct PostalOptions {
 	pub country: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl PostalOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
@@ -352,9 +382,12 @@ pub struct PostalNearbyOptions {
 	pub radius: Option<f64>,
 	pub unit: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl PostalNearbyOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
@@ -380,9 +413,12 @@ impl PostalNearbyOptions {
 pub struct PostalDistanceOptions {
 	pub country: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl PostalDistanceOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
@@ -496,9 +532,12 @@ impl NameOptions {
 #[non_exhaustive]
 pub struct NpiOptions {
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl NpiOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `deep` query option.
 	pub fn deep(mut self, value: bool) -> Self {
 		self.deep = value;
@@ -689,9 +728,12 @@ pub struct TimeOptions {
 	pub at: Option<String>,
 	pub to: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl TimeOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `at` query option.
 	pub fn at(mut self, value: impl Into<String>) -> Self {
 		self.at = Some(value.into());
@@ -713,9 +755,12 @@ pub struct TimeAtOptions {
 	pub at: Option<String>,
 	pub to: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl TimeAtOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the destination IANA timezone.
 	pub fn to(mut self, value: impl Into<String>) -> Self {
 		self.to = Some(value.into());
@@ -738,9 +783,12 @@ pub struct TimezoneOptions {
 	pub at: Option<String>,
 	pub to: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl TimezoneOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `at` query option.
 	pub fn at(mut self, value: impl Into<String>) -> Self {
 		self.at = Some(value.into());
@@ -761,9 +809,12 @@ impl TimezoneOptions {
 pub struct TimezoneAtOptions {
 	pub at: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl TimezoneAtOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `at` query option.
 	pub fn at(mut self, value: impl Into<String>) -> Self {
 		self.at = Some(value.into());
@@ -780,9 +831,12 @@ pub struct DateOptions {
 	pub format: Option<String>,
 	pub to: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl DateOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `format` query option.
 	pub fn format(mut self, value: impl Into<String>) -> Self {
 		self.format = Some(value.into());
@@ -803,9 +857,12 @@ impl DateOptions {
 pub struct DateTodayOptions {
 	pub to: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl DateTodayOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `to` query option.
 	pub fn to(mut self, value: impl Into<String>) -> Self {
 		self.to = Some(value.into());
@@ -836,9 +893,12 @@ impl HolidayOptions {
 pub struct PointOptions {
 	/// Add terrain and compact nearest-city context on every plan. The timezone ID stays in core.
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl PointOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Add terrain and compact nearest-city context on every plan. The timezone ID stays in core.
 	pub fn deep(mut self, value: bool) -> Self {
 		self.deep = value;
@@ -892,9 +952,12 @@ impl NaicsSearchOptions {
 pub struct EmojiSearchOptions {
 	pub limit: Option<u32>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl EmojiSearchOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `limit` query option.
 	pub fn limit(mut self, value: u32) -> Self {
 		self.limit = Some(value);
@@ -970,9 +1033,12 @@ impl AddressSearchOptions {
 pub struct CompanyOptions {
 	pub country: Option<String>,
 	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
 }
 
 impl CompanyOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
@@ -989,22 +1055,34 @@ impl CompanyOptions {
 /// Options for `country`. Deep reveals the same question in more detail.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct CountryOptions { pub deep: bool }
-impl CountryOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+pub struct CountryOptions { pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
+}
+impl CountryOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
 
 
 /// Options for `city_id`. Deep reveals the same question in more detail.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct CityIdOptions { pub deep: bool }
-impl CityIdOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+pub struct CityIdOptions { pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
+}
+impl CityIdOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
 
 
 /// Options for `city_nearest`. Deep reveals the same question in more detail.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct CityNearestOptions { pub deep: bool }
-impl CityNearestOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+pub struct CityNearestOptions { pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
+}
+impl CityNearestOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
 
 
 /// Options for `naics`. Deep reveals the same question in more detail.
@@ -1017,22 +1095,74 @@ impl NaicsOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = val
 /// Options for `currency`. Deep reveals the same question in more detail.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct CurrencyOptions { pub deep: bool }
-impl CurrencyOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+pub struct CurrencyOptions { pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
+}
+impl CurrencyOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
 
 
 /// Options for `language`. Deep reveals the same question in more detail.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct LanguageOptions { pub deep: bool }
-impl LanguageOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+pub struct LanguageOptions { pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
+}
+impl LanguageOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
 
 
 /// Options for `emoji`. Deep reveals the same question in more detail.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct EmojiOptions { pub deep: bool }
-impl EmojiOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+pub struct EmojiOptions { pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
+}
+impl EmojiOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+
+/// Display language for `continent`.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct ContinentOptions { pub lang: Option<String> }
+impl ContinentOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
+}
+
+/// Display language for `continent_countries`.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct ContinentCountriesOptions { pub lang: Option<String> }
+impl ContinentCountriesOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
+}
+
+/// Display language for `bloc_countries`.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct BlocCountriesOptions { pub lang: Option<String> }
+impl BlocCountriesOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
+}
+
+/// Display language for `country_states`.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CountryStatesOptions { pub lang: Option<String> }
+impl CountryStatesOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
+}
+
+/// Display language for `asn`.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct AsnOptions { pub lang: Option<String> }
+impl AsnOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
+}
 
 /// Configures a [`Client`].
 #[derive(Default)]
@@ -1270,6 +1400,7 @@ impl Client {
 	pub async fn ip(&self, ip: &str, opts: impl Into<Option<IpOptions>>) -> Result<Ip> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/ip/{}", seg(ip)), query, None).await
 	}
@@ -1278,6 +1409,7 @@ impl Client {
 	pub async fn ip_self(&self, opts: impl Into<Option<IpSelfOptions>>) -> Result<Ip> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push_deep(&mut query, opts.deep);
 		self.get("/ip", query, None).await
 	}
@@ -1287,6 +1419,14 @@ impl Client {
 		self.get(&format!("/continent/{}", seg(code)), Query::new(), None)
 			.await
 	}
+	/// Calls the same operation with a display language.
+	pub async fn continent_with_options(&self, code: &str, opts: impl Into<Option<ContinentOptions>>) -> Result<Continent> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
+		self.get(&format!("/continent/{}", seg(code)), query, None).await
+	}
+
 
 	/// Calls `/continent/{code}/countries`.
 	pub async fn continent_countries(&self, code: &str) -> Result<ContinentCountries> {
@@ -1297,6 +1437,14 @@ impl Client {
 		)
 		.await
 	}
+	/// Calls the same operation with a display language.
+	pub async fn continent_countries_with_options(&self, code: &str, opts: impl Into<Option<ContinentCountriesOptions>>) -> Result<ContinentCountries> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
+		self.get(&format!("/continent/{}/countries", seg(code)), query, None).await
+	}
+
 
 	/// Calls `/bloc/{code}`.
 	pub async fn bloc(&self, code: &str) -> Result<Bloc> {
@@ -1313,6 +1461,14 @@ impl Client {
 		)
 		.await
 	}
+	/// Calls the same operation with a display language.
+	pub async fn bloc_countries_with_options(&self, code: &str, opts: impl Into<Option<BlocCountriesOptions>>) -> Result<BlocCountries> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
+		self.get(&format!("/bloc/{}/countries", seg(code)), query, None).await
+	}
+
 
 	/// Calls `/country/{code}`.
 	pub async fn country(&self, code: &str) -> Result<Country> {
@@ -1323,6 +1479,7 @@ impl Client {
 	pub async fn country_with_options(&self, code: &str, opts: impl Into<Option<CountryOptions>>) -> Result<Country> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/country/{}", seg(code)), query, None)
 			.await
@@ -1337,11 +1494,20 @@ impl Client {
 		)
 		.await
 	}
+	/// Calls the same operation with a display language.
+	pub async fn country_states_with_options(&self, code: &str, opts: impl Into<Option<CountryStatesOptions>>) -> Result<CountryStates> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
+		self.get(&format!("/country/{}/states", seg(code)), query, None).await
+	}
+
 
 	/// Calls `/state/{code}`.
 	pub async fn state(&self, code: &str, opts: impl Into<Option<StateOptions>>) -> Result<State> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "country", opts.country);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/state/{}", seg(code)), query, None)
@@ -1356,6 +1522,7 @@ impl Client {
 	) -> Result<StateDistricts> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "country", opts.country);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/state/{}/districts", seg(code)), query, None)
@@ -1370,6 +1537,7 @@ impl Client {
 	) -> Result<District> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "country", opts.country);
 		push(&mut query, "state", opts.state);
 		push_deep(&mut query, opts.deep);
@@ -1381,6 +1549,7 @@ impl Client {
 	pub async fn city(&self, name: &str, opts: impl Into<Option<CityOptions>>) -> Result<City> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "country", opts.country);
 		push(&mut query, "state", opts.state);
 		push_deep(&mut query, opts.deep);
@@ -1396,6 +1565,7 @@ impl Client {
 	pub async fn city_id_with_options(&self, id: &str, opts: impl Into<Option<CityIdOptions>>) -> Result<City> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/city/id/{}", seg(id)), query, None)
 			.await
@@ -1409,6 +1579,7 @@ impl Client {
 	) -> Result<CitySearch> {
 		let opts = opts.into().unwrap_or_default();
 		let mut params = Query::new();
+		push(&mut params, "lang", opts.lang);
 		push(&mut params, "q", Some(query.to_string()));
 		push(&mut params, "country", opts.country);
 		push(&mut params, "state", opts.state);
@@ -1430,6 +1601,7 @@ impl Client {
 	pub async fn city_nearest_with_options(&self, lat: f64, lon: f64, opts: impl Into<Option<CityNearestOptions>>) -> Result<CityNearest> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "lat", Some(lat.to_string()));
 		push(&mut query, "lon", Some(lon.to_string()));
 		push_deep(&mut query, opts.deep);
@@ -1444,6 +1616,7 @@ impl Client {
 	) -> Result<CityNearby> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "country", opts.country);
 		push(&mut query, "state", opts.state);
 		push(
@@ -1471,6 +1644,7 @@ impl Client {
 	) -> Result<Postal> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "country", opts.country);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/postal/{}", seg(code)), query, None)
@@ -1485,6 +1659,7 @@ impl Client {
 	) -> Result<PostalNearby> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "country", opts.country);
 		push(
 			&mut query,
@@ -1506,6 +1681,7 @@ impl Client {
 	) -> Result<PostalDistance> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "country", opts.country);
 		push_deep(&mut query, opts.deep);
 		self.get(
@@ -1553,6 +1729,7 @@ impl Client {
 	pub async fn npi(&self, npi: &str, opts: impl Into<Option<NpiOptions>>) -> Result<Npi> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/npi/{}", seg(npi)), query, None).await
 	}
@@ -1629,6 +1806,14 @@ impl Client {
 		self.get(&format!("/asn/{}", seg(asn)), Query::new(), None)
 			.await
 	}
+	/// Calls the same operation with a display language.
+	pub async fn asn_with_options(&self, code: &str, opts: impl Into<Option<AsnOptions>>) -> Result<Asn> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
+		self.get(&format!("/asn/{}", seg(code)), query, None).await
+	}
+
 
 	/// Calls `/mac/{mac}`.
 	pub async fn mac(&self, mac: &str) -> Result<Mac> {
@@ -1660,6 +1845,7 @@ impl Client {
 	pub async fn measure_units(&self, opts: impl Into<Option<MeasureUnitsOptions>>) -> Result<MeasureUnits> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "q", opts.query);
 		push(&mut query, "type", opts.r#type);
 		push(&mut query, "unit", opts.unit);
@@ -1757,6 +1943,7 @@ impl Client {
 	pub async fn currency_with_options(&self, code: &str, opts: impl Into<Option<CurrencyOptions>>) -> Result<Currency> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/currency/{}", seg(code)), query, None)
 			.await
@@ -1771,6 +1958,7 @@ impl Client {
 	pub async fn language_with_options(&self, code: &str, opts: impl Into<Option<LanguageOptions>>) -> Result<Language> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/language/{}", seg(code)), query, None)
 			.await
@@ -1822,6 +2010,7 @@ impl Client {
 	) -> Result<Time> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "at", opts.at);
 		push(&mut query, "to", opts.to);
 		let path = if timezone.is_empty() { "/time".to_string() } else { format!("/time/{}", seg(timezone)) };
@@ -1839,6 +2028,7 @@ impl Client {
 	) -> Result<Time> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "lat", Some(lat.to_string()));
 		push(&mut query, "lon", Some(lon.to_string()));
 		push(&mut query, "at", opts.at);
@@ -1855,6 +2045,7 @@ impl Client {
 	) -> Result<Timezone> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "at", opts.at);
 		push(&mut query, "to", opts.to);
 		push_deep(&mut query, opts.deep);
@@ -1871,6 +2062,7 @@ impl Client {
 	) -> Result<Timezone> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "lat", Some(lat.to_string()));
 		push(&mut query, "lon", Some(lon.to_string()));
 		push(&mut query, "at", opts.at);
@@ -1882,6 +2074,7 @@ impl Client {
 	pub async fn date(&self, date: &str, opts: impl Into<Option<DateOptions>>) -> Result<DateInfo> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "format", opts.format);
 		push(&mut query, "to", opts.to);
 		push_deep(&mut query, opts.deep);
@@ -1892,6 +2085,7 @@ impl Client {
 	pub async fn date_today(&self, opts: impl Into<Option<DateTodayOptions>>) -> Result<DateInfo> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "to", opts.to);
 		push_deep(&mut query, opts.deep);
 		self.get("/date", query, None).await
@@ -1939,6 +2133,7 @@ impl Client {
 	) -> Result<Point> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "lat", Some(lat.to_string()));
 		push(&mut query, "lon", Some(lon.to_string()));
 		push_deep(&mut query, opts.deep);
@@ -1972,6 +2167,7 @@ impl Client {
 	pub async fn emoji_with_options(&self, emoji: &str, opts: impl Into<Option<EmojiOptions>>) -> Result<Emoji> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/emoji/{}", seg(emoji)), query, None)
 			.await
@@ -1985,6 +2181,7 @@ impl Client {
 	) -> Result<EmojiSearch> {
 		let opts = opts.into().unwrap_or_default();
 		let mut params = Query::new();
+		push(&mut params, "lang", opts.lang);
 		push(&mut params, "q", Some(query.to_string()));
 		push(
 			&mut params,
@@ -2037,6 +2234,7 @@ impl Client {
 	) -> Result<Company> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
 		push(&mut query, "country", opts.country);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/company/{}", seg(number)), query, None)

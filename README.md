@@ -19,7 +19,7 @@ Get a key at [parseapi.com](https://parseapi.com). `Client::from_env()` reads `P
 
 Choose your team's API version in [Dashboard → API version](https://parseapi.com/dashboard/versions). One setting applies to every key, including new and replacement keys. Existing teams keep `1.0.0`; new teams start on `2.0.0`. Keep the same keys and lookup URLs. Installing or upgrading the package does not change the team's setting.
 
-Published SDK `0.3.2` matches API `1.0.0`. The examples and response types in this source tree target API `2.0.0`, including changes that are not in `0.3.2`. Use a package release documented for your team's version. These types do not model every historical response; moving to `2.0.0` may require updating code that reads renamed, moved or removed fields.
+SDK `0.3.2` targets API `1.0.0`. SDK `0.4.0` and the examples and response types in this source tree target API `2.0.0`. Use a package release documented for your team's version. These types do not model every historical response; moving to `2.0.0` may require updating code that reads renamed, moved or removed fields.
 
 Test the target contract in a separate development team before changing your production team's version. A change applies to every integration in that team. See [API versions and migration](https://parseapi.com/docs/versioning).
 
@@ -49,6 +49,24 @@ Results are plain data. Pass a returned code or coordinate to another operation 
 
 Name paid deep includes flat `short`, `directory`, and `initials` fields beside `gender` and `salutation`. `name_locale` selects CLDR formatting rules and defaults to `en`. It changes formatting only. Country remains gender context, and unavailable formatting is null. Older responses may omit these fields.
 
+## Display language
+
+This source candidate accepts an optional language for supported display fields.
+It requires the matching API localization release and data.
+
+```rust
+let country = parse
+    .country("DE", Some(parseapi::CountryOptions::default().lang("fr")))
+    .await?;
+println!("{}", country.name); // Allemagne
+```
+
+`lang` applies to this request. The next call uses its usual default unless it
+also supplies a language. Codes, native names, numeric facts and response
+structure stay unchanged. Missing translations keep the API's documented
+fallback. Existing `deep` rules still apply; Date `format` and Measure input
+`locale` retain their parsing meanings.
+
 ## Calls
 
 Choose the operation and pass what you have. Related operations are separate direct calls, and results are plain typed data.
@@ -74,8 +92,8 @@ parse.npi("1881018208", None).await?;
 parse.asn("AS13335").await?;
 parse.mac("00:1B:63:84:45:E6").await?;
 parse.name("Andrea").await?;
-parse.name_with_options("Robert James Smith", NameOptions::default().deep(true).name_locale("en")).await?;
 parse.name_with_options("Andrea", NameOptions::default().country("IT")).await?;
+parse.name_with_options("Robert James Smith", NameOptions::default().deep(true).name_locale("en")).await?;
 parse.vin("1HGCM82633A004352", None).await?;
 parse.carrier("+14155552671", None).await?;
 parse.caller("+18004633339", None).await?;
