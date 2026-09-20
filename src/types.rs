@@ -343,8 +343,17 @@ pub struct PostalDistance {
 #[serde(default)]
 #[non_exhaustive]
 pub struct EmailDeep {
+	/// Suggested first name. Not a verified identity.
+	pub first_name: Option<String>,
+	pub no_reply: Option<bool>,
+	pub tag: Option<String>,
+	pub mail_provider: Option<String>,
 	pub deliverable: Option<bool>,
 	pub catchall: Option<bool>,
+	/// Mailbox status: deliverable, undeliverable or risky. Null when unavailable.
+	pub status: Option<String>,
+	/// Why the address received this result, such as mailbox_full or mailbox_not_found. Null when unavailable.
+	pub reason: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -353,7 +362,9 @@ pub struct EmailDeep {
 pub struct Email {
 	pub email: String,
 	pub valid: bool,
+	pub free: bool,
 	pub domain: Option<String>,
+	pub domain_type: Option<String>,
 	pub domain_valid: Option<bool>,
 	pub role: bool,
 	pub disposable: bool,
