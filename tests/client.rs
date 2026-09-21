@@ -1159,3 +1159,60 @@ async fn language_preserves_native_null_and_measure_input() {
  assert_eq!(date.query_pairs().collect::<HashMap<_,_>>().get("format").unwrap(), "dmy");
  assert_eq!(calls[2].target, "/measure/1%2C5%20m?to=cm&locale=de-DE");
 }
+
+#[tokio::test]
+async fn stack_preserves_site_inventory_and_request_options() {
+ let records = [
+  r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":null,"scope":"homepage","pages":0,"partial":null,"cms":null,"servers":null,"frameworks":null,"ecommerce":null,"analytics":null,"chat":null,"payments":null,"hosting":null,"future":true}"#,
+  r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":"2026-09-21T12:00:00Z","scope":"site","pages":2,"partial":false,"cms":[],"servers":[],"frameworks":[],"ecommerce":[],"analytics":[],"chat":[],"payments":[],"hosting":[],"future":true,"deep":{}}"#,
+  r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":"2026-09-21T12:00:00Z","scope":"site","pages":3,"partial":true,"cms":[{"technology":"wordpress","name":"WordPress","version":"6.8"},{"technology":"ghost","name":"Ghost","version":null}],"servers":[{"technology":"nginx","name":"nginx","version":"1.26.2"},{"technology":"apache","name":"Apache","version":null}],"frameworks":[{"technology":"nextjs","name":"Next.js","version":null,"future":true},{"technology":"react","name":"React","version":"19.1"}],"ecommerce":[{"technology":"woocommerce","name":"WooCommerce","version":null}],"analytics":[{"technology":"google-analytics","name":"Google Analytics","version":null}],"chat":[{"technology":"intercom","name":"Intercom","version":null}],"payments":[{"technology":"stripe","name":"Stripe","version":null}],"hosting":[{"technology":"vercel","name":"Vercel","version":null}],"future":true}"#,
+  r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":null,"scope":"future-scope","pages":0,"partial":null,"cms":null,"servers":null,"frameworks":null,"ecommerce":null,"analytics":null,"chat":null,"payments":null,"hosting":null,"future":true,"deep":{}}"#,
+  r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":"2026-09-21T12:00:00Z","scope":"homepage","pages":1,"partial":true,"cms":[],"servers":[],"frameworks":[{"technology":"nextjs","name":"Next.js","version":null,"future":true}],"ecommerce":[],"analytics":[],"chat":[],"payments":[],"hosting":[],"future":true,"deep":{}}"#
+ ];
+ for (i, body) in records.iter().enumerate() {
+  let server = TestServer::start(vec![(200, body), (200, body)]);
+  let client = server.client();
+  let result = client.stack_with_options("bücher.example", StackOptions::default().deep(true).pretty(true)).await.unwrap();
+  assert_eq!(server.requests()[0].target, "/stack/b%C3%BCcher.example?deep=true&pretty=true");
+  assert_eq!(server.requests()[0].headers.get("parse-version").unwrap(), "2.0.0");
+  if i == 0 || i == 3 { assert!(result.cms.is_none() && result.servers.is_none()); assert_eq!(result.pages, 0); assert!(result.partial.is_none()); }
+  else if i != 2 { assert!(result.cms.as_ref().unwrap().is_empty() && result.servers.as_ref().unwrap().is_empty()); }
+  for group in [&result.ecommerce, &result.analytics, &result.chat, &result.payments, &result.hosting] {
+   if i == 0 || i == 3 { assert!(group.is_none()); }
+   else if i == 2 { assert_eq!(group.as_ref().unwrap().len(), 1); assert!(!group.as_ref().unwrap()[0].technology.is_empty()); }
+   else { assert!(group.as_ref().unwrap().is_empty()); }
+  }
+  match i {
+   0 => { assert!(result.frameworks.is_none()); assert!(result.checked_at.is_none()); assert!(result.deep.is_none()); },
+   1 => { assert_eq!(result.scope, "site"); assert_eq!(result.pages, 2); assert_eq!(result.partial, Some(false)); assert!(result.frameworks.unwrap().is_empty()); assert_eq!(result.deep.unwrap(), serde_json::json!({})); },
+   2 => {
+    let technologies = result.frameworks.unwrap();
+    assert_eq!(technologies.len(), 2);
+    assert!(result.checked_at.is_some());
+    assert_eq!(result.scope, "site");
+    assert_eq!(result.pages, 3);
+    assert_eq!(result.partial, Some(true));
+    let cms = result.cms.unwrap(); let servers = result.servers.unwrap();
+    assert_eq!(cms.len(), 2); assert_eq!(servers.len(), 2);
+    assert_eq!(cms[0].technology, "wordpress"); assert_eq!(cms[0].name, "WordPress"); assert_eq!(cms[0].version.as_deref(), Some("6.8"));
+    assert_eq!(cms[1].technology, "ghost"); assert!(cms[1].version.is_none());
+    assert_eq!(servers[0].version.as_deref(), Some("1.26.2")); assert_eq!(servers[1].technology, "apache");
+    assert!(result.deep.is_none()); assert!(technologies[0].version.is_none());
+   },
+   3 => {
+    assert_eq!(result.scope, "future-scope");
+    assert!(result.frameworks.is_none());
+    assert_eq!(result.deep.unwrap(), serde_json::json!({}));
+   },
+   _ => {
+    assert_eq!(result.scope, "homepage"); assert_eq!(result.pages, 1); assert_eq!(result.partial, Some(true));
+    assert_eq!(result.deep.unwrap(), serde_json::json!({}));
+    let technologies = result.frameworks.unwrap();
+    assert_eq!(technologies[0].technology, "nextjs");
+    assert!(technologies[0].version.is_none());
+   },
+  }
+  client.stack("example.com").await.unwrap();
+  assert_eq!(server.requests()[1].target, "/stack/example.com");
+ }
+}

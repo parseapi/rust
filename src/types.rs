@@ -680,6 +680,36 @@ pub struct MxRecord {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct StackTechnology {
+	pub technology: String,
+	pub name: String,
+	pub version: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Stack {
+	pub domain: String,
+	pub url: String,
+	pub checked_at: Option<String>,
+	pub scope: String,
+	pub pages: i64,
+	pub partial: Option<bool>,
+	pub cms: Option<Vec<StackTechnology>>,
+	pub servers: Option<Vec<StackTechnology>>,
+	pub frameworks: Option<Vec<StackTechnology>>,
+	pub ecommerce: Option<Vec<StackTechnology>>,
+	pub analytics: Option<Vec<StackTechnology>>,
+	pub chat: Option<Vec<StackTechnology>>,
+	pub payments: Option<Vec<StackTechnology>>,
+	pub hosting: Option<Vec<StackTechnology>>,
+	pub deep: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct DomainRegistration {
 	pub registered: bool,
 	pub created: Option<String>,

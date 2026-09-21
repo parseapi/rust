@@ -634,6 +634,20 @@ impl DnsOptions {
 	}
 }
 
+/// Configures website technology observation.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct StackOptions {
+	pub deep: bool,
+	pub pretty: bool,
+}
+impl StackOptions {
+	/// Adds an empty deep object. Stack includes its technology data in the core response.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
+	/// Formats the wire JSON response.
+	pub fn pretty(mut self, value: bool) -> Self { self.pretty = value; self }
+}
+
 /// Configures `domain`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
@@ -1197,7 +1211,7 @@ impl Builder {
 		self
 	}
 
-	/// Per-attempt timeout. Default 10s.
+	/// Per-attempt timeout for every operation. Defaults are 35s for Stack and 10s otherwise.
 	pub fn timeout(mut self, timeout: Duration) -> Self {
 		self.timeout = Some(timeout);
 		self
@@ -1233,6 +1247,7 @@ impl Builder {
 			base_url: base_url.trim_end_matches('/').to_string(),
 			retries: self.retries.unwrap_or(DEFAULT_RETRIES),
 			retries_explicit: self.retries.is_some(),
+			timeout: self.timeout,
 			http,
 		})
 	}
@@ -1245,6 +1260,7 @@ pub struct Client {
 	base_url: String,
 	retries: u32,
 	retries_explicit: bool,
+	timeout: Option<Duration>,
 	http: reqwest::Client,
 }
 
@@ -1324,6 +1340,10 @@ fn push_deep(query: &mut Query, deep: bool) {
 }
 
 impl Client {
+	fn timeout_for(&self, path: &str) -> Duration {
+		self.timeout.unwrap_or_else(|| if path.starts_with("/stack/") { Duration::from_secs(35) } else { DEFAULT_TIMEOUT })
+	}
+
 	/// Creates a client with an explicit key.
 	pub fn new(api_key: impl Into<String>) -> Result<Client> {
 		// You found Dev. https://parseapi.com/dev
@@ -1358,7 +1378,8 @@ impl Client {
 				.get(&url)
 				.header("X-API-Key", &self.api_key)
 				.header("Parse-Version", API_VERSION)
-				.header(reqwest::header::USER_AGENT, ua.unwrap_or(USER_AGENT));
+				.header(reqwest::header::USER_AGENT, ua.unwrap_or(USER_AGENT))
+				.timeout(self.timeout_for(path));
 			if !query.is_empty() {
 				request = request.query(&query);
 			}
@@ -1789,6 +1810,21 @@ impl Client {
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/hlr/{}", seg(number)), query, None)
 			.await
+	}
+
+	/// Observe technologies on a public hostname without a scheme or path.
+	/// None collections mean the check did not complete.
+	pub async fn stack(&self, domain: &str) -> Result<Stack> {
+		self.stack_with_options(domain, None).await
+	}
+
+	/// Observe the same website with optional JSON formatting. Generic deep returns an empty object.
+	pub async fn stack_with_options(&self, domain: &str, opts: impl Into<Option<StackOptions>>) -> Result<Stack> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		if opts.pretty { push(&mut query, "pretty", Some("true".to_string())); }
+		self.get(&format!("/stack/{}", seg(domain)), query, None).await
 	}
 
 	/// Check whether a domain is registered. Deep adds registration dates, registrar, status and DNSSEC on paid plans.
@@ -2257,5 +2293,23 @@ mod transport_tests {
 		assert_eq!(retry_delay(0, Some(&future)), Duration::from_secs(5));
 		assert_eq!(retry_delay(0, Some(&past)), Duration::ZERO);
 		assert_eq!(retry_delay(0, Some("0")), Duration::ZERO);
+	}
+}
+
+#[cfg(test)]
+mod stack_defaults_tests {
+	use super::*;
+
+	#[test]
+	fn operation_deadlines_preserve_explicit_settings() {
+		let client = Client::new("fixture").unwrap();
+		assert_eq!(client.timeout_for("/stack/example.com"), Duration::from_secs(35));
+		assert_eq!(client.timeout_for("/domain/example.com"), Duration::from_secs(10));
+		assert_eq!(client.timeout_for("/stack-other/example.com"), Duration::from_secs(10));
+		for timeout in [Duration::from_secs(10), Duration::from_millis(1200), Duration::from_secs(45)] {
+			let client = Client::builder().api_key("fixture").timeout(timeout).build().unwrap();
+			assert_eq!(client.timeout_for("/stack/example.com"), timeout);
+			assert_eq!(client.timeout_for("/domain/example.com"), timeout);
+		}
 	}
 }

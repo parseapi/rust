@@ -102,6 +102,7 @@ parse.caller("+18004633339", None).await?;
 parse.hlr("+447712345678", None).await?;
 parse.dns("example.com", None).await?;
 parse.dns("_dmarc.example.com", DnsOptions::default().r#type("TXT")).await?;
+parse.stack("example.com").await?;
 parse.naics("541511").await?;
 parse.naics_search("coffee shop", NaicsSearchOptions::default().limit(5)).await?;
 parse.tariff("8471.30.01.00", TariffOptions::default().origin("DE").deep(true)).await?;
@@ -209,7 +210,7 @@ Transport or response-decoding failures return `Error::Transport`. Construction 
 
 ## Requests and retries
 
-Create one client and share it across tasks. Clones share the connection pool. Dropping a request future cancels its work, including any retry wait. The timeout defaults to 10 seconds per attempt. Use `tokio::time::timeout` to bound the whole call.
+Create one client and share it across tasks. Clones share the connection pool. Dropping a request future cancels its work, including any retry wait. The timeout defaults to 35 seconds for Stack and 10 seconds for other operations. Use `tokio::time::timeout` to bound the whole call.
 
 Ordinary lookups retry twice on network failures, 429, 500, 502, 503, and 504. Carrier, caller, and HLR calls use one attempt by default. Deep email, VAT, and address calls also use one attempt, reserving that behavior for address verification. Address deep currently returns an empty object. An explicit retry setting applies to every call, including metered operations. Additional attempts can be billed.
 
@@ -228,3 +229,17 @@ Requires Rust 1.88 or later and a Tokio runtime with time and I/O enabled. CI te
 [Full endpoint and field reference](https://parseapi.com/docs)
 
 BIN lookup accepts 6-11 digits as a string, including leading zeros. Spaces and hyphens are accepted. `prefix` is the actual longest match and can be shorter than the input. Unknown reference fields are null. `deep` adds an empty object on every plan.
+
+## Stack
+
+```rust
+let result = parse.stack("example.com").await?;
+```
+
+Pass a public hostname without a scheme, path, port or IP address. Stack returns the homepage URL and `checked_at` time, then eight technology arrays: `cms`, `servers`, `frameworks`, `ecommerce`, `analytics`, `chat`, `payments` and `hosting`. Each entry contains a `technology` code, name and nullable version. Multiple CMSs or servers remain separate entries. Empty arrays mean no matches in the checked pages. An unsuccessful check returns null arrays and a null `checked_at`.
+
+`scope` identifies `homepage` or `site` coverage. `pages` counts successfully checked HTML pages. `partial` is true for a homepage-only or incomplete bounded site check, false when the known in-scope candidates finished, and null when no check succeeded. False does not guarantee that every page on the website was discovered.
+
+The complete technology result is included in the core response. The generic `deep=true` option adds only an empty object and is unnecessary for Stack. Successful checks may be reused for up to 24 hours. `pretty` optionally formats the wire JSON. Each lookup uses one request and API version 2.0.0 selected by this client.
+
+Stack defaults to 35 seconds per attempt so a first scan has time to finish. Other lookups retain their 10-second default. An explicit client timeout takes precedence.
