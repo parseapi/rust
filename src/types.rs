@@ -275,10 +275,21 @@ pub struct PostalMetro {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct PostalLocality {
+	pub city: String,
+	pub state: String,
+	pub state_name: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
 pub struct Postal {
 	pub postal: String,
 	pub city: Option<String>,
 	pub city_local: Option<String>,
+	/// None is unknown. An empty list has no eligible choices. One choice does not imply city.
+	pub localities: Option<Vec<PostalLocality>>,
 	pub district: Option<String>,
 	pub district_name: Option<String>,
 	pub district_name_local: Option<String>,
