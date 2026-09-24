@@ -476,6 +476,55 @@ async fn does_not_retry_404() {
 }
 
 #[tokio::test]
+async fn card_rejects_invalid_input_before_dispatch_and_preserves_accepted_bytes() {
+    let server = TestServer::start(vec![(200, "{}"), (200, "{}"), (200, "{}")]);
+    let client = server.client();
+    for raw in ["4111111111111111".to_owned(), "4111-1111-1111-1111".into(), "12345".into(), "123456789012".into(), "１２３４５６".into(), "001\u{a0}234".into(), "001\u{200b}234".into(), "00%20234".into(), format!("{}001234", " ".repeat(59))] {
+        let error = client.card(&raw).await.unwrap_err();
+        assert_eq!(error.to_string(), "parseapi: Card requires a 6-11 digit prefix string.");
+    }
+    assert!(server.requests().is_empty());
+    for raw in [" \t00-1234\r\n".to_owned(), format!("{}001234", " ".repeat(58)), "12345678901".into()] {
+        client.card(&raw).await.unwrap();
+        let target = server.requests().last().unwrap().target.clone();
+        assert_eq!(percent_encoding::percent_decode_str(target.trim_start_matches("/card/")).decode_utf8().unwrap(), raw);
+    }
+}
+
+#[tokio::test]
+async fn long_retry_after_returns_original_error_promptly_with_raw_header() {
+    for header in ["60".to_owned(), "9".repeat(400), httpdate::fmt_http_date(std::time::SystemTime::now() + std::time::Duration::from_secs(60))] {
+        let server = TestServer::start_with_headers(vec![(429, r#"{"code":"rate_limited","message":"Later","request_id":"receipt"}"#, format!("Retry-After: {header}\r\n"))]);
+        let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
+        let error = tokio::time::timeout(std::time::Duration::from_secs(1), client.country("US")).await.expect("long waits must return promptly").unwrap_err();
+        match error { Error::Api { status, code, request_id, retry_after, .. } => {
+            assert_eq!(status, 429); assert_eq!(code, "rate_limited"); assert_eq!(request_id.as_deref(), Some("receipt")); assert_eq!(retry_after.as_deref(), Some(header.as_str()));
+        }, other => panic!("unexpected: {other}") }
+        assert_eq!(server.requests().len(), 1);
+    }
+}
+
+#[tokio::test]
+async fn dropping_request_during_retry_wait_stops_further_attempts() {
+    let server = TestServer::start_with_headers(vec![(503, "{}", "Retry-After: 0.1\r\n".into()), (200, "{}", String::new())]);
+    let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
+    assert!(tokio::time::timeout(std::time::Duration::from_millis(30), client.country("US")).await.is_err());
+    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+    assert_eq!(server.requests().len(), 1);
+}
+
+#[tokio::test]
+async fn retry_after_metadata_survives_exhaustion_and_invalid_headers_back_off() {
+    for header in ["0", "0.01", "invalid"] {
+        let server = TestServer::start_with_headers(vec![(503,"{}",format!("Retry-After: {header}\r\n")),(503,"{}",format!("Retry-After: {header}\r\n"))]);
+        let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
+        let error = client.country("US").await.unwrap_err();
+        assert!(matches!(error, Error::Api { retry_after: Some(value), .. } if value == header));
+        assert_eq!(server.requests().len(), 2);
+    }
+}
+
+#[tokio::test]
 async fn gives_up_after_retries() {
 	let rate_limited = r#"{"code":"rate_limited","message":"slow down"}"#;
 	let server = TestServer::start(vec![
@@ -829,26 +878,25 @@ fn naics_exclusions_and_match_preserve_older_responses() {
  assert_eq!(evidence.corrections[0].to, "software");
 }
 
-url_test!(url_bin, c => c.bin("001234", None), "/bin/001234");
-url_test!(url_bin_deep, c => c.bin("00 1234-56", BinOptions::default().deep(true)), "/bin/00%201234-56?deep=true");
+url_test!(url_card, c => c.card("001234"), "/card/001234");
+url_test!(url_card_separators, c => c.card("00 1234-56"), "/card/00%201234-56");
 
 #[tokio::test]
-async fn bin_preserves_prefix_null_false_and_empty_deep() {
+async fn card_preserves_prefix_null_false_and_tolerates_unknown_fields() {
 	let server = TestServer::start(vec![
 		(200, r#"{"bin":"00123456","prefix":"001234","country":null,"issuer":"Fixture Bank","brand":"future-brand","type":null,"prepaid":false,"deep":{},"future":true}"#),
 		(200, r#"{"bin":"000000","prefix":null,"country":null,"issuer":null,"brand":null,"type":null,"prepaid":null}"#),
 		(400, r#"{"code":"invalid_input","message":"Expected 6-11 digits"}"#),
 	]);
 	let client = server.client();
-	let known = client.bin("00123456", BinOptions::default().deep(true)).await.unwrap();
+	let known = client.card("00123456").await.unwrap();
 	assert_eq!(known.bin, "00123456");
 	assert_eq!(known.prefix.as_deref(), Some("001234"));
 	assert_eq!(known.prepaid, Some(false));
 	assert!(known.country.is_none());
-	assert_eq!(known.deep, Some(serde_json::json!({})));
-	let unknown = client.bin("000000", None).await.unwrap();
-	assert!(unknown.prefix.is_none() && unknown.prepaid.is_none() && unknown.deep.is_none());
-	assert!(client.bin("junk", None).await.is_err());
+	let unknown = client.card("000000").await.unwrap();
+	assert!(unknown.prefix.is_none() && unknown.prepaid.is_none());
+	assert!(client.card("junk").await.is_err());
 }
 
 // Reviewed ADP options remain one operation with one explicit deep query.

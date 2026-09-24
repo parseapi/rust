@@ -773,7 +773,7 @@ pub struct Mac {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct Bin {
+pub struct Card {
 	pub bin: String,
 	/// Actual longest matched prefix, which may be shorter than the input.
 	pub prefix: Option<String>,
@@ -783,7 +783,6 @@ pub struct Bin {
 	pub brand_name: Option<String>,
 	pub r#type: Option<String>,
 	pub prepaid: Option<bool>,
-	pub deep: Option<serde_json::Value>,
 }
 
 

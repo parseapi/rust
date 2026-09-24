@@ -89,7 +89,7 @@ parse.ip("8.8.8.8", IpOptions::default().deep(true)).await?;
 parse.email("hello@example.com", EmailOptions::default().deep(true)).await?;
 parse.vat("DE136695976", VatOptions::default().deep(true)).await?;
 parse.iban("DE89370400440532013000", None).await?;
-parse.bin("424242", None).await?;
+parse.card("424242").await?;
 parse.npi("1881018208", None).await?;
 parse.asn("AS13335").await?;
 parse.mac("00:1B:63:84:45:E6").await?;
@@ -199,7 +199,7 @@ Without `deep`, the response omits that key. When requested, it is an empty obje
 
 ## Errors
 
-Every non-2xx response returns `Error::Api` with `status`, `code`, `message`, `docs`, and `request_id`. Branch on `code`.
+Every non-2xx response returns `Error::Api` with `status`, `code`, `message`, `docs`, and `request_id`, plus nullable `retry_after` header metadata. Branch on `code`.
 
 ```rust
 match parse.city("atlantis", None).await {
@@ -224,13 +224,32 @@ let parse = parseapi::Client::builder()
     .build()?;
 ```
 
-`.retries(0)` disables all automatic retries. Both numeric and HTTP-date `Retry-After` values are honored, capped at five seconds. Redirects return an API error and are never followed.
+`.retries(0)` disables all automatic retries. Numeric and HTTP-date `Retry-After` values up to five seconds are honored. Longer server waits return the API error immediately, with the raw header in `retry_after`, so the application can schedule a later attempt. Missing or invalid headers use ordinary backoff. Redirects return an API error and are never followed.
 
 Requires Rust 1.88 or later and a Tokio runtime with time and I/O enabled. CI tests both the minimum and stable compiler, including a separate application's fresh dependency resolution.
 
 [Full endpoint and field reference](https://parseapi.com/docs)
 
-BIN lookup accepts 6-11 digits as a string, including leading zeros. Spaces and hyphens are accepted. `prefix` is the actual longest match and can be shorter than the input. Unknown reference fields are null. `deep` adds an empty object on every plan.
+## Card
+
+Card looks up issuer, network and type from a BIN/IIN. It accepts 6-11 digits as a string, including leading zeros. Spaces and hyphens are accepted. `prefix` is the actual longest match and can be shorter than the input. Unknown reference fields are null. Invalid prefixes and full card numbers are rejected locally before a request is sent. Accepted input is sent unchanged.
+
+Compare `prefix` with the normalized response `bin`. A matched row can still have all metadata unknown. Keep unknown prepaid status separate from true and false. Place it inside the async `main` above, before `Ok(())`.
+
+```rust
+let card = parse.card("4242 42-99").await?;
+let match_kind = match card.prefix.as_deref() {
+    None => "No reference match",
+    Some(prefix) if prefix == card.bin => "Exact prefix match",
+    Some(_) => "Broader prefix match",
+};
+let prepaid = match card.prepaid {
+    None => "Unknown prepaid status",
+    Some(true) => "Prepaid",
+    Some(false) => "Not prepaid",
+};
+println!("{match_kind}, {prepaid}");
+```
 
 ## Stack
 

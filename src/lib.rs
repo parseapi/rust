@@ -48,6 +48,8 @@ pub enum Error {
 		message: String,
 		docs: Option<String>,
 		request_id: Option<String>,
+		/// Raw Retry-After response header, when supplied.
+		retry_after: Option<String>,
 	},
 	/// Network failure after retries (DNS, timeout, connect).
 	Transport(Box<dyn std::error::Error + Send + Sync>),
@@ -466,20 +468,6 @@ impl VatOptions {
 		self
 	}
 	/// Sets the `deep` query option.
-	pub fn deep(mut self, value: bool) -> Self {
-		self.deep = value;
-		self
-	}
-}
-
-/// Configures `bin`. Deep requests an empty object on every plan.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct BinOptions {
-	pub deep: bool,
-}
-
-impl BinOptions {
 	pub fn deep(mut self, value: bool) -> Self {
 		self.deep = value;
 		self
@@ -1285,22 +1273,22 @@ fn jitter() -> f64 {
 	f64::from(nanos % 1000) / 1000.0
 }
 
-fn retry_delay(attempt: u32, retry_after: Option<&str>) -> Duration {
-	if let Some(seconds) = retry_after.and_then(|value| value.parse::<f64>().ok()) {
-		if seconds >= 0.0 {
-			return Duration::from_millis((seconds * 1000.0).min(RETRY_AFTER_CAP_MS) as u64);
+fn retry_delay(attempt: u32, retry_after: Option<&str>) -> Option<Duration> {
+	if let Some(raw) = retry_after {
+		let parts: Vec<_> = raw.trim().split('.').collect();
+		if parts.len() <= 2 && parts.iter().all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit())) {
+			let seconds = raw.trim().parse::<f64>().unwrap_or(f64::INFINITY);
+			return (seconds.is_finite() && seconds <= 5.0).then(|| Duration::from_nanos((seconds * 1_000_000_000.0).ceil() as u64));
 		}
 	}
 	if let Some(at) = retry_after.and_then(|value| httpdate::parse_http_date(value).ok()) {
-		return at
-			.duration_since(std::time::SystemTime::now())
-			.unwrap_or_default()
-			.min(Duration::from_secs(5));
+		let wait = at.duration_since(std::time::SystemTime::now()).unwrap_or_default();
+		return (wait <= Duration::from_secs(5)).then_some(wait);
 	}
-	Duration::from_millis((jitter() * 250.0 * 2_f64.powi(attempt as i32)) as u64)
+	Some(Duration::from_millis((jitter() * (250.0 * 2_f64.powi(attempt.min(5) as i32)).min(RETRY_AFTER_CAP_MS)) as u64))
 }
 
-fn build_error(status: u16, body: &str) -> Error {
+fn build_error(status: u16, body: &str, retry_after: Option<String>) -> Error {
 	let parsed: serde_json::Value = serde_json::from_str(body).unwrap_or_default();
 	let field = |name: &str| parsed.get(name).and_then(|v| v.as_str()).map(str::to_owned);
 	Error::Api {
@@ -1309,6 +1297,7 @@ fn build_error(status: u16, body: &str) -> Error {
 		message: field("message").unwrap_or_else(|| format!("Request failed with status {status}")),
 		docs: field("docs"),
 		request_id: field("request_id"),
+		retry_after,
 	}
 }
 
@@ -1388,7 +1377,7 @@ impl Client {
 				Ok(response) => response,
 				Err(err) => {
 					if attempt < retries {
-						tokio::time::sleep(retry_delay(attempt, None)).await;
+						tokio::time::sleep(retry_delay(attempt, None).expect("backoff fits wait budget")).await;
 						attempt += 1;
 						continue;
 					}
@@ -1404,19 +1393,17 @@ impl Client {
 					.map_err(|err| Error::Transport(Box::new(err)));
 			}
 
+			let retry_after = response.headers().get("retry-after").and_then(|value| value.to_str().ok()).map(str::to_owned);
 			if RETRY_STATUS.contains(&status.as_u16()) && attempt < retries {
-				let retry_after = response
-					.headers()
-					.get("retry-after")
-					.and_then(|value| value.to_str().ok())
-					.map(str::to_owned);
-				tokio::time::sleep(retry_delay(attempt, retry_after.as_deref())).await;
-				attempt += 1;
-				continue;
+				if let Some(wait) = retry_delay(attempt, retry_after.as_deref()) {
+					tokio::time::sleep(wait).await;
+					attempt += 1;
+					continue;
+				}
 			}
 
 			let body = response.text().await.unwrap_or_default();
-			return Err(build_error(status.as_u16(), &body));
+			return Err(build_error(status.as_u16(), &body, retry_after));
 		}
 	}
 
@@ -1861,11 +1848,15 @@ impl Client {
 	}
 
 	/// Look up a 6-11 digit card prefix. Preserve leading zeros in the string.
-	pub async fn bin(&self, bin: &str, opts: impl Into<Option<BinOptions>>) -> Result<Bin> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push_deep(&mut query, opts.deep);
-		self.get(&format!("/bin/{}", seg(bin)), query, None).await
+	pub async fn card(&self, bin: &str) -> Result<Card> {
+		if bin.len() > 64 {
+			return Err(Error::Config("Card requires a 6-11 digit prefix string.".into()));
+		}
+		let digits: Vec<_> = bin.bytes().filter(|byte| !b" \t\r\n-".contains(byte)).collect();
+		if !(6..=11).contains(&digits.len()) || !digits.iter().all(u8::is_ascii_digit) {
+			return Err(Error::Config("Card requires a 6-11 digit prefix string.".into()));
+		}
+		self.get(&format!("/card/{}", seg(bin)), Query::new(), None).await
 	}
 
 
@@ -2290,9 +2281,13 @@ mod transport_tests {
 			httpdate::fmt_http_date(std::time::SystemTime::now() + Duration::from_secs(3600));
 		let past =
 			httpdate::fmt_http_date(std::time::SystemTime::now() - Duration::from_secs(3600));
-		assert_eq!(retry_delay(0, Some(&future)), Duration::from_secs(5));
-		assert_eq!(retry_delay(0, Some(&past)), Duration::ZERO);
-		assert_eq!(retry_delay(0, Some("0")), Duration::ZERO);
+		assert_eq!(retry_delay(0, Some(&future)), None);
+		assert_eq!(retry_delay(0, Some(&past)), Some(Duration::ZERO));
+		assert_eq!(retry_delay(0, Some("0")), Some(Duration::ZERO));
+		assert_eq!(retry_delay(0, Some("0.01")), Some(Duration::from_millis(10)));
+		assert_eq!(retry_delay(0, Some("0.0000000001")), Some(Duration::from_nanos(1)));
+		assert_eq!(retry_delay(0, Some(&"9".repeat(400))), None);
+		assert!(retry_delay(999, Some("NaN")).unwrap() <= Duration::from_secs(5));
 	}
 }
 
