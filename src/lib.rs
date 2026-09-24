@@ -693,10 +693,19 @@ impl VinOptions {
 	}
 }
 
+fn tariff_selection(edition: Option<&str>, date: Option<&str>, got_edition: Option<&str>, got_date: Option<&str>) -> Result<()> {
+	if (edition.is_some() || date.is_some()) && (!got_edition.is_some_and(|value| value.len() == 64 && value.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))) || (edition.is_some() && got_edition != edition) || got_date != date) {
+		return Err(Error::Api { status: 0, code: "tariff_selection_mismatch".into(), message: "Tariff response did not confirm the requested edition/date. The server may not support this selection.".into(), docs: None, request_id: None });
+	}
+	Ok(())
+}
+
 /// Configures `tariff`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct TariffOptions {
+	pub edition: Option<String>,
+	pub date: Option<String>,
 	/// Add units and the special and other schedule columns on paid plans.
 	pub deep: bool,
 	/// ISO 3166-1 alpha-2 origin. With paid deep, resolves country-specific measures. Optional for schedule detail.
@@ -704,6 +713,8 @@ pub struct TariffOptions {
 }
 
 impl TariffOptions {
+	pub fn edition(mut self, value: impl Into<String>) -> Self { self.edition = Some(value.into()); self }
+	pub fn date(mut self, value: impl Into<String>) -> Self { self.date = Some(value.into()); self }
 	/// Add units and the special and other schedule columns on paid plans.
 	pub fn deep(mut self, value: bool) -> Self {
 		self.deep = value;
@@ -714,6 +725,18 @@ impl TariffOptions {
 		self.origin = Some(value.into());
 		self
 	}
+}
+
+/// Edition and date selection for tariff description search.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct TariffSearchOptions {
+	pub edition: Option<String>,
+	pub date: Option<String>,
+}
+impl TariffSearchOptions {
+	pub fn edition(mut self, value: impl Into<String>) -> Self { self.edition = Some(value.into()); self }
+	pub fn date(mut self, value: impl Into<String>) -> Self { self.date = Some(value.into()); self }
 }
 
 /// Configures `currency_rate`. Omitted fields use API defaults.
@@ -2018,15 +2041,27 @@ impl Client {
 		let mut query = Query::new();
 		push_deep(&mut query, opts.deep);
 		push(&mut query, "origin", opts.origin);
-		self.get(&format!("/tariff/{}", seg(code)), query, None)
-			.await
+		push(&mut query, "edition", opts.edition.clone());
+		push(&mut query, "date", opts.date.clone());
+		let result: Tariff = self.get(&format!("/tariff/{}", seg(code)), query, None).await?;
+		tariff_selection(opts.edition.as_deref(), opts.date.as_deref(), result.edition.as_deref(), result.date.as_deref())?;
+		Ok(result)
 	}
 
 	/// Calls `/tariff`.
 	pub async fn tariff_search(&self, query: &str) -> Result<TariffSearch> {
+		self.tariff_search_with_options(query, None).await
+	}
+
+	pub async fn tariff_search_with_options(&self, query: &str, opts: impl Into<Option<TariffSearchOptions>>) -> Result<TariffSearch> {
+		let opts = opts.into().unwrap_or_default();
 		let mut params = Query::new();
 		push(&mut params, "q", Some(query.to_string()));
-		self.get("/tariff", params, None).await
+		push(&mut params, "edition", opts.edition.clone());
+		push(&mut params, "date", opts.date.clone());
+		let result: TariffSearch = self.get("/tariff", params, None).await?;
+		tariff_selection(opts.edition.as_deref(), opts.date.as_deref(), result.edition.as_deref(), result.date.as_deref())?;
+		Ok(result)
 	}
 
 	/// Calls `/currency/{code}`.

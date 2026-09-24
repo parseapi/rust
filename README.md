@@ -17,7 +17,7 @@ Get a key at [parseapi.com](https://parseapi.com). `Client::from_env()` reads `P
 
 ## API versions
 
-Version 1.6.0 sends `Parse-Version: 2.0.0` on every request, including retries. Its response types match API `2.0.0`, and the client selects that contract automatically. No extra constructor setting or key change is needed. This behavior requires the matching API request-version release.
+Version 2.0.0 sends `Parse-Version: 2.0.0` on every request, including retries. Its response types match API `2.0.0`, and the client selects that contract automatically. No extra constructor setting or key change is needed. This behavior requires the matching API request-version release.
 
 The team setting in [Dashboard API version](https://parseapi.com/dashboard/versions) is the default for requests without a version header. This SDK's header takes precedence without changing that saved default. Existing published packages keep their documented behavior.
 
@@ -205,6 +205,12 @@ parse.weather(40.7128, -74.006, WeatherOptions::default().deep(true).date("2026-
 ```
 
 Tariff starts with the general schedule line. Paid deep adds units and the special and other schedule columns. An optional origin then resolves country-specific measures. The three calls below show those successive choices. Without origin, schedule detail is still returned and origin-dependent fields are null. A null effective rate is not a zero rate.
+
+Tariff lookup and search accept an optional `edition` fingerprint and `date` (`YYYY-MM-DD`). The edition pins exact immutable source bytes. A date is accepted only when verified source coverage exists. An edition without a date returns undated schedule context (`date: null`). Default requests use today. Paid detail exposes an open-string `reason` when `effective_rate` is null, including `incomplete_coverage`. A null rate never means zero. Explicit selections fail with `tariff_selection_mismatch` if an older server ignores the requested scope.
+
+Origin means where the goods originate, not where they ship from. The effective rate covers matched stored schedule measures only. It is not complete duty or landed cost.
+
+Codes contain 4, 6, 8 or 10 ASCII digits; dots and whitespace are optional. Search returns up to 20 description matches with parent `lineage` so a result named "Other" has context. Search is not product classification. In deep, `measures: null` means origin-dependent measures were not resolved. `measures: []` means the resolved lookup found none.
 
 ```rust
 parse.tariff("8471.30.01.00", None).await?;

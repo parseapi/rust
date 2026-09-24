@@ -525,13 +525,16 @@ pub struct TariffMeasure {
 #[serde(default)]
 #[non_exhaustive]
 pub struct TariffDeep {
+	/// Open-string explanation when effective_rate is None.
+	pub reason: Option<String>,
 	/// The origin country the measures were resolved for.
 	pub origin: Option<String>,
-	/// Composed ad valorem percent. None when the components do not compose cleanly.
+	/// Composed ad valorem percent for matched stored measures only, not complete duty
+	/// or landed cost. None when the components do not compose cleanly.
 	pub effective_rate: Option<f64>,
-	/// Every Chapter 99 tariff measure that applies to this code from this origin.
-	#[serde(default, deserialize_with = "null_default")]
-	pub measures: Vec<TariffMeasure>,
+	/// Matching stored Chapter 99 measures for this code and goods origin. None means unresolved;
+	/// an empty list means the resolved lookup found no matching measures.
+	pub measures: Option<Vec<TariffMeasure>>,
 	/// Units of quantity (No., kg).
 	pub units: Option<Vec<String>>,
 	/// Column 1 special rate, verbatim.
@@ -544,6 +547,9 @@ pub struct TariffDeep {
 #[serde(default)]
 #[non_exhaustive]
 pub struct Tariff {
+	/// Exact edition and answering date. Older servers may omit both.
+	pub edition: Option<String>,
+	pub date: Option<String>,
 	/// Normalized code with dots (8471.30.01.00).
 	pub hts: String,
 	/// The schedule line verbatim.
@@ -565,12 +571,17 @@ pub struct TariffSearchHit {
 	pub hts: String,
 	pub description: String,
 	pub general: Option<String>,
+	/// Parent descriptions, outermost first. Older responses may omit this context.
+	pub lineage: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
 pub struct TariffSearch {
+	/// Exact edition and answering date. Older servers may omit both.
+	pub edition: Option<String>,
+	pub date: Option<String>,
 	pub q: String,
 	pub revision: String,
 	/// Up to 20 tariff lines, best match first.

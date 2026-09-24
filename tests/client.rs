@@ -1284,3 +1284,47 @@ async fn time_locations_rich_catalog_and_seasons() {
  assert_eq!(server.requests().len(),2);
  for raw in ["{}",r#"{"deep":{}}"#,r#"{"deep":{"season":null}}"#] { let old:Time=serde_json::from_str(raw).unwrap(); assert!(old.location.is_none()); }
 }
+
+#[tokio::test]
+async fn tariff_edition_date_serialization() {
+	let server = TestServer::start(vec![(200, r#"{"edition":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","date":"2026-09-15"}"#), (200, r#"{"edition":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","date":"2026-09-15"}"#), (200, r#"{"edition":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","date":null}"#)]);
+	let client = server.client();
+	let edition = "a".repeat(64);
+	client.tariff("0101", TariffOptions::default().deep(true).origin("CA").edition(&edition).date("2026-09-15")).await.unwrap();
+	client.tariff_search_with_options("horses", TariffSearchOptions::default().edition(&edition).date("2026-09-15")).await.unwrap();
+	client.tariff("0101", TariffOptions::default().edition(&edition)).await.unwrap();
+	let requests = server.requests.lock().unwrap();
+	assert_eq!(requests[0].target, format!("/tariff/0101?deep=true&origin=CA&edition={edition}&date=2026-09-15"));
+	assert_eq!(requests[1].target, format!("/tariff?q=horses&edition={edition}&date=2026-09-15"));
+	assert_eq!(requests[2].target, format!("/tariff/0101?edition={edition}"));
+}
+
+#[tokio::test]
+async fn tariff_rejects_ignored_selection() {
+	let server = TestServer::start(vec![(200, "{}"), (200, "{}")]);
+	let client = server.client();
+	let err = client.tariff("0101", TariffOptions::default().edition("a".repeat(64))).await.unwrap_err();
+	assert_eq!(err.code(), Some("tariff_selection_mismatch"));
+	assert_eq!(err.status(), Some(0));
+	let err = client.tariff_search_with_options("horses", TariffSearchOptions::default().date("2026-09-15")).await.unwrap_err();
+	assert_eq!(err.code(), Some("tariff_selection_mismatch"));
+}
+
+#[tokio::test]
+async fn tariff_date_selection_rejects_invalid_returned_edition() {
+	for body in [
+		r#"{"edition":"legacy","date":"2026-09-15"}"#,
+		r#"{"edition":"","date":"2026-09-15"}"#,
+		r#"{"edition":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","date":"2026-09-15"}"#,
+		r#"{"edition":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n","date":"2026-09-15"}"#,
+	] {
+		let server = TestServer::start(vec![(200, body), (200, body)]);
+		let client = server.client();
+		let err = client.tariff("0101", TariffOptions::default().date("2026-09-15")).await.unwrap_err();
+		assert_eq!(err.code(), Some("tariff_selection_mismatch"));
+		assert_eq!(err.status(), Some(0));
+		let err = client.tariff_search_with_options("horses", TariffSearchOptions::default().date("2026-09-15")).await.unwrap_err();
+		assert_eq!(err.code(), Some("tariff_selection_mismatch"));
+		assert_eq!(err.status(), Some(0));
+	}
+}
