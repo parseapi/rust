@@ -12,6 +12,8 @@ fn env_lock() -> &'static Mutex<()> {
 
 #[derive(Debug, Clone)]
 struct Recorded {
+	method: String,
+	body: String,
 	target: String,
 	headers: HashMap<String, String>,
 }
@@ -54,8 +56,10 @@ impl TestServer {
 					}
 				}
 				let text = String::from_utf8_lossy(&raw);
-				let mut lines = text.split("\r\n");
+				let head_end = raw.windows(4).position(|w| w == b"\r\n\r\n").unwrap() + 4;
+				let mut lines = text[..head_end].split("\r\n");
 				let request_line = lines.next().unwrap_or_default();
+				let method = request_line.split(' ').next().unwrap_or_default().to_owned();
 				let target = request_line
 					.split(' ')
 					.nth(1)
@@ -68,7 +72,16 @@ impl TestServer {
 							.insert(name.trim().to_lowercase(), value.trim().to_string());
 					}
 				}
+				let length = request_headers.get("content-length").and_then(|v| v.parse::<usize>().ok()).unwrap_or(0);
+				while raw.len() < head_end + length {
+					let n = stream.read(&mut buf).unwrap();
+					if n == 0 { break; }
+					raw.extend_from_slice(&buf[..n]);
+				}
+				let request_body = String::from_utf8(raw[head_end..].to_vec()).unwrap();
 				recorded.lock().unwrap().push(Recorded {
+					method,
+					body: request_body,
 					target,
 					headers: request_headers,
 				});
@@ -208,14 +221,32 @@ url_test!(url_email, c => c.email("a@b.com", None), "/email/a%40b.com");
 url_test!(url_vat, c => c.vat("DE136695976", None), "/vat/DE136695976");
 url_test!(
 	url_iban,
-	c => c.iban("DE89370400440532013000", None),
-	"/iban/DE89370400440532013000"
+	c => c.bank("DE89370400440532013000", None),
+	"/bank"
 );
 url_test!(
 	url_iban_country,
-	c => c.iban("89370400440532013000", parseapi::IbanOptions::default().country("DE")),
-	"/iban/89370400440532013000?country=DE"
+	c => c.bank("89370400440532013000", parseapi::BankOptions::default().country("DE")),
+	"/bank"
 );
+
+#[tokio::test]
+async fn bank_preserves_raw_input_for_server_validation() {
+	for (input, _encoded) in [
+		("DE89.370400440532013000", "DE89.370400440532013000"),
+		("\u{feff}DE89370400440532013000", "%EF%BB%BFDE89370400440532013000"),
+		("DE89\u{00a0}370400440532013000", "DE89%C2%A0370400440532013000"),
+		("DE89%20370400440532013000", "DE89%2520370400440532013000"),
+	] {
+		let server = TestServer::start(vec![(200, r#"{"valid":false}"#)]);
+		server.client().bank(input, None).await.unwrap();
+		let requests = server.requests();
+		assert_eq!(requests[0].target, "/bank");
+		assert_eq!(requests[0].method, "POST");
+		assert_eq!(serde_json::from_str::<serde_json::Value>(&requests[0].body).unwrap()["iban"], input);
+		assert_eq!(requests[0].headers.get("parse-version").map(String::as_str), Some("2.0.0"));
+	}
+}
 url_test!(url_npi, c => c.npi("1881018208", None), "/npi/1881018208");
 url_test!(
 	url_npi_deep,
@@ -1000,9 +1031,9 @@ async fn adp_postal_distance_option() {
 async fn adp_iban_option() {
  let server=TestServer::start(vec![(200,"{}")]);
  let client=server.client();
- let _=client.iban("DE89370400440532013000", IbanOptions::default().deep(true)).await;
+ let _=client.bank("DE89370400440532013000", BankOptions::default().deep(true)).await;
  assert_eq!(server.requests().len(),1);
- assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+ assert_eq!(serde_json::from_str::<serde_json::Value>(&server.requests()[0].body).unwrap()["deep"], true);
 }
 #[tokio::test]
 async fn adp_carrier_option() {
@@ -1263,4 +1294,29 @@ async fn stack_preserves_site_inventory_and_request_options() {
   client.stack("example.com").await.unwrap();
   assert_eq!(server.requests()[1].target, "/stack/example.com");
  }
+}
+
+#[tokio::test]
+async fn bank_post_context_domestic_requirements_and_retry_keep_raw_data_out_of_urls() {
+	let server = TestServer::start(vec![(503,r#"{"code":"unavailable"}"#),(200,r#"{"valid":true,"deep":{"directory":{"edition":"future","country":"DE","match":"future_grain"}}}"#)]);
+	let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
+	let result = client.bank("89%20\u{feff}00", BankOptions::default().country("DE").deep(true)).await.unwrap();
+	assert_eq!(result.deep.unwrap().directory.unwrap().r#match.as_deref(),Some("future_grain"));
+	for request in server.requests() {
+		assert_eq!(request.method,"POST"); assert_eq!(request.target,"/bank");
+		assert_eq!(request.headers.get("content-type").map(String::as_str),Some("application/json"));
+		assert_eq!(serde_json::from_str::<serde_json::Value>(&request.body).unwrap(),serde_json::json!({"iban":"89%20\u{feff}00","country":"DE","deep":true}));
+	}
+	let server = TestServer::start(vec![(200,r#"{"valid":false,"routing":null,"account":null,"checks":{"account_checksum":"future_status"},"issues":[{"field":"account","code":"future_issue"}]}"#)]);
+	let result = server.client().bank_us_ach(BankUsAchInput::new("021 000021","00a-B %20\u{feff}")).await.unwrap();
+	assert!(result.routing.is_none()); assert_eq!(result.checks.unwrap().account_checksum.as_deref(),Some("future_status"));
+	let request = &server.requests()[0];
+	assert_eq!(request.target,"/bank"); assert_eq!(request.method,"POST");
+	assert_eq!(serde_json::from_str::<serde_json::Value>(&request.body).unwrap(),serde_json::json!({"format":"us_ach","country":"US","routing":"021 000021","account":"00a-B %20\u{feff}"}));
+	let server = TestServer::start(vec![(200,r#"{"country":"GB","format":"uk_domestic","supported":false,"fields":[],"checks":{},"limitations":["Unsupported"]}"#)]);
+	let result=server.client().bank_requirements("GB",Some("uk_domestic")).await.unwrap();
+	assert!(!result.supported); assert!(result.fields.is_empty());
+	assert_eq!(server.requests()[0].target,"/bank/requirements?country=GB&format=uk_domestic");
+	assert_eq!(server.requests()[0].method,"GET");
+	assert!(server.requests()[0].body.is_empty());
 }

@@ -93,8 +93,8 @@ async fn frozen_consumer_calls(client: &Client) -> Result<()> {
 				.deep(true),
 		)
 		.await?;
-	let _: Iban = client
-		.iban("example", IbanOptions::default().country("example"))
+	let _: Bank = client
+		.bank("example", BankOptions::default().country("example"))
 		.await?;
 	let _: Npi = client
 		.npi("example", NpiOptions::default().deep(true))

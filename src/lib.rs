@@ -474,22 +474,35 @@ impl VatOptions {
 	}
 }
 
-/// Configures `iban`. Omitted fields use API defaults.
+/// Configures `bank`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct IbanOptions {
+pub struct BankOptions {
 	pub country: Option<String>,
 	pub deep: bool,
 }
 
-impl IbanOptions {
-	/// Sets the `country` query option.
+impl BankOptions {
+	/// Sets the `country` body option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
 		self
 	}
 	/// Requests optional detail from the same lookup.
 	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
+}
+
+/// US ACH collection input. Preserve account text and leading zeros.
+#[derive(Clone)]
+#[non_exhaustive]
+pub struct BankUsAchInput {
+	pub routing: String,
+	pub account: String,
+}
+impl BankUsAchInput {
+	pub fn new(routing: impl Into<String>, account: impl Into<String>) -> Self {
+		Self { routing: routing.into(), account: account.into() }
+	}
 }
 
 /// Configures `name_with_options`. Country is an ISO2 gender context.
@@ -1354,6 +1367,14 @@ impl Client {
 		query: Query,
 		ua: Option<&str>,
 	) -> Result<T> {
+		self.request(path, query, ua, None).await
+	}
+
+	async fn post<T: DeserializeOwned>(&self, path: &str, body: serde_json::Value) -> Result<T> {
+		self.request(path, Query::new(), None, Some(body)).await
+	}
+
+	async fn request<T: DeserializeOwned>(&self, path: &str, query: Query, ua: Option<&str>, body: Option<serde_json::Value>) -> Result<T> {
 		let retries = if !self.retries_explicit && metered_request(path, &query) {
 			0
 		} else {
@@ -1364,11 +1385,12 @@ impl Client {
 		loop {
 			let mut request = self
 				.http
-				.get(&url)
+				.request(if body.is_some() { reqwest::Method::POST } else { reqwest::Method::GET }, &url)
 				.header("X-API-Key", &self.api_key)
 				.header("Parse-Version", API_VERSION)
 				.header(reqwest::header::USER_AGENT, ua.unwrap_or(USER_AGENT))
 				.timeout(self.timeout_for(path));
+			if let Some(body) = &body { request = request.json(body); }
 			if !query.is_empty() {
 				request = request.query(&query);
 			}
@@ -1727,13 +1749,26 @@ impl Client {
 			.await
 	}
 
-	/// Calls `/iban/{iban}`.
-	pub async fn iban(&self, iban: &str, opts: impl Into<Option<IbanOptions>>) -> Result<Iban> {
+	/// Validate an IBAN using a JSON body; raw input is preserved.
+	pub async fn bank(&self, iban: &str, opts: impl Into<Option<BankOptions>>) -> Result<Bank> {
 		let opts = opts.into().unwrap_or_default();
+		let mut body = serde_json::json!({"iban": iban});
+		if let Some(country) = opts.country { body["country"] = country.into(); }
+		if opts.deep { body["deep"] = true.into(); }
+		self.post("/bank", body).await
+	}
+
+	/// Check the supported US ACH format, not account existence or ACH eligibility.
+	pub async fn bank_us_ach(&self, input: BankUsAchInput) -> Result<BankUsAch> {
+		self.post("/bank", serde_json::json!({"format":"us_ach", "country":"US", "routing":input.routing, "account":input.account})).await
+	}
+
+	/// Describe required fields for a country/format; omitted format selects IBAN.
+	pub async fn bank_requirements(&self, country: &str, format: Option<&str>) -> Result<BankRequirements> {
 		let mut query = Query::new();
-		push(&mut query, "country", opts.country);
-		push_deep(&mut query, opts.deep);
-		self.get(&format!("/iban/{}", seg(iban)), query, None).await
+		query.push(("country", country.to_owned()));
+		if let Some(format) = format { query.push(("format", format.to_owned())); }
+		self.get("/bank/requirements", query, None).await
 	}
 
 	/// Calls `/npi/{npi}`.

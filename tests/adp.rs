@@ -32,11 +32,11 @@ fn adp_models_decode_absent_locked_and_populated_depth() {
  assert!(rich.deep.is_some());
  let rich: Postal = serde_json::from_str(r#"{"postal":"28202","country":"US","deep":{"metros":[],"water_area":0.25,"tax_rate":0}}"#).unwrap();
  assert!(rich.deep.is_some());
- let plain: Iban = serde_json::from_str(r#"{"iban":"DE89370400440532013000","valid":true}"#).unwrap();
+ let plain: Bank = serde_json::from_str(r#"{"iban":"DE89370400440532013000","valid":true}"#).unwrap();
  assert!(plain.deep.is_none());
- let rich: Iban = serde_json::from_str(r#"{"iban":"DE89370400440532013000","valid":true,"deep":{}}"#).unwrap();
+ let rich: Bank = serde_json::from_str(r#"{"iban":"DE89370400440532013000","valid":true,"deep":{}}"#).unwrap();
  assert!(rich.deep.is_some());
- let rich: Iban = serde_json::from_str(r#"{"iban":"DE89370400440532013000","valid":true,"deep":{"checksum":"89","branch":null,"account":"0532013000"}}"#).unwrap();
+ let rich: Bank = serde_json::from_str(r#"{"iban":"DE89370400440532013000","valid":true,"deep":{"checksum":"89","branch":null,"account":"0532013000"}}"#).unwrap();
  assert!(rich.deep.is_some());
  let plain: Npi = serde_json::from_str(r#"{"npi":"1881018208","valid":true,"excluded":true,"credential":"MD","state_name":"Minnesota"}"#).unwrap();
  assert!(plain.deep.is_none());

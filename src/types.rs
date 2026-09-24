@@ -419,7 +419,7 @@ pub struct Vat {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct Iban {
+pub struct Bank {
 	pub iban: Option<String>,
 	pub valid: bool,
 	pub country: Option<String>,
@@ -431,7 +431,94 @@ pub struct Iban {
 	pub bank_name: Option<String>,
 	/// BIC from that same directory. None when unsourced or missing.
 	pub bic: Option<String>,
-	pub deep: Option<IbanDeep>,
+	/// Performed IBAN checks; absent on older responses. Statuses are open strings.
+	pub checks: Option<BankChecks>,
+	/// Lookup findings, separate from HTTP errors. Empty when applicable checks pass.
+	pub issues: Option<Vec<BankIssue>>,
+	pub deep: Option<BankDeep>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankChecks {
+	pub input: Option<String>,
+	pub country: Option<String>,
+	pub length: Option<String>,
+	pub structure: Option<String>,
+	pub checksum: Option<String>,
+	pub national: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankIssue {
+	pub field: Option<String>,
+	pub code: Option<String>,
+	pub message: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankDirectory {
+	pub edition: Option<String>,
+	pub country: Option<String>,
+	pub r#match: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankUsAch {
+	pub format: Option<String>,
+	pub country: Option<String>,
+	pub routing: Option<String>,
+	pub account: Option<String>,
+	pub valid: bool,
+	pub bank_name: Option<String>,
+	pub checks: Option<BankUsAchChecks>,
+	pub issues: Option<Vec<BankIssue>>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankUsAchChecks {
+	pub routing_format: Option<String>,
+	pub routing_checksum: Option<String>,
+	pub account_format: Option<String>,
+	pub account_checksum: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankRequirements {
+	pub country: String,
+	pub format: String,
+	pub supported: bool,
+	pub fields: Vec<BankRequirementField>,
+	pub checks: std::collections::HashMap<String, String>,
+	pub limitations: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankRequirementField {
+	pub key: String,
+	pub label: String,
+	pub required: bool,
+	pub r#type: String,
+	pub length: Option<u32>,
+	pub min_length: Option<u32>,
+	pub max_length: Option<u32>,
+	pub max_input_length: Option<u32>,
+	pub length_unit: Option<String>,
+	pub pattern: Option<String>,
+	pub normalization: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1641,7 +1728,9 @@ pub struct PostalDeep {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct IbanDeep {
+pub struct BankDeep {
+	/// Directory edition and match grain, when available. Match is an open string.
+	pub directory: Option<BankDirectory>,
 	pub checksum: Option<String>,
 	/// Branch identifier when that country has one.
 	pub branch: Option<String>,

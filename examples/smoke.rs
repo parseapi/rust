@@ -248,15 +248,15 @@ async fn main() {
 		if r.bin == "000000" { None } else { Some("BIN echo mismatch".into()) }
 	});
 	s.ok(
-		"iban",
-		parse.iban("DE89370400440532013000", None).await,
+		"bank",
+		parse.bank("DE89370400440532013000", None).await,
 		|r| {
 			(r.valid && r.country.as_deref() == Some("DE") && r.bank.as_deref() == Some("37040044"))
 				.then_some(None)
 				.unwrap_or(Some("not valid DE".into()))
 		},
 	);
-	s.ok("iban junk", parse.iban("hello", None).await, |r| {
+	s.ok("bank junk", parse.bank("hello", None).await, |r| {
 		(!r.valid)
 			.then_some(None)
 			.unwrap_or(Some("expected invalid".into()))
