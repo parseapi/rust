@@ -741,14 +741,38 @@ impl CurrencyRateOptions {
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct TimeOptions {
+	pub ip: Option<String>,
+	pub city: Option<String>,
+	pub country: Option<String>,
+	pub state: Option<String>,
+	pub iata: Option<String>,
+	pub icao: Option<String>,
+	pub unlocode: Option<String>,
+	pub address: Option<String>,
+
 	pub at: Option<String>,
 	pub to: Option<String>,
+	/// One to ten destination zones, preserving order and duplicates. Mutually exclusive with to.
+	pub targets: Option<Vec<String>>,
+	/// Offsetless conversion policy at clock changes: compatible (default), earlier, later, or reject.
+	pub disambiguation: Option<String>,
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
 }
 
 impl TimeOptions {
+	pub fn ip(mut self, value: impl Into<String>) -> Self { self.ip = Some(value.into()); self }
+	pub fn city(mut self, value: impl Into<String>) -> Self { self.city = Some(value.into()); self }
+	pub fn country(mut self, value: impl Into<String>) -> Self { self.country = Some(value.into()); self }
+	pub fn state(mut self, value: impl Into<String>) -> Self { self.state = Some(value.into()); self }
+	pub fn iata(mut self, value: impl Into<String>) -> Self { self.iata = Some(value.into()); self }
+	pub fn icao(mut self, value: impl Into<String>) -> Self { self.icao = Some(value.into()); self }
+	pub fn unlocode(mut self, value: impl Into<String>) -> Self { self.unlocode = Some(value.into()); self }
+	pub fn address(mut self, value: impl Into<String>) -> Self { self.address = Some(value.into()); self }
+
+	pub fn targets(mut self, value: impl IntoIterator<Item = impl Into<String>>) -> Self { self.targets = Some(value.into_iter().map(Into::into).collect()); self }
+	pub fn disambiguation(mut self, value: impl Into<String>) -> Self { self.disambiguation = Some(value.into()); self }
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `at` query option.
 	pub fn at(mut self, value: impl Into<String>) -> Self {
@@ -764,18 +788,50 @@ impl TimeOptions {
 	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
+/// Filters the serving timezone catalog at one instant.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct TimeZonesOptions {
+	pub country: Option<String>,
+	pub area: Option<String>,
+	pub offset: Option<String>,
+	pub abbreviation: Option<String>,
+	pub at: Option<String>,
+	pub sort: Option<String>,
+	pub dst: Option<bool>,
+	pub observes_dst: Option<bool>,
+	pub details: bool,
+}
+impl TimeZonesOptions {
+	pub fn country(mut self, value: impl Into<String>) -> Self { self.country = Some(value.into()); self }
+	pub fn area(mut self, value: impl Into<String>) -> Self { self.area = Some(value.into()); self }
+	pub fn offset(mut self, value: impl Into<String>) -> Self { self.offset = Some(value.into()); self }
+	pub fn abbreviation(mut self, value: impl Into<String>) -> Self { self.abbreviation = Some(value.into()); self }
+	pub fn at(mut self, value: impl Into<String>) -> Self { self.at = Some(value.into()); self }
+	pub fn sort(mut self, value: impl Into<String>) -> Self { self.sort = Some(value.into()); self }
+	pub fn dst(mut self, value: bool) -> Self { self.dst = Some(value); self }
+	pub fn observes_dst(mut self, value: bool) -> Self { self.observes_dst = Some(value); self }
+	pub fn details(mut self, value: bool) -> Self { self.details = value; self }
+}
+
 /// Configures `time_at`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct TimeAtOptions {
 	pub at: Option<String>,
 	pub to: Option<String>,
+	/// One to ten destination zones, preserving order and duplicates. Mutually exclusive with to.
+	pub targets: Option<Vec<String>>,
+	/// Offsetless conversion policy at clock changes: compatible (default), earlier, later, or reject.
+	pub disambiguation: Option<String>,
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
 }
 
 impl TimeAtOptions {
+	pub fn targets(mut self, value: impl IntoIterator<Item = impl Into<String>>) -> Self { self.targets = Some(value.into_iter().map(Into::into).collect()); self }
+	pub fn disambiguation(mut self, value: impl Into<String>) -> Self { self.disambiguation = Some(value.into()); self }
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the destination IANA timezone.
 	pub fn to(mut self, value: impl Into<String>) -> Self {
@@ -2047,11 +2103,26 @@ impl Client {
 		timezone: &str,
 		opts: impl Into<Option<TimeOptions>>,
 	) -> Result<Time> {
+		if matches!(timezone.trim().to_ascii_lowercase().as_str(), "zones" | "help") {
+			return Err(Error::Config("Time source must be an IANA timezone ID. Use timezone discovery to list IDs.".into()));
+		}
 		let opts = opts.into().unwrap_or_default();
+		time_source(timezone, &opts)?;
 		let mut query = Query::new();
+		push(&mut query, "ip", opts.ip);
+		push(&mut query, "city", opts.city);
+		push(&mut query, "country", opts.country);
+		push(&mut query, "state", opts.state);
+		push(&mut query, "iata", opts.iata);
+		push(&mut query, "icao", opts.icao);
+		push(&mut query, "unlocode", opts.unlocode);
+		push(&mut query, "address", opts.address);
+
 		push(&mut query, "lang", opts.lang);
 		push(&mut query, "at", opts.at);
+		push(&mut query, "targets", time_targets(opts.targets, opts.to.as_deref())?);
 		push(&mut query, "to", opts.to);
+		push(&mut query, "disambiguation", opts.disambiguation);
 		let path = if timezone.is_empty() { "/time".to_string() } else { format!("/time/{}", seg(timezone)) };
 		push_deep(&mut query, opts.deep);
 		self.get(&path, query, None)
@@ -2071,9 +2142,33 @@ impl Client {
 		push(&mut query, "lat", Some(lat.to_string()));
 		push(&mut query, "lon", Some(lon.to_string()));
 		push(&mut query, "at", opts.at);
+		push(&mut query, "targets", time_targets(opts.targets, opts.to.as_deref())?);
 		push(&mut query, "to", opts.to);
+		push(&mut query, "disambiguation", opts.disambiguation);
 		push_deep(&mut query, opts.deep);
 		self.get("/time", query, None).await
+	}
+
+	/// Search serving timezone IDs. An empty query lists all.
+	pub async fn time_zones(&self, query: &str) -> Result<TimeZones> {
+		self.time_zones_with_options(query, TimeZonesOptions::default()).await
+	}
+
+	/// Filters catalog candidates without choosing an abbreviation's timezone.
+	pub async fn time_zones_with_options(&self, query: &str, opts: impl Into<Option<TimeZonesOptions>>) -> Result<TimeZones> {
+		let opts = opts.into().unwrap_or_default();
+		let mut values = Query::new();
+		if !query.is_empty() { push(&mut values, "q", Some(query.to_owned())); }
+		push(&mut values, "country", opts.country);
+		push(&mut values, "area", opts.area);
+		push(&mut values, "offset", opts.offset);
+		push(&mut values, "abbreviation", opts.abbreviation);
+		push(&mut values, "at", opts.at);
+		push(&mut values, "sort", opts.sort);
+		push(&mut values, "dst", opts.dst.map(|value| value.to_string()));
+		push(&mut values, "observes_dst", opts.observes_dst.map(|value| value.to_string()));
+		if opts.details { push(&mut values, "details", Some("true".into())); }
+		self.get("/time/zones", values, None).await
 	}
 
 	/// Calls `/timezone/{timezone}`.
@@ -2312,4 +2407,24 @@ mod stack_defaults_tests {
 			assert_eq!(client.timeout_for("/domain/example.com"), timeout);
 		}
 	}
+}
+
+fn time_source(timezone: &str, opts: &TimeOptions) -> Result<()> {
+	let primary = [&opts.ip, &opts.city, &opts.iata, &opts.icao, &opts.unlocode, &opts.address].into_iter().filter(|value| value.is_some()).count();
+	let values = [&opts.ip, &opts.city, &opts.country, &opts.state, &opts.iata, &opts.icao, &opts.unlocode, &opts.address];
+	if values.iter().any(|value| value.as_ref().is_some_and(|text| text.trim().is_empty())) ||
+		(!timezone.is_empty() && values.iter().any(|value| value.is_some())) || primary > 1 ||
+		(opts.country.is_some() && primary > 0 && opts.city.is_none() && opts.address.is_none()) ||
+		(opts.state.is_some() && ((opts.city.is_none() && opts.address.is_none()) || opts.country.is_none())) || (opts.address.is_some() && opts.country.is_none()) {
+		return Err(Error::Config("Pass one Time source, using country only with city or address and state only with city or address and country.".into()));
+	}
+	Ok(())
+}
+
+fn time_targets(targets: Option<Vec<String>>, to: Option<&str>) -> Result<Option<String>> {
+	let Some(targets) = targets else { return Ok(None); };
+	if to.is_some() || !(1..=10).contains(&targets.len()) || targets.iter().any(|zone| zone.trim().is_empty() || zone.contains(',')) {
+		return Err(Error::Config("Time targets requires 1 to 10 timezone IDs and cannot be combined with to.".into()));
+	}
+	Ok(Some(targets.join(",")))
 }

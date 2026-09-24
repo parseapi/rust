@@ -958,10 +958,22 @@ pub struct TimezoneNextDst {
 /// Local clock and timezone facts. Missing clock fields remain unknown.
 pub type Time = Timezone;
 
+/// Serving timezone IDs and their pinned rule edition.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeZones {
+	pub timezone_database_version: String,
+	pub timezones: Vec<String>,
+	pub at: Option<String>,
+	pub zones: Option<Vec<TimeZoneEntry>>,
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
 pub struct Timezone {
+	pub location: Option<TimeLocation>,
 	pub timezone: Option<String>,
 	pub abbreviation: Option<String>,
 	pub offset: Option<String>,
@@ -971,6 +983,7 @@ pub struct Timezone {
 	pub at: Option<String>,
 	pub unix: Option<i64>,
 	pub to: Option<TimezoneConversionTarget>,
+	pub targets: Option<Vec<TimezoneConversionTarget>>,
 	pub deep: Option<TimezoneDeep>,
 }
 
@@ -1737,6 +1750,12 @@ pub struct NameDeep {
 #[serde(default)]
 #[non_exhaustive]
 pub struct TimezoneDeep {
+	pub standard_offset: Option<String>,
+	pub standard_offset_seconds: Option<i32>,
+	pub dst_offset_seconds: Option<i32>,
+	pub season: Option<TimeSeason>,
+	pub timezone_database_version: Option<String>,
+	pub resolution: Option<TimeResolution>,
 	pub name: Option<String>,
 	pub offset_seconds: Option<i32>,
 	pub offset_minutes: Option<i32>,
@@ -1878,4 +1897,96 @@ pub struct PropertyTax {
 	pub currency: String,
 	/// Reporting period, YYYY-YYYY. Monetary amounts use the final year of this period.
 	pub period: String,
+}
+
+/// Source wall-time resolution. Missing observations remain unknown.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeResolution {
+	pub kind: Option<String>,
+	pub policy: Option<String>,
+	pub adjustment_seconds: Option<i32>,
+	pub alternatives: Option<Vec<TimeResolutionAlternative>>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeResolutionAlternative {
+	pub at: Option<String>,
+	pub unix: Option<i64>,
+	pub offset: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeZoneEntry {
+	pub timezone: String,
+	#[serde(deserialize_with = "null_default")]
+	pub countries: Vec<String>,
+	pub area: Option<String>,
+	pub abbreviation: String,
+	pub offset: String,
+	pub offset_seconds: i32,
+	pub dst: bool,
+	pub observes_dst: bool,
+}
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeTransitionState {
+	pub at: Option<String>,
+	pub offset: Option<String>,
+	pub offset_seconds: Option<i32>,
+	pub abbreviation: Option<String>,
+	pub dst: Option<bool>,
+}
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeTransition {
+	pub at: Option<String>,
+	pub before: Option<TimeTransitionState>,
+	pub after: Option<TimeTransitionState>,
+	pub change_seconds: Option<i32>,
+}
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeSeason {
+	pub start: Option<TimeTransition>,
+	pub end: Option<TimeTransition>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeLocationInput {
+	pub r#type: String,
+	pub value: String,
+}
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeLocationCandidate {
+	pub id: Option<String>,
+	pub name: Option<String>,
+	pub country: Option<String>,
+	pub state: Option<String>,
+	pub timezone: Option<String>,
+	pub latitude: Option<f64>,
+	pub longitude: Option<f64>,
+}
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeLocation {
+	pub input: TimeLocationInput,
+	pub status: String,
+	#[serde(deserialize_with = "null_default")]
+	pub candidates: Vec<TimeLocationCandidate>,
+	pub truncated: bool,
+	pub source: String,
 }

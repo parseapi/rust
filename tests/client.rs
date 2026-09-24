@@ -791,9 +791,41 @@ async fn dns_preserves_presentation_and_question() {
 	assert_eq!(calls[1].target, "/dns/example.com");
 }
 
+url_test!(url_time_compatible, c => c.time("America/New_York", TimeOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("compatible")), "/time/America%2FNew_York?at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=compatible");
+url_test!(url_time_coordinates_compatible, c => c.time_at(40.71, -74.01, TimeAtOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("compatible")), "/time?lat=40.71&lon=-74.01&at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=compatible");
+url_test!(url_time_earlier, c => c.time("America/New_York", TimeOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("earlier")), "/time/America%2FNew_York?at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=earlier");
+url_test!(url_time_coordinates_earlier, c => c.time_at(40.71, -74.01, TimeAtOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("earlier")), "/time?lat=40.71&lon=-74.01&at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=earlier");
+url_test!(url_time_later, c => c.time("America/New_York", TimeOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("later")), "/time/America%2FNew_York?at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=later");
+url_test!(url_time_coordinates_later, c => c.time_at(40.71, -74.01, TimeAtOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("later")), "/time?lat=40.71&lon=-74.01&at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=later");
+url_test!(url_time_reject, c => c.time("America/New_York", TimeOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("reject")), "/time/America%2FNew_York?at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=reject");
+url_test!(url_time_coordinates_reject, c => c.time_at(40.71, -74.01, TimeAtOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("reject")), "/time?lat=40.71&lon=-74.01&at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=reject");
+url_test!(url_time_zones, c => c.time_zones(""), "/time/zones");
+url_test!(url_time_search, c => c.time_zones("Europe"), "/time/zones?q=Europe");
+url_test!(url_time_targets, c => c.time("UTC", TimeOptions::default().targets(["UTC", "Asia/Tokyo", "UTC"])), "/time/UTC?targets=UTC%2CAsia%2FTokyo%2CUTC");
+url_test!(url_time_coords, c => c.time_at(0.0, 0.0, TimeAtOptions::default().targets(["UTC", "Asia/Tokyo", "UTC"])), "/time?lat=0&lon=0&targets=UTC%2CAsia%2FTokyo%2CUTC");
 url_test!(url_time_utc, c => c.time("", None), "/time");
 url_test!(url_time_conversion, c => c.time("America/New_York", TimeOptions::default().at("2026-09-05T15:00:00").to("Asia/Tokyo")), "/time/America%2FNew_York?at=2026-09-05T15%3A00%3A00&to=Asia%2FTokyo");
 url_test!(url_time_coordinates, c => c.time_at(0.0, 0.0, TimeAtOptions::default().at("1970-01-01T00:00:00Z").to("UTC")), "/time?lat=0&lon=0&at=1970-01-01T00%3A00%3A00Z&to=UTC");
+#[test]
+fn time_target_lists_preserve_unknown_empty_order_and_zero() {
+ for body in [r#"{}"#, r#"{"targets":null}"#] { assert!(serde_json::from_str::<Time>(body).unwrap().targets.is_none()); }
+ assert!(serde_json::from_str::<Time>(r#"{"targets":[]}"#).unwrap().targets.unwrap().is_empty());
+ let data: Time = serde_json::from_str(r#"{"targets":[{"timezone":"UTC","at":"1970-01-01T00:00:00+00:00","unix":0},{"timezone":"UTC","at":"1970-01-01T00:00:00+00:00","unix":0}]}"#).unwrap();
+ let targets = data.targets.unwrap(); assert_eq!(targets.len(), 2); assert_eq!(targets[0].unix, Some(0)); assert_eq!(targets[1].timezone, "UTC");
+ let zones: TimeZones = serde_json::from_str(r#"{"timezone_database_version":"2026c","timezones":[]}"#).unwrap();
+ assert_eq!(zones.timezone_database_version, "2026c"); assert!(zones.timezones.is_empty());
+}
+
+#[tokio::test]
+async fn time_invalid_target_lists_never_dispatch() {
+ let client = Client::new("fixture").unwrap();
+ for targets in [vec![], vec![""], vec!["UTC,UTC"], vec!["UTC"; 11]] {
+  assert!(matches!(client.time("UTC", TimeOptions::default().targets(targets.clone())).await, Err(Error::Config(_))));
+  assert!(matches!(client.time_at(0.0, 0.0, TimeAtOptions::default().targets(targets)).await, Err(Error::Config(_))));
+ }
+ assert!(matches!(client.time("UTC", TimeOptions::default().targets(["UTC"]).to("UTC")).await, Err(Error::Config(_))));
+}
+
 #[test]
 fn time_keeps_epoch_zero_and_unknown() {
  let historical: Time = serde_json::from_str(r#"{"deep":{"offset_seconds":-17762,"offset_minutes":-296},"at":"1880-01-01T00:00:00-04:56:02"}"#).unwrap();
@@ -1215,4 +1247,40 @@ async fn stack_preserves_site_inventory_and_request_options() {
   client.stack("example.com").await.unwrap();
   assert_eq!(server.requests()[1].target, "/stack/example.com");
  }
+}
+
+#[tokio::test]
+async fn time_resolution_and_reserved_source_routes() {
+ let client = Client::new("fixture").unwrap();
+ for zone in ["zones", "help", " ZONES ", "Help"] {
+  assert!(matches!(client.time(zone, None).await, Err(Error::Config(message)) if message.contains("IANA timezone ID")));
+ }
+ let result: Time = serde_json::from_str(r#"{"deep":{"timezone_database_version":"2026c","resolution":{"kind":"gap","policy":"earlier","adjustment_seconds":-1800,"alternatives":[{"at":"1970-01-01T00:00:00.123+00:00","unix":0,"offset":"+00:00"},{"at":"1970-01-01T00:30:00.123+00:00","unix":1800,"offset":"+00:00"}],"future":true}}}"#).unwrap();
+ let deep = result.deep.unwrap();
+ assert_eq!(deep.timezone_database_version.as_deref(), Some("2026c"));
+ let resolution = deep.resolution.unwrap();
+ assert_eq!(resolution.adjustment_seconds, Some(-1800));
+ assert_eq!(resolution.alternatives.unwrap()[0].unix, Some(0));
+ for raw in [r#"{"deep":{}}"#, r#"{"deep":{"resolution":null}}"#] {
+  assert!(serde_json::from_str::<Time>(raw).unwrap().deep.unwrap().resolution.is_none());
+ }
+ let unique: Time = serde_json::from_str(r#"{"deep":{"resolution":{"kind":"unique","alternatives":[]}}}"#).unwrap();
+ assert!(unique.deep.unwrap().resolution.unwrap().alternatives.unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn time_locations_rich_catalog_and_seasons() {
+ let server=TestServer::start(vec![(200,r#"{"timezone_database_version": "2026c", "timezones": ["UTC"], "at": "1970-01-01T00:00:00.000Z", "zones": [{"timezone": "UTC", "countries": [], "area": null, "abbreviation": "UTC", "offset": "+00:00", "offset_seconds": 0, "dst": false, "observes_dst": false}]}"#),(200,r#"{"timezone": null, "targets": null, "location": {"input": {"type": "city", "value": "Springfield"}, "status": "ambiguous", "candidates": [{"id": "city_a", "name": "Springfield", "country": "US", "state": "IL", "timezone": "America/Chicago", "latitude": 0, "longitude": 0}], "truncated": false, "source": "city_reference"}, "deep": {"standard_offset": "+01:00", "standard_offset_seconds": 3600, "dst_offset_seconds": -3600, "season": {"start": {"at": "2026-10-25T01:00:00Z", "before": {"offset_seconds": 3600, "dst": false}, "after": {"offset_seconds": 0, "dst": true}, "change_seconds": -3600}, "end": null}}}"#)]);
+ let client=server.client();
+ let zones=client.time_zones_with_options("",TimeZonesOptions::default().country("US").area("America").offset("+00:00").abbreviation("UTC").dst(false).observes_dst(false).at("1970-01-01T00:00:00Z").details(true).sort("offset")).await.unwrap();
+ let requests=server.requests();
+ assert!(requests[0].target.contains("dst=false")); assert!(requests[0].target.contains("observes_dst=false"));
+ assert_eq!(zones.zones.as_ref().unwrap()[0].offset_seconds,0); assert!(!zones.zones.unwrap()[0].dst);
+ let result=client.time("",TimeOptions::default().city("Springfield").country("US").state("IL").targets(["UTC"]).deep(true)).await.unwrap();
+ assert!(result.timezone.is_none()); let loc=result.location.unwrap(); assert_eq!(loc.status,"ambiguous"); assert_eq!(loc.candidates[0].latitude,Some(0.0));
+ let deep=result.deep.unwrap(); assert_eq!(deep.dst_offset_seconds,Some(-3600)); let start=deep.season.unwrap().start.unwrap(); assert_eq!(start.change_seconds,Some(-3600)); assert_eq!(start.before.unwrap().dst,Some(false));
+ for opts in [TimeOptions::default().ip("8.8.8.8").city("Paris"),TimeOptions::default().ip("8.8.8.8").country("US"),TimeOptions::default().state("NY"),TimeOptions::default().city("Paris").state("IDF"),TimeOptions::default().address("a"),TimeOptions::default().ip("")] { assert!(matches!(client.time("",opts).await,Err(Error::Config(_)))); }
+ assert!(matches!(client.time("UTC",TimeOptions::default().city("Paris")).await,Err(Error::Config(_))));
+ assert_eq!(server.requests().len(),2);
+ for raw in ["{}",r#"{"deep":{}}"#,r#"{"deep":{"season":null}}"#] { let old:Time=serde_json::from_str(raw).unwrap(); assert!(old.location.is_none()); }
 }
