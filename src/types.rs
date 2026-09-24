@@ -438,13 +438,15 @@ pub struct Iban {
 #[serde(default)]
 #[non_exhaustive]
 pub struct Npi {
-	/// Normalized 10-digit NPI. Invalid input still echoes the fold.
+	/// Input with accepted separators removed; None when empty. Invalid values remain visible.
 	pub npi: Option<String>,
+	/// Format and NPI checksum only; does not verify a provider or credentials.
 	pub valid: bool,
-	/// Exists in the healthcare provider registry.
+	/// Found in the stored NPPES snapshot. None when input is invalid.
 	pub registered: Option<bool>,
+	/// Recorded NPI activation status. None when unknown; not licensure or practice status.
 	pub active: Option<bool>,
-	/// On the OIG exclusion list.
+	/// NPI-only match in the stored OIG LEIE file. False is not complete exclusion clearance.
 	pub excluded: Option<bool>,
 	/// individual or organization.
 	#[serde(rename = "type")]
@@ -481,13 +483,13 @@ pub struct NpiEnrollment {
 #[serde(default)]
 #[non_exhaustive]
 pub struct NpiDeep {
-	/// In the published Medicare FFS enrollment extract.
+	/// Present in the stored Medicare FFS enrollment extract; not payment eligibility.
 	pub medicare: Option<bool>,
-	/// Has a Medicare opt-out affidavit.
+	/// NPI-only match in the stored CMS opt-out affidavit list. None when unavailable.
 	pub opt_out: Option<bool>,
-	/// Enrollment rows. Empty when medicare is false.
+	/// Stored enrollment rows. None when unavailable; empty when no rows are returned.
 	pub enrollments: Option<Vec<NpiEnrollment>>,
-	/// Date the NPI was deactivated, YYYY-MM-DD. None when still active.
+	/// Recorded NPI deactivation date, YYYY-MM-DD. None when active or unavailable.
 	pub deactivated_at: Option<String>,
 }
 
