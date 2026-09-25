@@ -48,6 +48,8 @@ pub enum Error {
 		message: String,
 		docs: Option<String>,
 		request_id: Option<String>,
+		/// Raw Retry-After response header, when supplied.
+		retry_after: Option<String>,
 	},
 	/// Network failure after retries (DNS, timeout, connect).
 	Transport(Box<dyn std::error::Error + Send + Sync>),
@@ -143,6 +145,14 @@ impl MeasureUnitsOptions {
 		self.unit = Some(value.into());
 		self
 	}
+}
+
+/// Optional recorded issuer details for Card.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CardOptions { pub deep: bool }
+impl CardOptions {
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
 /// Configures `ip`. Omitted fields use API defaults.
@@ -472,36 +482,35 @@ impl VatOptions {
 	}
 }
 
-/// Configures `bin`. Deep requests an empty object on every plan.
+/// Configures `bank`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct BinOptions {
-	pub deep: bool,
-}
-
-impl BinOptions {
-	pub fn deep(mut self, value: bool) -> Self {
-		self.deep = value;
-		self
-	}
-}
-
-/// Configures `iban`. Omitted fields use API defaults.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct IbanOptions {
+pub struct BankOptions {
 	pub country: Option<String>,
 	pub deep: bool,
 }
 
-impl IbanOptions {
-	/// Sets the `country` query option.
+impl BankOptions {
+	/// Sets the `country` body option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
 		self.country = Some(value.into());
 		self
 	}
 	/// Requests optional detail from the same lookup.
 	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
+}
+
+/// US ACH collection input. Preserve account text and leading zeros.
+#[derive(Clone)]
+#[non_exhaustive]
+pub struct BankUsAchInput {
+	pub routing: String,
+	pub account: String,
+}
+impl BankUsAchInput {
+	pub fn new(routing: impl Into<String>, account: impl Into<String>) -> Self {
+		Self { routing: routing.into(), account: account.into() }
+	}
 }
 
 /// Configures `name_with_options`. Country is an ISO2 gender context.
@@ -529,16 +538,16 @@ impl NameOptions {
 	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
-/// Configures `npi`. Omitted fields use API defaults.
+/// Configures `provider`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct NpiOptions {
+pub struct ProviderOptions {
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
 }
 
-impl NpiOptions {
+impl ProviderOptions {
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `deep` query option.
 	pub fn deep(mut self, value: bool) -> Self {
@@ -695,7 +704,7 @@ impl VinOptions {
 
 fn tariff_selection(edition: Option<&str>, date: Option<&str>, got_edition: Option<&str>, got_date: Option<&str>) -> Result<()> {
 	if (edition.is_some() || date.is_some()) && (!got_edition.is_some_and(|value| value.len() == 64 && value.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))) || (edition.is_some() && got_edition != edition) || got_date != date) {
-		return Err(Error::Api { status: 0, code: "tariff_selection_mismatch".into(), message: "Tariff response did not confirm the requested edition/date. The server may not support this selection.".into(), docs: None, request_id: None });
+		return Err(Error::Api { status: 0, code: "tariff_selection_mismatch".into(), retry_after: None, message: "Tariff response did not confirm the requested edition/date. The server may not support this selection.".into(), docs: None, request_id: None });
 	}
 	Ok(())
 }
@@ -1024,7 +1033,7 @@ impl WeatherOptions {
 	}
 }
 
-/// Configures `naics_search`. Limit defaults to 10 and accepts 1-50.
+/// Configures `industry_search`. Limit defaults to 10 and accepts 1-50.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct NaicsSearchOptions {
@@ -1180,7 +1189,7 @@ impl CityNearestOptions {
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
 
 
-/// Options for `naics`. Deep reveals the same question in more detail.
+/// Options for `industry`. Deep reveals the same question in more detail.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct NaicsOptions { pub deep: bool }
@@ -1364,22 +1373,22 @@ fn jitter() -> f64 {
 	f64::from(nanos % 1000) / 1000.0
 }
 
-fn retry_delay(attempt: u32, retry_after: Option<&str>) -> Duration {
-	if let Some(seconds) = retry_after.and_then(|value| value.parse::<f64>().ok()) {
-		if seconds >= 0.0 {
-			return Duration::from_millis((seconds * 1000.0).min(RETRY_AFTER_CAP_MS) as u64);
+fn retry_delay(attempt: u32, retry_after: Option<&str>) -> Option<Duration> {
+	if let Some(raw) = retry_after {
+		let parts: Vec<_> = raw.trim().split('.').collect();
+		if parts.len() <= 2 && parts.iter().all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit())) {
+			let seconds = raw.trim().parse::<f64>().unwrap_or(f64::INFINITY);
+			return (seconds.is_finite() && seconds <= 5.0).then(|| Duration::from_nanos((seconds * 1_000_000_000.0).ceil() as u64));
 		}
 	}
 	if let Some(at) = retry_after.and_then(|value| httpdate::parse_http_date(value).ok()) {
-		return at
-			.duration_since(std::time::SystemTime::now())
-			.unwrap_or_default()
-			.min(Duration::from_secs(5));
+		let wait = at.duration_since(std::time::SystemTime::now()).unwrap_or_default();
+		return (wait <= Duration::from_secs(5)).then_some(wait);
 	}
-	Duration::from_millis((jitter() * 250.0 * 2_f64.powi(attempt as i32)) as u64)
+	Some(Duration::from_millis((jitter() * (250.0 * 2_f64.powi(attempt.min(5) as i32)).min(RETRY_AFTER_CAP_MS)) as u64))
 }
 
-fn build_error(status: u16, body: &str) -> Error {
+fn build_error(status: u16, body: &str, retry_after: Option<String>) -> Error {
 	let parsed: serde_json::Value = serde_json::from_str(body).unwrap_or_default();
 	let field = |name: &str| parsed.get(name).and_then(|v| v.as_str()).map(str::to_owned);
 	Error::Api {
@@ -1388,6 +1397,7 @@ fn build_error(status: u16, body: &str) -> Error {
 		message: field("message").unwrap_or_else(|| format!("Request failed with status {status}")),
 		docs: field("docs"),
 		request_id: field("request_id"),
+		retry_after,
 	}
 }
 
@@ -1444,6 +1454,14 @@ impl Client {
 		query: Query,
 		ua: Option<&str>,
 	) -> Result<T> {
+		self.request(path, query, ua, None).await
+	}
+
+	async fn post<T: DeserializeOwned>(&self, path: &str, body: serde_json::Value) -> Result<T> {
+		self.request(path, Query::new(), None, Some(body)).await
+	}
+
+	async fn request<T: DeserializeOwned>(&self, path: &str, query: Query, ua: Option<&str>, body: Option<serde_json::Value>) -> Result<T> {
 		let retries = if !self.retries_explicit && metered_request(path, &query) {
 			0
 		} else {
@@ -1454,11 +1472,12 @@ impl Client {
 		loop {
 			let mut request = self
 				.http
-				.get(&url)
+				.request(if body.is_some() { reqwest::Method::POST } else { reqwest::Method::GET }, &url)
 				.header("X-API-Key", &self.api_key)
 				.header("Parse-Version", API_VERSION)
 				.header(reqwest::header::USER_AGENT, ua.unwrap_or(USER_AGENT))
 				.timeout(self.timeout_for(path));
+			if let Some(body) = &body { request = request.json(body); }
 			if !query.is_empty() {
 				request = request.query(&query);
 			}
@@ -1467,7 +1486,7 @@ impl Client {
 				Ok(response) => response,
 				Err(err) => {
 					if attempt < retries {
-						tokio::time::sleep(retry_delay(attempt, None)).await;
+						tokio::time::sleep(retry_delay(attempt, None).expect("backoff fits wait budget")).await;
 						attempt += 1;
 						continue;
 					}
@@ -1483,19 +1502,17 @@ impl Client {
 					.map_err(|err| Error::Transport(Box::new(err)));
 			}
 
+			let retry_after = response.headers().get("retry-after").and_then(|value| value.to_str().ok()).map(str::to_owned);
 			if RETRY_STATUS.contains(&status.as_u16()) && attempt < retries {
-				let retry_after = response
-					.headers()
-					.get("retry-after")
-					.and_then(|value| value.to_str().ok())
-					.map(str::to_owned);
-				tokio::time::sleep(retry_delay(attempt, retry_after.as_deref())).await;
-				attempt += 1;
-				continue;
+				if let Some(wait) = retry_delay(attempt, retry_after.as_deref()) {
+					tokio::time::sleep(wait).await;
+					attempt += 1;
+					continue;
+				}
 			}
 
 			let body = response.text().await.unwrap_or_default();
-			return Err(build_error(status.as_u16(), &body));
+			return Err(build_error(status.as_u16(), &body, retry_after));
 		}
 	}
 
@@ -1819,7 +1836,7 @@ impl Client {
 			.await
 	}
 
-	/// Calls `/iban/{iban}`.
+	/// Validate an IBAN using a JSON body; raw input is preserved.
 	pub async fn iban(&self, iban: &str, opts: impl Into<Option<IbanOptions>>) -> Result<Iban> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
@@ -1828,13 +1845,53 @@ impl Client {
 		self.get(&format!("/iban/{}", seg(iban)), query, None).await
 	}
 
-	/// Calls `/npi/{npi}`.
+
 	pub async fn npi(&self, npi: &str, opts: impl Into<Option<NpiOptions>>) -> Result<Npi> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "lang", opts.lang);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/npi/{}", seg(npi)), query, None).await
+	}
+
+
+	pub async fn bin(&self, bin: &str, opts: impl Into<Option<BinOptions>>) -> Result<Bin> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/bin/{}", seg(bin)), query, None).await
+	}
+
+
+
+	pub async fn bank(&self, iban: &str, opts: impl Into<Option<BankOptions>>) -> Result<Bank> {
+		let opts = opts.into().unwrap_or_default();
+		let mut body = serde_json::json!({"iban": iban});
+		if let Some(country) = opts.country { body["country"] = country.into(); }
+		if opts.deep { body["deep"] = true.into(); }
+		self.post("/bank", body).await
+	}
+
+	/// Check the supported US ACH format, not account existence or ACH eligibility.
+	pub async fn bank_us_ach(&self, input: BankUsAchInput) -> Result<BankUsAch> {
+		self.post("/bank", serde_json::json!({"format":"us_ach", "country":"US", "routing":input.routing, "account":input.account})).await
+	}
+
+	/// Describe required fields for a country/format; omitted format selects IBAN.
+	pub async fn bank_requirements(&self, country: &str, format: Option<&str>) -> Result<BankRequirements> {
+		let mut query = Query::new();
+		query.push(("country", country.to_owned()));
+		if let Some(format) = format { query.push(("format", format.to_owned())); }
+		self.get("/bank/requirements", query, None).await
+	}
+
+	/// Calls `/provider/{npi}`.
+	pub async fn provider(&self, npi: &str, opts: impl Into<Option<ProviderOptions>>) -> Result<Provider> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/provider/{}", seg(npi)), query, None).await
 	}
 
 	/// Parse a phone number and its formats. Pass country for national numbers when needed. Deep
@@ -1939,12 +1996,23 @@ impl Client {
 			.await
 	}
 
-	/// Look up a 6-11 digit card prefix. Preserve leading zeros in the string.
-	pub async fn bin(&self, bin: &str, opts: impl Into<Option<BinOptions>>) -> Result<Bin> {
-		let opts = opts.into().unwrap_or_default();
+	/// Look up a 2-11 digit card prefix. Preserve leading zeros in the string.
+	pub async fn card(&self, bin: &str) -> Result<Card> {
+		self.card_with_options(bin, CardOptions::default()).await
+	}
+
+	/// Request optional recorded issuer details, pooled on every plan.
+	pub async fn card_with_options(&self, bin: &str, opts: CardOptions) -> Result<Card> {
+		if bin.len() > 64 {
+			return Err(Error::Config("Card requires a 2-11 digit prefix string.".into()));
+		}
+		let digits: Vec<_> = bin.bytes().filter(|byte| !b" \t\r\n-".contains(byte)).collect();
+		if !(2..=11).contains(&digits.len()) || !digits.iter().all(u8::is_ascii_digit) {
+			return Err(Error::Config("Card requires a 2-11 digit prefix string.".into()));
+		}
 		let mut query = Query::new();
 		push_deep(&mut query, opts.deep);
-		self.get(&format!("/bin/{}", seg(bin)), query, None).await
+		self.get(&format!("/card/{}", seg(bin)), query, None).await
 	}
 
 
@@ -1997,6 +2065,14 @@ impl Client {
 		self.get("/useragent", query, Some(ua)).await
 	}
 
+	/// Calls `/vehicle/{vin}`.
+	pub async fn vehicle(&self, vin: &str, opts: impl Into<Option<VehicleOptions>>) -> Result<Vehicle> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/vehicle/{}", seg(vin)), query, None).await
+	}
+
 	/// Calls `/vin/{vin}`.
 	pub async fn vin(&self, vin: &str, opts: impl Into<Option<VinOptions>>) -> Result<Vin> {
 		let opts = opts.into().unwrap_or_default();
@@ -2007,25 +2083,37 @@ impl Client {
 
 	/// Looks up a US NAICS 2022 code and its hierarchy.
 	pub async fn naics(&self, code: &str) -> Result<Naics> {
-		self.naics_with_options(code, None).await
+		self.industry(code).await
+	}
+
+	pub async fn naics_with_options(&self, code: &str, opts: impl Into<Option<NaicsOptions>>) -> Result<Naics> {
+		self.industry_with_options(code, opts).await
+	}
+
+	pub async fn naics_search(&self, query: &str, opts: impl Into<Option<NaicsSearchOptions>>) -> Result<NaicsSearch> {
+		self.industry_search(query, opts).await
+	}
+
+	pub async fn industry(&self, code: &str) -> Result<Industry> {
+		self.industry_with_options(code, None).await
 	}
 
 	/// Calls the same operation with optional detail.
-	pub async fn naics_with_options(&self, code: &str, opts: impl Into<Option<NaicsOptions>>) -> Result<Naics> {
+	pub async fn industry_with_options(&self, code: &str, opts: impl Into<Option<NaicsOptions>>) -> Result<Industry> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push_deep(&mut query, opts.deep);
-		self.get(&format!("/naics/{}", seg(code)), query, None).await
+		self.get(&format!("/industry/{}", seg(code)), query, None).await
 	}
 
 	/// Searches US NAICS 2022 industry names and activity terms.
-	pub async fn naics_search(&self, query: &str, opts: impl Into<Option<NaicsSearchOptions>>) -> Result<NaicsSearch> {
+	pub async fn industry_search(&self, query: &str, opts: impl Into<Option<NaicsSearchOptions>>) -> Result<IndustrySearch> {
 		let opts = opts.into().unwrap_or_default();
 		let mut params = Query::new();
 		params.push(("q", query.into()));
 		push(&mut params, "limit", opts.limit.map(|value| value.to_string()));
 		push_deep(&mut params, opts.deep);
-		self.get("/naics", params, None).await
+		self.get("/industry", params, None).await
 	}
 
 	/// Look up the general US duty schedule line. Paid deep adds units and the special and other
@@ -2420,9 +2508,13 @@ mod transport_tests {
 			httpdate::fmt_http_date(std::time::SystemTime::now() + Duration::from_secs(3600));
 		let past =
 			httpdate::fmt_http_date(std::time::SystemTime::now() - Duration::from_secs(3600));
-		assert_eq!(retry_delay(0, Some(&future)), Duration::from_secs(5));
-		assert_eq!(retry_delay(0, Some(&past)), Duration::ZERO);
-		assert_eq!(retry_delay(0, Some("0")), Duration::ZERO);
+		assert_eq!(retry_delay(0, Some(&future)), None);
+		assert_eq!(retry_delay(0, Some(&past)), Some(Duration::ZERO));
+		assert_eq!(retry_delay(0, Some("0")), Some(Duration::ZERO));
+		assert_eq!(retry_delay(0, Some("0.01")), Some(Duration::from_millis(10)));
+		assert_eq!(retry_delay(0, Some("0.0000000001")), Some(Duration::from_nanos(1)));
+		assert_eq!(retry_delay(0, Some(&"9".repeat(400))), None);
+		assert!(retry_delay(999, Some("NaN")).unwrap() <= Duration::from_secs(5));
 	}
 }
 
@@ -2462,4 +2554,66 @@ fn time_targets(targets: Option<Vec<String>>, to: Option<&str>) -> Result<Option
 		return Err(Error::Config("Time targets requires 1 to 10 timezone IDs and cannot be combined with to.".into()));
 	}
 	Ok(Some(targets.join(",")))
+}
+
+pub type IndustryOptions = NaicsOptions;
+pub type IndustrySearchOptions = NaicsSearchOptions;
+
+/// Options for a Vehicle lookup by VIN.
+pub type VehicleOptions = VinOptions;
+
+// Published compatibility declarations.
+/// Configures `bin`. Deep requests an empty object on every plan.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct BinOptions {
+	pub deep: bool,
+}
+
+
+/// Configures `iban`. Omitted fields use API defaults.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct IbanOptions {
+	pub country: Option<String>,
+	pub deep: bool,
+}
+
+
+/// Configures `npi`. Omitted fields use API defaults.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct NpiOptions {
+	pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
+}
+
+
+impl BinOptions {
+	pub fn deep(mut self, value: bool) -> Self {
+		self.deep = value;
+		self
+	}
+}
+
+
+impl IbanOptions {
+	/// Sets the `country` query option.
+	pub fn country(mut self, value: impl Into<String>) -> Self {
+		self.country = Some(value.into());
+		self
+	}
+	/// Requests optional detail from the same lookup.
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
+}
+
+
+impl NpiOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
+	/// Sets the `deep` query option.
+	pub fn deep(mut self, value: bool) -> Self {
+		self.deep = value;
+		self
+	}
 }

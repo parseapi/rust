@@ -12,6 +12,8 @@ fn env_lock() -> &'static Mutex<()> {
 
 #[derive(Debug, Clone)]
 struct Recorded {
+	method: String,
+	body: String,
 	target: String,
 	headers: HashMap<String, String>,
 }
@@ -54,8 +56,10 @@ impl TestServer {
 					}
 				}
 				let text = String::from_utf8_lossy(&raw);
-				let mut lines = text.split("\r\n");
+				let head_end = raw.windows(4).position(|w| w == b"\r\n\r\n").unwrap() + 4;
+				let mut lines = text[..head_end].split("\r\n");
 				let request_line = lines.next().unwrap_or_default();
+				let method = request_line.split(' ').next().unwrap_or_default().to_owned();
 				let target = request_line
 					.split(' ')
 					.nth(1)
@@ -68,7 +72,16 @@ impl TestServer {
 							.insert(name.trim().to_lowercase(), value.trim().to_string());
 					}
 				}
+				let length = request_headers.get("content-length").and_then(|v| v.parse::<usize>().ok()).unwrap_or(0);
+				while raw.len() < head_end + length {
+					let n = stream.read(&mut buf).unwrap();
+					if n == 0 { break; }
+					raw.extend_from_slice(&buf[..n]);
+				}
+				let request_body = String::from_utf8(raw[head_end..].to_vec()).unwrap();
 				recorded.lock().unwrap().push(Recorded {
+					method,
+					body: request_body,
 					target,
 					headers: request_headers,
 				});
@@ -208,19 +221,37 @@ url_test!(url_email, c => c.email("a@b.com", None), "/email/a%40b.com");
 url_test!(url_vat, c => c.vat("DE136695976", None), "/vat/DE136695976");
 url_test!(
 	url_iban,
-	c => c.iban("DE89370400440532013000", None),
-	"/iban/DE89370400440532013000"
+	c => c.bank("DE89370400440532013000", None),
+	"/bank"
 );
 url_test!(
 	url_iban_country,
-	c => c.iban("89370400440532013000", parseapi::IbanOptions::default().country("DE")),
-	"/iban/89370400440532013000?country=DE"
+	c => c.bank("89370400440532013000", parseapi::BankOptions::default().country("DE")),
+	"/bank"
 );
-url_test!(url_npi, c => c.npi("1881018208", None), "/npi/1881018208");
+
+#[tokio::test]
+async fn bank_preserves_raw_input_for_server_validation() {
+	for (input, _encoded) in [
+		("DE89.370400440532013000", "DE89.370400440532013000"),
+		("\u{feff}DE89370400440532013000", "%EF%BB%BFDE89370400440532013000"),
+		("DE89\u{00a0}370400440532013000", "DE89%C2%A0370400440532013000"),
+		("DE89%20370400440532013000", "DE89%2520370400440532013000"),
+	] {
+		let server = TestServer::start(vec![(200, r#"{"valid":false}"#)]);
+		server.client().bank(input, None).await.unwrap();
+		let requests = server.requests();
+		assert_eq!(requests[0].target, "/bank");
+		assert_eq!(requests[0].method, "POST");
+		assert_eq!(serde_json::from_str::<serde_json::Value>(&requests[0].body).unwrap()["iban"], input);
+		assert_eq!(requests[0].headers.get("parse-version").map(String::as_str), Some("2.0.0"));
+	}
+}
+url_test!(url_npi, c => c.provider("1881018208", None), "/provider/1881018208");
 url_test!(
 	url_npi_deep,
-	c => c.npi("1881018208", parseapi::NpiOptions::default().deep(true)),
-	"/npi/1881018208?deep=true"
+	c => c.provider("1881018208", parseapi::ProviderOptions::default().deep(true)),
+	"/provider/1881018208?deep=true"
 );
 url_test!(
 	url_vat_from_deep,
@@ -248,6 +279,12 @@ url_test!(url_asn, c => c.asn("AS13335"), "/asn/AS13335");
 url_test!(url_mac, c => c.mac("00:1B:63:84:45:E6"), "/mac/00%3A1B%3A63%3A84%3A45%3AE6");
 url_test!(url_mx, c => c.mx("example.com"), "/mx/example.com");
 url_test!(url_useragent, c => c.useragent("TestUA/1.0", None), "/useragent");
+url_test!(url_vehicle, c => c.vehicle("1HGCM82633A004352", None), "/vehicle/1HGCM82633A004352");
+url_test!(
+	url_vehicle_deep,
+	c => c.vehicle("1HGCM82633A004352", parseapi::VehicleOptions::default().deep(true)),
+	"/vehicle/1HGCM82633A004352?deep=true"
+);
 url_test!(url_vin, c => c.vin("1HGCM82633A004352", None), "/vin/1HGCM82633A004352");
 url_test!(
 	url_vin_deep,
@@ -473,6 +510,55 @@ async fn does_not_retry_404() {
 	let err = client.country("XX").await.unwrap_err();
 	assert_eq!(err.code(), Some("not_found"));
 	assert_eq!(server.requests().len(), 1);
+}
+
+#[tokio::test]
+async fn card_rejects_invalid_input_before_dispatch_and_preserves_accepted_bytes() {
+    let server = TestServer::start(vec![(200, "{}"), (200, "{}"), (200, "{}")]);
+    let client = server.client();
+    for raw in ["4111111111111111".to_owned(), "4111-1111-1111-1111".into(), "1".into(), "123456789012".into(), "１２３４５６".into(), "001\u{a0}234".into(), "001\u{200b}234".into(), "00%20234".into(), format!("{}001234", " ".repeat(59))] {
+        let error = client.card(&raw).await.unwrap_err();
+        assert_eq!(error.to_string(), "parseapi: Card requires a 2-11 digit prefix string.");
+    }
+    assert!(server.requests().is_empty());
+    for raw in [" \t00-1234\r\n".to_owned(), format!("{}001234", " ".repeat(58)), "12345678901".into()] {
+        client.card(&raw).await.unwrap();
+        let target = server.requests().last().unwrap().target.clone();
+        assert_eq!(percent_encoding::percent_decode_str(target.trim_start_matches("/card/")).decode_utf8().unwrap(), raw);
+    }
+}
+
+#[tokio::test]
+async fn long_retry_after_returns_original_error_promptly_with_raw_header() {
+    for header in ["60".to_owned(), "9".repeat(400), httpdate::fmt_http_date(std::time::SystemTime::now() + std::time::Duration::from_secs(60))] {
+        let server = TestServer::start_with_headers(vec![(429, r#"{"code":"rate_limited","message":"Later","request_id":"receipt"}"#, format!("Retry-After: {header}\r\n"))]);
+        let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
+        let error = tokio::time::timeout(std::time::Duration::from_secs(1), client.country("US")).await.expect("long waits must return promptly").unwrap_err();
+        match error { Error::Api { status, code, request_id, retry_after, .. } => {
+            assert_eq!(status, 429); assert_eq!(code, "rate_limited"); assert_eq!(request_id.as_deref(), Some("receipt")); assert_eq!(retry_after.as_deref(), Some(header.as_str()));
+        }, other => panic!("unexpected: {other}") }
+        assert_eq!(server.requests().len(), 1);
+    }
+}
+
+#[tokio::test]
+async fn dropping_request_during_retry_wait_stops_further_attempts() {
+    let server = TestServer::start_with_headers(vec![(503, "{}", "Retry-After: 0.1\r\n".into()), (200, "{}", String::new())]);
+    let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
+    assert!(tokio::time::timeout(std::time::Duration::from_millis(30), client.country("US")).await.is_err());
+    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+    assert_eq!(server.requests().len(), 1);
+}
+
+#[tokio::test]
+async fn retry_after_metadata_survives_exhaustion_and_invalid_headers_back_off() {
+    for header in ["0", "0.01", "invalid"] {
+        let server = TestServer::start_with_headers(vec![(503,"{}",format!("Retry-After: {header}\r\n")),(503,"{}",format!("Retry-After: {header}\r\n"))]);
+        let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
+        let error = client.country("US").await.unwrap_err();
+        assert!(matches!(error, Error::Api { retry_after: Some(value), .. } if value == header));
+        assert_eq!(server.requests().len(), 2);
+    }
 }
 
 #[tokio::test]
@@ -761,16 +847,16 @@ async fn naics_hierarchy_and_keyword_search() {
   (200, r#"{"q":"coffee & tea","year":2022,"country":"US","results":[]}"#),
  ]);
  let client = Client::builder().api_key("test_key").base_url(&server.base_url).retries(0).build().unwrap();
- let industry = client.naics("31-33").await.unwrap();
+ let industry = client.industry("31-33").await.unwrap();
  assert_eq!(industry.naics, "31-33");
  assert!(industry.deep.as_ref().unwrap().description.is_none() && industry.parent.is_none());
  assert_eq!(industry.deep.as_ref().unwrap().children.as_ref().unwrap()[0].naics, "311");
- let search = client.naics_search("coffee & tea", NaicsSearchOptions::default().limit(5)).await.unwrap();
+ let search = client.industry_search("coffee & tea", IndustrySearchOptions::default().limit(5)).await.unwrap();
  assert_eq!(search.year, 2022);
  assert!(search.results.is_empty());
  let requests = server.requests.lock().unwrap();
- assert_eq!(requests[0].target, "/naics/31-33");
- assert_eq!(requests[1].target, "/naics?q=coffee+%26+tea&limit=5");
+ assert_eq!(requests[0].target, "/industry/31-33");
+ assert_eq!(requests[1].target, "/industry?q=coffee+%26+tea&limit=5");
 }
 
 #[tokio::test]
@@ -843,8 +929,8 @@ fn time_keeps_epoch_zero_and_unknown() {
 
 #[test]
 fn naics_exclusions_and_match_preserve_older_responses() {
- let search: NaicsSearch = serde_json::from_str(r#"{"q":"sofware","year":2022,"country":"US","results":[{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","deep":{"description":null,"children":[]}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":null,"deep":{"description":null,"children":[],"exclusions":null}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"future-field","text":"Future matching evidence","corrections":[],"future":true},"deep":{"description":null,"children":[],"exclusions":[]}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"term","text":"Computer software programming services","corrections":[{"from":"sofware","to":"software"}]},"future":true,"deep":{"description":null,"children":[],"exclusions":[{"description":"Designing integrated computer systems","codes":[{"naics":"541512","name":"Computer Systems Design Services"}]},{"description":"Activities classified elsewhere","codes":[]}]}}]}"#).unwrap();
- let results: Vec<NaicsSearchResult> = search.results;
+ let search: IndustrySearch = serde_json::from_str(r#"{"q":"sofware","year":2022,"country":"US","results":[{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","deep":{"description":null,"children":[]}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":null,"deep":{"description":null,"children":[],"exclusions":null}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"future-field","text":"Future matching evidence","corrections":[],"future":true},"deep":{"description":null,"children":[],"exclusions":[]}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"term","text":"Computer software programming services","corrections":[{"from":"sofware","to":"software"}]},"future":true,"deep":{"description":null,"children":[],"exclusions":[{"description":"Designing integrated computer systems","codes":[{"naics":"541512","name":"Computer Systems Design Services"}]},{"description":"Activities classified elsewhere","codes":[]}]}}]}"#).unwrap();
+ let results: Vec<IndustrySearchResult> = search.results;
  assert!(results[0].deep.as_ref().unwrap().exclusions.is_none() && results[0].r#match.is_none());
  assert!(results[1].deep.as_ref().unwrap().exclusions.is_none() && results[1].r#match.is_none());
  assert!(results[2].deep.as_ref().unwrap().exclusions.as_ref().unwrap().is_empty());
@@ -861,26 +947,26 @@ fn naics_exclusions_and_match_preserve_older_responses() {
  assert_eq!(evidence.corrections[0].to, "software");
 }
 
-url_test!(url_bin, c => c.bin("001234", None), "/bin/001234");
-url_test!(url_bin_deep, c => c.bin("00 1234-56", BinOptions::default().deep(true)), "/bin/00%201234-56?deep=true");
+url_test!(url_card_deep, c => c.card_with_options("51", parseapi::CardOptions::default().deep(true)), "/card/51?deep=true");
+url_test!(url_card, c => c.card("001234"), "/card/001234");
+url_test!(url_card_separators, c => c.card("00 1234-56"), "/card/00%201234-56");
 
 #[tokio::test]
-async fn bin_preserves_prefix_null_false_and_empty_deep() {
+async fn card_preserves_prefix_null_false_and_tolerates_unknown_fields() {
 	let server = TestServer::start(vec![
-		(200, r#"{"bin":"00123456","prefix":"001234","country":null,"issuer":"Fixture Bank","brand":"future-brand","type":null,"prepaid":false,"deep":{},"future":true}"#),
-		(200, r#"{"bin":"000000","prefix":null,"country":null,"issuer":null,"brand":null,"type":null,"prepaid":null}"#),
+		(200, r#"{"bin":"00123456","brand":"future-brand","brand_name":null,"logo":"https://cdn.parseapi.com/card/generic.svg","deep":{"prefix":"001234","issuer":"Fixture Bank","country":null,"type":null,"prepaid":false},"future":true}"#),
+		(200, r#"{"bin":"000000","brand":null,"brand_name":null,"logo":"https://cdn.parseapi.com/card/generic.svg"}"#),
 		(400, r#"{"code":"invalid_input","message":"Expected 6-11 digits"}"#),
 	]);
 	let client = server.client();
-	let known = client.bin("00123456", BinOptions::default().deep(true)).await.unwrap();
+	let known = client.card_with_options("00123456", parseapi::CardOptions::default().deep(true)).await.unwrap();
 	assert_eq!(known.bin, "00123456");
-	assert_eq!(known.prefix.as_deref(), Some("001234"));
-	assert_eq!(known.prepaid, Some(false));
-	assert!(known.country.is_none());
-	assert_eq!(known.deep, Some(serde_json::json!({})));
-	let unknown = client.bin("000000", None).await.unwrap();
-	assert!(unknown.prefix.is_none() && unknown.prepaid.is_none() && unknown.deep.is_none());
-	assert!(client.bin("junk", None).await.is_err());
+	assert_eq!(known.deep.as_ref().unwrap().prefix.as_deref(), Some("001234"));
+	assert_eq!(known.deep.as_ref().unwrap().prepaid, Some(false));
+	assert!(known.deep.as_ref().unwrap().country.is_none());
+	let unknown = client.card("000000").await.unwrap();
+	assert!(unknown.deep.is_none() && unknown.brand.is_none());
+	assert!(client.card("junk").await.is_err());
 }
 
 // Reviewed ADP options remain one operation with one explicit deep query.
@@ -984,9 +1070,9 @@ async fn adp_postal_distance_option() {
 async fn adp_iban_option() {
  let server=TestServer::start(vec![(200,"{}")]);
  let client=server.client();
- let _=client.iban("DE89370400440532013000", IbanOptions::default().deep(true)).await;
+ let _=client.bank("DE89370400440532013000", BankOptions::default().deep(true)).await;
  assert_eq!(server.requests().len(),1);
- assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
+ assert_eq!(serde_json::from_str::<serde_json::Value>(&server.requests()[0].body).unwrap()["deep"], true);
 }
 #[tokio::test]
 async fn adp_carrier_option() {
@@ -1005,18 +1091,18 @@ async fn adp_hlr_option() {
  assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
 }
 #[tokio::test]
-async fn adp_naics_with_options_option() {
+async fn adp_industry_with_options_option() {
  let server=TestServer::start(vec![(200,"{}")]);
  let client=server.client();
- let _=client.naics_with_options("541511", NaicsOptions::default().deep(true)).await;
+ let _=client.industry_with_options("541511", IndustryOptions::default().deep(true)).await;
  assert_eq!(server.requests().len(),1);
  assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
 }
 #[tokio::test]
-async fn adp_naics_search_option() {
+async fn adp_industry_search_option() {
  let server=TestServer::start(vec![(200,"{}")]);
  let client=server.client();
- let _=client.naics_search("software", NaicsSearchOptions::default().deep(true)).await;
+ let _=client.industry_search("software", IndustrySearchOptions::default().deep(true)).await;
  assert_eq!(server.requests().len(),1);
  assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
 }
@@ -1155,7 +1241,7 @@ language_request_test!(language_postal, c => c.postal("SW1A 1AA", PostalOptions:
 language_request_test!(language_postal_nearby, c => c.postal_nearby("28202", PostalNearbyOptions::default().country("US").radius(8.0).lang("fr-CA")), c.postal_nearby("28202", PostalNearbyOptions::default().country("US").radius(8.0)), "/postal/28202/nearby", "country=US&radius=8");
 language_request_test!(language_postal_distance, c => c.postal_distance("28202", "10001", PostalDistanceOptions::default().country("US").lang("fr-CA")), c.postal_distance("28202", "10001", PostalDistanceOptions::default().country("US")), "/postal/28202/distance/10001", "country=US");
 language_request_test!(language_company, c => c.company("732829320", CompanyOptions::default().country("FR").deep(true).lang("fr-CA")), c.company("732829320", CompanyOptions::default().country("FR").deep(true)), "/company/732829320", "country=FR&deep=true");
-language_request_test!(language_npi, c => c.npi("1881018208", NpiOptions::default().deep(true).lang("fr-CA")), c.npi("1881018208", NpiOptions::default().deep(true)), "/npi/1881018208", "deep=true");
+language_request_test!(language_npi, c => c.provider("1881018208", ProviderOptions::default().deep(true).lang("fr-CA")), c.provider("1881018208", ProviderOptions::default().deep(true)), "/provider/1881018208", "deep=true");
 language_request_test!(language_asn, c => c.asn_with_options("AS13335", AsnOptions::default().lang("fr-CA")), c.asn("AS13335"), "/asn/AS13335", "");
 language_request_test!(language_currency, c => c.currency_with_options("USD", CurrencyOptions::default().deep(true).lang("fr-CA")), c.currency_with_options("USD", CurrencyOptions::default().deep(true)), "/currency/USD", "deep=true");
 language_request_test!(language_language, c => c.language_with_options("ja", LanguageOptions::default().lang("fr-CA")), c.language_with_options("ja", LanguageOptions::default()), "/language/ja", "");
@@ -1327,4 +1413,31 @@ async fn tariff_date_selection_rejects_invalid_returned_edition() {
 		assert_eq!(err.code(), Some("tariff_selection_mismatch"));
 		assert_eq!(err.status(), Some(0));
 	}
+}
+
+
+
+#[tokio::test]
+async fn bank_post_context_domestic_requirements_and_retry_keep_raw_data_out_of_urls() {
+	let server = TestServer::start(vec![(503,r#"{"code":"unavailable"}"#),(200,r#"{"valid":true,"deep":{"directory":{"edition":"future","country":"DE","match":"future_grain"}}}"#)]);
+	let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
+	let result = client.bank("89%20\u{feff}00", BankOptions::default().country("DE").deep(true)).await.unwrap();
+	assert_eq!(result.deep.unwrap().directory.unwrap().r#match.as_deref(),Some("future_grain"));
+	for request in server.requests() {
+		assert_eq!(request.method,"POST"); assert_eq!(request.target,"/bank");
+		assert_eq!(request.headers.get("content-type").map(String::as_str),Some("application/json"));
+		assert_eq!(serde_json::from_str::<serde_json::Value>(&request.body).unwrap(),serde_json::json!({"iban":"89%20\u{feff}00","country":"DE","deep":true}));
+	}
+	let server = TestServer::start(vec![(200,r#"{"valid":false,"routing":null,"account":null,"checks":{"account_checksum":"future_status"},"issues":[{"field":"account","code":"future_issue"}]}"#)]);
+	let result = server.client().bank_us_ach(BankUsAchInput::new("021 000021","00a-B %20\u{feff}")).await.unwrap();
+	assert!(result.routing.is_none()); assert_eq!(result.checks.unwrap().account_checksum.as_deref(),Some("future_status"));
+	let request = &server.requests()[0];
+	assert_eq!(request.target,"/bank"); assert_eq!(request.method,"POST");
+	assert_eq!(serde_json::from_str::<serde_json::Value>(&request.body).unwrap(),serde_json::json!({"format":"us_ach","country":"US","routing":"021 000021","account":"00a-B %20\u{feff}"}));
+	let server = TestServer::start(vec![(200,r#"{"country":"GB","format":"uk_domestic","supported":false,"fields":[],"checks":{},"limitations":["Unsupported"]}"#)]);
+	let result=server.client().bank_requirements("GB",Some("uk_domestic")).await.unwrap();
+	assert!(!result.supported); assert!(result.fields.is_empty());
+	assert_eq!(server.requests()[0].target,"/bank/requirements?country=GB&format=uk_domestic");
+	assert_eq!(server.requests()[0].method,"GET");
+	assert!(server.requests()[0].body.is_empty());
 }

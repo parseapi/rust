@@ -419,7 +419,7 @@ pub struct Vat {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct Iban {
+pub struct Bank {
 	pub iban: Option<String>,
 	pub valid: bool,
 	pub country: Option<String>,
@@ -431,20 +431,141 @@ pub struct Iban {
 	pub bank_name: Option<String>,
 	/// BIC from that same directory. None when unsourced or missing.
 	pub bic: Option<String>,
-	pub deep: Option<IbanDeep>,
+	/// Performed IBAN checks; absent on older responses. Statuses are open strings.
+	pub checks: Option<BankChecks>,
+	/// Lookup findings, separate from HTTP errors. Empty when applicable checks pass.
+	pub issues: Option<Vec<BankIssue>>,
+	pub deep: Option<BankDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct Npi {
-	/// Normalized 10-digit NPI. Invalid input still echoes the fold.
-	pub npi: Option<String>,
+pub struct BankChecks {
+	pub input: Option<String>,
+	pub country: Option<String>,
+	pub length: Option<String>,
+	pub structure: Option<String>,
+	pub checksum: Option<String>,
+	pub national: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankIssue {
+	pub field: Option<String>,
+	pub code: Option<String>,
+	pub message: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankDirectory {
+	pub edition: Option<String>,
+	pub country: Option<String>,
+	pub r#match: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankUsAch {
+	pub format: Option<String>,
+	pub country: Option<String>,
+	pub routing: Option<String>,
+	pub account: Option<String>,
 	pub valid: bool,
-	/// Exists in the healthcare provider registry.
+	pub bank_name: Option<String>,
+	pub checks: Option<BankUsAchChecks>,
+	pub issues: Option<Vec<BankIssue>>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankUsAchChecks {
+	pub routing_format: Option<String>,
+	pub routing_checksum: Option<String>,
+	pub account_format: Option<String>,
+	pub account_checksum: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankRequirements {
+	pub country: String,
+	pub format: String,
+	pub supported: bool,
+	pub fields: Vec<BankRequirementField>,
+	pub checks: std::collections::HashMap<String, String>,
+	pub limitations: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct BankRequirementField {
+	pub key: String,
+	pub label: String,
+	pub required: bool,
+	pub r#type: String,
+	pub length: Option<u32>,
+	pub min_length: Option<u32>,
+	pub max_length: Option<u32>,
+	pub max_input_length: Option<u32>,
+	pub length_unit: Option<String>,
+	pub pattern: Option<String>,
+	pub normalization: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct ProviderTaxonomy {
+	pub taxonomy: Option<String>,
+	pub specialty: Option<String>,
+	pub primary: Option<bool>,
+	pub license: Option<String>,
+	pub state: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct ProviderSource {
+	pub edition: Option<String>,
+	pub published_at: Option<String>,
+	pub through: Option<String>,
+	pub imported_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct ProviderSources {
+	pub nppes: Option<ProviderSource>,
+	pub leie: Option<ProviderSource>,
+	pub pecos: Option<ProviderSource>,
+	pub optout: Option<ProviderSource>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Provider {
+	pub sources: Option<ProviderSources>,
+	/// Input with accepted separators removed; None when empty. Invalid values remain visible.
+	pub npi: Option<String>,
+	/// Format and NPI checksum only; does not verify a provider or credentials.
+	pub valid: bool,
+	/// Found in the stored NPPES snapshot. None when input is invalid.
 	pub registered: Option<bool>,
+	/// Recorded NPI activation status. None when unknown; not licensure or practice status.
 	pub active: Option<bool>,
-	/// On the OIG exclusion list.
+	/// NPI-only match in the stored OIG LEIE file. False is not complete exclusion clearance.
 	pub excluded: Option<bool>,
 	/// individual or organization.
 	#[serde(rename = "type")]
@@ -463,13 +584,13 @@ pub struct Npi {
 	pub postal: Option<String>,
 	pub country: Option<String>,
 	pub phone: Option<String>,
-	pub deep: Option<NpiDeep>,
+	pub deep: Option<ProviderDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct NpiEnrollment {
+pub struct ProviderEnrollment {
 	/// part_a, part_b, practitioner, dme, order_refer, mdpp. None when unknown.
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
@@ -480,14 +601,18 @@ pub struct NpiEnrollment {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct NpiDeep {
-	/// In the published Medicare FFS enrollment extract.
+pub struct ProviderDeep {
+	pub enumerated_at: Option<String>,
+	pub updated_at: Option<String>,
+	pub reactivated_at: Option<String>,
+	pub taxonomies: Option<Vec<ProviderTaxonomy>>,
+	/// Present in the stored Medicare FFS enrollment extract; not payment eligibility.
 	pub medicare: Option<bool>,
-	/// Has a Medicare opt-out affidavit.
+	/// NPI-only match in the stored CMS opt-out affidavit list. None when unavailable.
 	pub opt_out: Option<bool>,
-	/// Enrollment rows. Empty when medicare is false.
-	pub enrollments: Option<Vec<NpiEnrollment>>,
-	/// Date the NPI was deactivated, YYYY-MM-DD. None when still active.
+	/// Stored enrollment rows. None when unavailable; empty when no rows are returned.
+	pub enrollments: Option<Vec<ProviderEnrollment>>,
+	/// Recorded NPI deactivation date, YYYY-MM-DD. None when active or unavailable.
 	pub deactivated_at: Option<String>,
 }
 
@@ -593,7 +718,7 @@ pub struct TariffSearch {
 #[serde(default)]
 #[non_exhaustive]
 pub struct VinDeep {
-	/// Open recall campaigns for the decoded vehicle. Empty when none,
+	/// Recall campaigns for the decoded year, make and model. Empty when none,
 	/// None when the recall registry did not answer.
 	pub recalls: Option<Vec<VinRecall>>,
 	pub series: Option<String>,
@@ -780,23 +905,29 @@ pub struct Mac {
 	pub multicast: Option<bool>,
 }
 
-/// Card-prefix reference data. None means unknown.
+/// Network identity. None means unknown or ambiguous.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct Bin {
+pub struct Card {
 	pub bin: String,
-	/// Actual longest matched prefix, which may be shorter than the input.
-	pub prefix: Option<String>,
-	pub country: Option<String>,
-	pub issuer: Option<String>,
 	pub brand: Option<String>,
 	pub brand_name: Option<String>,
-	pub r#type: Option<String>,
-	pub prepaid: Option<bool>,
-	pub deep: Option<serde_json::Value>,
+	pub logo: String,
+	pub deep: Option<CardDeep>,
 }
 
+/// Optional recorded issuer data. None fields mean unknown.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CardDeep {
+	pub prefix: Option<String>,
+	pub issuer: Option<String>,
+	pub country: Option<String>,
+	pub r#type: Option<String>,
+	pub prepaid: Option<bool>,
+}
 
 /// A published DNS record. Value retains DNS presentation syntax, including TXT quoting.
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1664,7 +1795,9 @@ pub struct PostalDeep {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct IbanDeep {
+pub struct BankDeep {
+	/// Directory edition and match grain, when available. Match is an open string.
+	pub directory: Option<BankDirectory>,
 	pub checksum: Option<String>,
 	/// Branch identifier when that country has one.
 	pub branch: Option<String>,
@@ -2000,4 +2133,127 @@ pub struct TimeLocation {
 	pub candidates: Vec<TimeLocationCandidate>,
 	pub truncated: bool,
 	pub source: String,
+}
+
+// Industry names for the existing US NAICS response contract.
+pub type Industry = Naics;
+pub type IndustryChild = NaicsChild;
+pub type IndustryCorrection = NaicsCorrection;
+pub type IndustryDeep = NaicsDeep;
+pub type IndustryExclusion = NaicsExclusion;
+pub type IndustryMatch = NaicsMatch;
+pub type IndustrySearch = NaicsSearch;
+pub type IndustrySearchResult = NaicsSearchResult;
+
+pub type Vehicle = Vin;
+pub type VehicleDeep = VinDeep;
+pub type VehicleRecall = VinRecall;
+
+// Published compatibility declarations.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Iban {
+	pub iban: Option<String>,
+	pub valid: bool,
+	pub country: Option<String>,
+	/// Print form in groups of four, for display. None when invalid.
+	pub formatted: Option<String>,
+	/// Bank identifier parsed from the number, not a name.
+	pub bank: Option<String>,
+	/// Institution name from the national bank-code directory. None when unsourced.
+	pub bank_name: Option<String>,
+	/// BIC from that same directory. None when unsourced or missing.
+	pub bic: Option<String>,
+	pub deep: Option<IbanDeep>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Npi {
+	/// Normalized 10-digit NPI. Invalid input still echoes the fold.
+	pub npi: Option<String>,
+	pub valid: bool,
+	/// Exists in the healthcare provider registry.
+	pub registered: Option<bool>,
+	pub active: Option<bool>,
+	/// On the OIG exclusion list.
+	pub excluded: Option<bool>,
+	/// individual or organization.
+	#[serde(rename = "type")]
+	pub kind: Option<String>,
+	pub name: Option<String>,
+	pub first: Option<String>,
+	pub last: Option<String>,
+	pub credential: Option<String>,
+	pub specialty: Option<String>,
+	/// NUCC taxonomy code.
+	pub taxonomy: Option<String>,
+	pub address: Option<String>,
+	pub city: Option<String>,
+	pub state: Option<String>,
+	pub state_name: Option<String>,
+	pub postal: Option<String>,
+	pub country: Option<String>,
+	pub phone: Option<String>,
+	pub deep: Option<NpiDeep>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct NpiEnrollment {
+	/// part_a, part_b, practitioner, dme, order_refer, mdpp. None when unknown.
+	#[serde(rename = "type")]
+	pub kind: Option<String>,
+	pub specialty: Option<String>,
+	pub state: Option<String>,
+}
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct NpiDeep {
+	/// In the published Medicare FFS enrollment extract.
+	pub medicare: Option<bool>,
+	/// Has a Medicare opt-out affidavit.
+	pub opt_out: Option<bool>,
+	/// Enrollment rows. Empty when medicare is false.
+	pub enrollments: Option<Vec<NpiEnrollment>>,
+	/// Date the NPI was deactivated, YYYY-MM-DD. None when still active.
+	pub deactivated_at: Option<String>,
+}
+
+
+/// Card-prefix reference data. None means unknown.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Bin {
+	pub bin: String,
+	/// Actual longest matched prefix, which may be shorter than the input.
+	pub prefix: Option<String>,
+	pub country: Option<String>,
+	pub issuer: Option<String>,
+	pub brand: Option<String>,
+	pub brand_name: Option<String>,
+	pub r#type: Option<String>,
+	pub prepaid: Option<bool>,
+	pub deep: Option<serde_json::Value>,
+}
+
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct IbanDeep {
+	pub checksum: Option<String>,
+	/// Branch identifier when that country has one.
+	pub branch: Option<String>,
+	pub account: Option<String>,
 }

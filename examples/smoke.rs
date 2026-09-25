@@ -244,29 +244,29 @@ async fn main() {
 			.then_some(None)
 			.unwrap_or(Some("not valid DE".into()))
 	});
-	s.ok("bin", parse.bin("00 0000", BinOptions::default().deep(true)).await, |r| {
-		if r.bin == "000000" && r.deep == Some(serde_json::json!({})) { None } else { Some("BIN echo or deep mismatch".into()) }
+	s.ok("card", parse.card("00 0000").await, |r| {
+		if r.bin == "000000" { None } else { Some("BIN echo mismatch".into()) }
 	});
 	s.ok(
-		"iban",
-		parse.iban("DE89370400440532013000", None).await,
+		"bank",
+		parse.bank("DE89370400440532013000", None).await,
 		|r| {
 			(r.valid && r.country.as_deref() == Some("DE") && r.bank.as_deref() == Some("37040044"))
 				.then_some(None)
 				.unwrap_or(Some("not valid DE".into()))
 		},
 	);
-	s.ok("iban junk", parse.iban("hello", None).await, |r| {
+	s.ok("bank junk", parse.bank("hello", None).await, |r| {
 		(!r.valid)
 			.then_some(None)
 			.unwrap_or(Some("expected invalid".into()))
 	});
-	s.ok("npi", parse.npi("1881018208", None).await, |r| {
+	s.ok("npi", parse.provider("1881018208", None).await, |r| {
 		(r.valid && r.registered == Some(true))
 			.then_some(None)
 			.unwrap_or(Some("not registered".into()))
 	});
-	s.ok("npi junk", parse.npi("hello", None).await, |r| {
+	s.ok("npi junk", parse.provider("hello", None).await, |r| {
 		(!r.valid)
 			.then_some(None)
 			.unwrap_or(Some("expected invalid".into()))
