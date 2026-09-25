@@ -954,7 +954,7 @@ impl WeatherOptions {
 	}
 }
 
-/// Configures `naics_search`. Limit defaults to 10 and accepts 1-50.
+/// Configures `industry_search`. Limit defaults to 10 and accepts 1-50.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct NaicsSearchOptions {
@@ -1110,7 +1110,7 @@ impl CityNearestOptions {
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
 
 
-/// Options for `naics`. Deep reveals the same question in more detail.
+/// Options for `industry`. Deep reveals the same question in more detail.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct NaicsOptions { pub deep: bool }
@@ -1969,25 +1969,37 @@ impl Client {
 
 	/// Looks up a US NAICS 2022 code and its hierarchy.
 	pub async fn naics(&self, code: &str) -> Result<Naics> {
-		self.naics_with_options(code, None).await
+		self.industry(code).await
+	}
+
+	pub async fn naics_with_options(&self, code: &str, opts: impl Into<Option<NaicsOptions>>) -> Result<Naics> {
+		self.industry_with_options(code, opts).await
+	}
+
+	pub async fn naics_search(&self, query: &str, opts: impl Into<Option<NaicsSearchOptions>>) -> Result<NaicsSearch> {
+		self.industry_search(query, opts).await
+	}
+
+	pub async fn industry(&self, code: &str) -> Result<Industry> {
+		self.industry_with_options(code, None).await
 	}
 
 	/// Calls the same operation with optional detail.
-	pub async fn naics_with_options(&self, code: &str, opts: impl Into<Option<NaicsOptions>>) -> Result<Naics> {
+	pub async fn industry_with_options(&self, code: &str, opts: impl Into<Option<NaicsOptions>>) -> Result<Industry> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push_deep(&mut query, opts.deep);
-		self.get(&format!("/naics/{}", seg(code)), query, None).await
+		self.get(&format!("/industry/{}", seg(code)), query, None).await
 	}
 
 	/// Searches US NAICS 2022 industry names and activity terms.
-	pub async fn naics_search(&self, query: &str, opts: impl Into<Option<NaicsSearchOptions>>) -> Result<NaicsSearch> {
+	pub async fn industry_search(&self, query: &str, opts: impl Into<Option<NaicsSearchOptions>>) -> Result<IndustrySearch> {
 		let opts = opts.into().unwrap_or_default();
 		let mut params = Query::new();
 		params.push(("q", query.into()));
 		push(&mut params, "limit", opts.limit.map(|value| value.to_string()));
 		push_deep(&mut params, opts.deep);
-		self.get("/naics", params, None).await
+		self.get("/industry", params, None).await
 	}
 
 	/// Look up the general US duty schedule line. Paid deep adds units and the special and other
@@ -2358,3 +2370,6 @@ mod stack_defaults_tests {
 		}
 	}
 }
+
+pub type IndustryOptions = NaicsOptions;
+pub type IndustrySearchOptions = NaicsSearchOptions;

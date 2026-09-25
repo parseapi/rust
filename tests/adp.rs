@@ -74,11 +74,11 @@ fn adp_models_decode_absent_locked_and_populated_depth() {
  assert!(rich.deep.is_some());
  let rich: Tariff = serde_json::from_str(r#"{"hts":"8471.30.01.00","description":"Portable computers","revision":"2026","deep":{"units":[],"special":"Free","origin":null,"effective_rate":null,"measures":null}}"#).unwrap();
  assert!(rich.deep.is_some());
- let plain: Naics = serde_json::from_str(r#"{"naics":"541511","name":"Programming","level":6,"parent":"54151","year":2022,"country":"US"}"#).unwrap();
+ let plain: Industry = serde_json::from_str(r#"{"naics":"541511","name":"Programming","level":6,"parent":"54151","year":2022,"country":"US"}"#).unwrap();
  assert!(plain.deep.is_none());
- let rich: Naics = serde_json::from_str(r#"{"naics":"541511","name":"Programming","level":6,"parent":"54151","year":2022,"country":"US","deep":{}}"#).unwrap();
+ let rich: Industry = serde_json::from_str(r#"{"naics":"541511","name":"Programming","level":6,"parent":"54151","year":2022,"country":"US","deep":{}}"#).unwrap();
  assert!(rich.deep.is_some());
- let rich: Naics = serde_json::from_str(r#"{"naics":"541511","name":"Programming","level":6,"parent":"54151","year":2022,"country":"US","deep":{"description":"Definition","children":[],"exclusions":[]}}"#).unwrap();
+ let rich: Industry = serde_json::from_str(r#"{"naics":"541511","name":"Programming","level":6,"parent":"54151","year":2022,"country":"US","deep":{"description":"Definition","children":[],"exclusions":[]}}"#).unwrap();
  assert!(rich.deep.is_some());
  let plain: Company = serde_json::from_str(r#"{"company":"01234567","valid":true,"name":"Example"}"#).unwrap();
  assert!(plain.deep.is_none());

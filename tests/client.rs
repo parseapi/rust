@@ -841,16 +841,16 @@ async fn naics_hierarchy_and_keyword_search() {
   (200, r#"{"q":"coffee & tea","year":2022,"country":"US","results":[]}"#),
  ]);
  let client = Client::builder().api_key("test_key").base_url(&server.base_url).retries(0).build().unwrap();
- let industry = client.naics("31-33").await.unwrap();
+ let industry = client.industry("31-33").await.unwrap();
  assert_eq!(industry.naics, "31-33");
  assert!(industry.deep.as_ref().unwrap().description.is_none() && industry.parent.is_none());
  assert_eq!(industry.deep.as_ref().unwrap().children.as_ref().unwrap()[0].naics, "311");
- let search = client.naics_search("coffee & tea", NaicsSearchOptions::default().limit(5)).await.unwrap();
+ let search = client.industry_search("coffee & tea", IndustrySearchOptions::default().limit(5)).await.unwrap();
  assert_eq!(search.year, 2022);
  assert!(search.results.is_empty());
  let requests = server.requests.lock().unwrap();
- assert_eq!(requests[0].target, "/naics/31-33");
- assert_eq!(requests[1].target, "/naics?q=coffee+%26+tea&limit=5");
+ assert_eq!(requests[0].target, "/industry/31-33");
+ assert_eq!(requests[1].target, "/industry?q=coffee+%26+tea&limit=5");
 }
 
 #[tokio::test]
@@ -891,8 +891,8 @@ fn time_keeps_epoch_zero_and_unknown() {
 
 #[test]
 fn naics_exclusions_and_match_preserve_older_responses() {
- let search: NaicsSearch = serde_json::from_str(r#"{"q":"sofware","year":2022,"country":"US","results":[{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","deep":{"description":null,"children":[]}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":null,"deep":{"description":null,"children":[],"exclusions":null}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"future-field","text":"Future matching evidence","corrections":[],"future":true},"deep":{"description":null,"children":[],"exclusions":[]}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"term","text":"Computer software programming services","corrections":[{"from":"sofware","to":"software"}]},"future":true,"deep":{"description":null,"children":[],"exclusions":[{"description":"Designing integrated computer systems","codes":[{"naics":"541512","name":"Computer Systems Design Services"}]},{"description":"Activities classified elsewhere","codes":[]}]}}]}"#).unwrap();
- let results: Vec<NaicsSearchResult> = search.results;
+ let search: IndustrySearch = serde_json::from_str(r#"{"q":"sofware","year":2022,"country":"US","results":[{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","deep":{"description":null,"children":[]}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":null,"deep":{"description":null,"children":[],"exclusions":null}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"future-field","text":"Future matching evidence","corrections":[],"future":true},"deep":{"description":null,"children":[],"exclusions":[]}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"term","text":"Computer software programming services","corrections":[{"from":"sofware","to":"software"}]},"future":true,"deep":{"description":null,"children":[],"exclusions":[{"description":"Designing integrated computer systems","codes":[{"naics":"541512","name":"Computer Systems Design Services"}]},{"description":"Activities classified elsewhere","codes":[]}]}}]}"#).unwrap();
+ let results: Vec<IndustrySearchResult> = search.results;
  assert!(results[0].deep.as_ref().unwrap().exclusions.is_none() && results[0].r#match.is_none());
  assert!(results[1].deep.as_ref().unwrap().exclusions.is_none() && results[1].r#match.is_none());
  assert!(results[2].deep.as_ref().unwrap().exclusions.as_ref().unwrap().is_empty());
@@ -1053,18 +1053,18 @@ async fn adp_hlr_option() {
  assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
 }
 #[tokio::test]
-async fn adp_naics_with_options_option() {
+async fn adp_industry_with_options_option() {
  let server=TestServer::start(vec![(200,"{}")]);
  let client=server.client();
- let _=client.naics_with_options("541511", NaicsOptions::default().deep(true)).await;
+ let _=client.industry_with_options("541511", IndustryOptions::default().deep(true)).await;
  assert_eq!(server.requests().len(),1);
  assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
 }
 #[tokio::test]
-async fn adp_naics_search_option() {
+async fn adp_industry_search_option() {
  let server=TestServer::start(vec![(200,"{}")]);
  let client=server.client();
- let _=client.naics_search("software", NaicsSearchOptions::default().deep(true)).await;
+ let _=client.industry_search("software", IndustrySearchOptions::default().deep(true)).await;
  assert_eq!(server.requests().len(),1);
  assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
 }

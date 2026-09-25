@@ -2012,3 +2012,13 @@ pub struct PropertyTax {
 	/// Reporting period, YYYY-YYYY. Monetary amounts use the final year of this period.
 	pub period: String,
 }
+
+// Industry names for the existing US NAICS response contract.
+pub type Industry = Naics;
+pub type IndustryChild = NaicsChild;
+pub type IndustryCorrection = NaicsCorrection;
+pub type IndustryDeep = NaicsDeep;
+pub type IndustryExclusion = NaicsExclusion;
+pub type IndustryMatch = NaicsMatch;
+pub type IndustrySearch = NaicsSearch;
+pub type IndustrySearchResult = NaicsSearchResult;

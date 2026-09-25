@@ -103,8 +103,8 @@ parse.hlr("+447712345678", None).await?;
 parse.dns("example.com", None).await?;
 parse.dns("_dmarc.example.com", DnsOptions::default().r#type("TXT")).await?;
 parse.stack("example.com").await?;
-parse.naics("541511").await?;
-parse.naics_search("coffee shop", NaicsSearchOptions::default().limit(5)).await?;
+parse.industry("541511").await?;
+parse.industry_search("coffee shop", IndustrySearchOptions::default().limit(5)).await?;
 parse.tariff("8471.30.01.00", TariffOptions::default().origin("DE").deep(true)).await?;
 parse.address("123 Main St", AddressOptions::default().country("US")).await?;
 parse.address_search("123 Main", AddressSearchOptions::default().country("US").state("NC")).await?;
@@ -117,7 +117,7 @@ parse.time_at(40.7128, -74.006, None).await?;
 parse.weather(40.7128, -74.006, WeatherOptions::default().deep(true).date("2026-09-01")).await?;
 ```
 
-Paid NAICS `deep` includes full definitions, child categories and classification `exclusions`, each with a description and linked codes. Generic exclusions can have no linked codes. Omitted or null exclusions in older responses remain unknown. Search results keep `country` and `year` on the envelope and optional depth on each result. They also include core `match`: the matched `field` (`name`, `term` or `naics`) and `text`, plus `corrections` with `from` and `to` tokens for typo fallback. Corrections are empty for exact, plural and prefix matches. Direct code lookups omit `match`. Older responses may omit it.
+Paid Industry `deep` includes full definitions, child categories and classification `exclusions`, each with a description and linked codes. Generic exclusions can have no linked codes. Omitted or null exclusions in older responses remain unknown. Search results keep `country` and `year` on the envelope and optional depth on each result. They also include core `match`: the matched `field` (`name`, `term` or `naics`) and `text`, plus `corrections` with `from` and `to` tokens for typo fallback. Corrections are empty for exact, plural and prefix matches. Direct code lookups omit `match`. Older responses may omit it.
 
 Nullable values use `Option`. Unknown JSON fields are accepted. An omitted `deep` is `None`, and a requested empty `deep` is `Some` with empty fields. Optional deep arrays preserve unknown versus an empty result. Existing core collections retain their documented null-to-empty normalization. API fields named `type` use `r#type` where a separate `kind` field also exists.
 
@@ -198,7 +198,7 @@ The default call returns the common answer. Request more detail with `parse.coun
 | VAT | A metered registry check where supported, using included VAT checks or enabled on-demand usage. |
 | Country, State, City, District, Postal | Reference profiles included with a paid plan; place identity and coordinates stay core. |
 | NPI | Deactivation date, Medicare enrollment, opt-out and enrollment rows from stored sources on paid plans. Exclusion evidence stays core. |
-| VIN, NAICS, Company | Paid technical or registration profiles. NPI exclusion status and NAICS hierarchy stay core. |
+| VIN, Industry, Company | Paid technical or registration profiles. NPI exclusion status and Industry hierarchy stay core. |
 | Tariff | Paid schedule columns and units; add origin for applicable measures. |
 | Name, Weather | Paid name context or weather detail; parsing and current conditions stay core. |
 | Phone, Bank | Numbering-plan or bank structure detail in the same pooled request on every plan. |
