@@ -213,3 +213,22 @@ fn client_and_errors_remain_send_sync() {
 	let client = Client::new("contract_test_key").unwrap();
 	send(frozen_consumer_calls(&client));
 }
+
+
+#[allow(dead_code)]
+async fn directory_consumer_calls(client: &Client) -> Result<()> {
+	let _: CompanyProfile = client.company_id("co_222222222222").await?;
+	let _: CompanyProfile = client
+		.company_id_with_options("co_222222222222", CompanyIdOptions::default().deep(true))
+		.await?;
+	let _: CompanySearch = client.company_search(None).await?;
+	let _: CompanySearch = client
+		.company_search(
+			CompanySearchOptions::default()
+				.domain("example.com")
+				.deep(true),
+		)
+		.await?;
+	let _: CompanyCoverage = client.company_coverage().await?;
+	Ok(())
+}

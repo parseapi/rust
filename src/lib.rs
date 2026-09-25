@@ -702,10 +702,19 @@ impl VinOptions {
 	}
 }
 
+fn tariff_selection(edition: Option<&str>, date: Option<&str>, got_edition: Option<&str>, got_date: Option<&str>) -> Result<()> {
+	if (edition.is_some() || date.is_some()) && (!got_edition.is_some_and(|value| value.len() == 64 && value.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))) || (edition.is_some() && got_edition != edition) || got_date != date) {
+		return Err(Error::Api { status: 0, code: "tariff_selection_mismatch".into(), message: "Tariff response did not confirm the requested edition/date. The server may not support this selection.".into(), docs: None, request_id: None, retry_after: None });
+	}
+	Ok(())
+}
+
 /// Configures `tariff`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct TariffOptions {
+	pub edition: Option<String>,
+	pub date: Option<String>,
 	/// Add units and the special and other schedule columns on paid plans.
 	pub deep: bool,
 	/// ISO 3166-1 alpha-2 origin. With paid deep, resolves country-specific measures. Optional for schedule detail.
@@ -713,6 +722,8 @@ pub struct TariffOptions {
 }
 
 impl TariffOptions {
+	pub fn edition(mut self, value: impl Into<String>) -> Self { self.edition = Some(value.into()); self }
+	pub fn date(mut self, value: impl Into<String>) -> Self { self.date = Some(value.into()); self }
 	/// Add units and the special and other schedule columns on paid plans.
 	pub fn deep(mut self, value: bool) -> Self {
 		self.deep = value;
@@ -723,6 +734,18 @@ impl TariffOptions {
 		self.origin = Some(value.into());
 		self
 	}
+}
+
+/// Edition and date selection for tariff description search.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct TariffSearchOptions {
+	pub edition: Option<String>,
+	pub date: Option<String>,
+}
+impl TariffSearchOptions {
+	pub fn edition(mut self, value: impl Into<String>) -> Self { self.edition = Some(value.into()); self }
+	pub fn date(mut self, value: impl Into<String>) -> Self { self.date = Some(value.into()); self }
 }
 
 /// Configures `currency_rate`. Omitted fields use API defaults.
@@ -750,14 +773,38 @@ impl CurrencyRateOptions {
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct TimeOptions {
+	pub ip: Option<String>,
+	pub city: Option<String>,
+	pub country: Option<String>,
+	pub state: Option<String>,
+	pub iata: Option<String>,
+	pub icao: Option<String>,
+	pub unlocode: Option<String>,
+	pub address: Option<String>,
+
 	pub at: Option<String>,
 	pub to: Option<String>,
+	/// One to ten destination zones, preserving order and duplicates. Mutually exclusive with to.
+	pub targets: Option<Vec<String>>,
+	/// Offsetless conversion policy at clock changes: compatible (default), earlier, later, or reject.
+	pub disambiguation: Option<String>,
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
 }
 
 impl TimeOptions {
+	pub fn ip(mut self, value: impl Into<String>) -> Self { self.ip = Some(value.into()); self }
+	pub fn city(mut self, value: impl Into<String>) -> Self { self.city = Some(value.into()); self }
+	pub fn country(mut self, value: impl Into<String>) -> Self { self.country = Some(value.into()); self }
+	pub fn state(mut self, value: impl Into<String>) -> Self { self.state = Some(value.into()); self }
+	pub fn iata(mut self, value: impl Into<String>) -> Self { self.iata = Some(value.into()); self }
+	pub fn icao(mut self, value: impl Into<String>) -> Self { self.icao = Some(value.into()); self }
+	pub fn unlocode(mut self, value: impl Into<String>) -> Self { self.unlocode = Some(value.into()); self }
+	pub fn address(mut self, value: impl Into<String>) -> Self { self.address = Some(value.into()); self }
+
+	pub fn targets(mut self, value: impl IntoIterator<Item = impl Into<String>>) -> Self { self.targets = Some(value.into_iter().map(Into::into).collect()); self }
+	pub fn disambiguation(mut self, value: impl Into<String>) -> Self { self.disambiguation = Some(value.into()); self }
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `at` query option.
 	pub fn at(mut self, value: impl Into<String>) -> Self {
@@ -773,18 +820,50 @@ impl TimeOptions {
 	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
+/// Filters the serving timezone catalog at one instant.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct TimeZonesOptions {
+	pub country: Option<String>,
+	pub area: Option<String>,
+	pub offset: Option<String>,
+	pub abbreviation: Option<String>,
+	pub at: Option<String>,
+	pub sort: Option<String>,
+	pub dst: Option<bool>,
+	pub observes_dst: Option<bool>,
+	pub details: bool,
+}
+impl TimeZonesOptions {
+	pub fn country(mut self, value: impl Into<String>) -> Self { self.country = Some(value.into()); self }
+	pub fn area(mut self, value: impl Into<String>) -> Self { self.area = Some(value.into()); self }
+	pub fn offset(mut self, value: impl Into<String>) -> Self { self.offset = Some(value.into()); self }
+	pub fn abbreviation(mut self, value: impl Into<String>) -> Self { self.abbreviation = Some(value.into()); self }
+	pub fn at(mut self, value: impl Into<String>) -> Self { self.at = Some(value.into()); self }
+	pub fn sort(mut self, value: impl Into<String>) -> Self { self.sort = Some(value.into()); self }
+	pub fn dst(mut self, value: bool) -> Self { self.dst = Some(value); self }
+	pub fn observes_dst(mut self, value: bool) -> Self { self.observes_dst = Some(value); self }
+	pub fn details(mut self, value: bool) -> Self { self.details = value; self }
+}
+
 /// Configures `time_at`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct TimeAtOptions {
 	pub at: Option<String>,
 	pub to: Option<String>,
+	/// One to ten destination zones, preserving order and duplicates. Mutually exclusive with to.
+	pub targets: Option<Vec<String>>,
+	/// Offsetless conversion policy at clock changes: compatible (default), earlier, later, or reject.
+	pub disambiguation: Option<String>,
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
 }
 
 impl TimeAtOptions {
+	pub fn targets(mut self, value: impl IntoIterator<Item = impl Into<String>>) -> Self { self.targets = Some(value.into_iter().map(Into::into).collect()); self }
+	pub fn disambiguation(mut self, value: impl Into<String>) -> Self { self.disambiguation = Some(value.into()); self }
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the destination IANA timezone.
 	pub fn to(mut self, value: impl Into<String>) -> Self {
@@ -1048,6 +1127,109 @@ impl AddressSearchOptions {
 	/// Sets the `ip` query option.
 	pub fn ip(mut self, value: impl Into<String>) -> Self {
 		self.ip = Some(value.into());
+		self
+	}
+}
+
+
+/// Directory detail in the same pooled request on every plan.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CompanyIdOptions {
+	pub deep: bool,
+}
+impl CompanyIdOptions {
+	pub fn deep(mut self, value: bool) -> Self {
+		self.deep = value;
+		self
+	}
+}
+
+/// Use at most one selector, or discover by country, industry or selected registration. The API validates
+/// combinations. Reuse cursor with the same selector, filters and limit.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CompanySearchOptions {
+	pub query: Option<String>,
+	pub domain: Option<String>,
+	pub ticker: Option<String>,
+	pub identifier: Option<String>,
+	pub country: Option<String>,
+	/// Exact four-digit SIC string; pair with industry_type.
+	pub industry: Option<String>,
+	/// Open namespace string, currently sic.
+	pub industry_type: Option<String>,
+	/// Selected registration authority; required by registration_form/status.
+	pub registration_authority: Option<String>,
+	/// Exact source legal-form code, not ownership or tax-exempt status.
+	pub registration_form: Option<String>,
+	/// Exact administrative source status, not current business activity.
+	pub registration_status: Option<String>,
+	pub exchange: Option<String>,
+	pub authority: Option<String>,
+	pub limit: Option<u32>,
+	pub cursor: Option<String>,
+	pub deep: bool,
+}
+impl CompanySearchOptions {
+	pub fn registration_authority(mut self, value: impl Into<String>) -> Self {
+		self.registration_authority = Some(value.into());
+		self
+	}
+	pub fn registration_form(mut self, value: impl Into<String>) -> Self {
+		self.registration_form = Some(value.into());
+		self
+	}
+	pub fn registration_status(mut self, value: impl Into<String>) -> Self {
+		self.registration_status = Some(value.into());
+		self
+	}
+	pub fn industry(mut self, value: impl Into<String>) -> Self {
+		self.industry = Some(value.into());
+		self
+	}
+	pub fn industry_type(mut self, value: impl Into<String>) -> Self {
+		self.industry_type = Some(value.into());
+		self
+	}
+	pub fn query(mut self, value: impl Into<String>) -> Self {
+		self.query = Some(value.into());
+		self
+	}
+	pub fn domain(mut self, value: impl Into<String>) -> Self {
+		self.domain = Some(value.into());
+		self
+	}
+	pub fn ticker(mut self, value: impl Into<String>) -> Self {
+		self.ticker = Some(value.into());
+		self
+	}
+	pub fn identifier(mut self, value: impl Into<String>) -> Self {
+		self.identifier = Some(value.into());
+		self
+	}
+	pub fn country(mut self, value: impl Into<String>) -> Self {
+		self.country = Some(value.into());
+		self
+	}
+	pub fn exchange(mut self, value: impl Into<String>) -> Self {
+		self.exchange = Some(value.into());
+		self
+	}
+	pub fn authority(mut self, value: impl Into<String>) -> Self {
+		self.authority = Some(value.into());
+		self
+	}
+	pub fn limit(mut self, value: u32) -> Self {
+		self.limit = Some(value);
+		self
+	}
+	pub fn cursor(mut self, value: impl Into<String>) -> Self {
+		self.cursor = Some(value.into());
+		self
+	}
+	pub fn deep(mut self, value: bool) -> Self {
+		self.deep = value;
 		self
 	}
 }
@@ -2023,15 +2205,27 @@ impl Client {
 		let mut query = Query::new();
 		push_deep(&mut query, opts.deep);
 		push(&mut query, "origin", opts.origin);
-		self.get(&format!("/tariff/{}", seg(code)), query, None)
-			.await
+		push(&mut query, "edition", opts.edition.clone());
+		push(&mut query, "date", opts.date.clone());
+		let result: Tariff = self.get(&format!("/tariff/{}", seg(code)), query, None).await?;
+		tariff_selection(opts.edition.as_deref(), opts.date.as_deref(), result.edition.as_deref(), result.date.as_deref())?;
+		Ok(result)
 	}
 
 	/// Calls `/tariff`.
 	pub async fn tariff_search(&self, query: &str) -> Result<TariffSearch> {
+		self.tariff_search_with_options(query, None).await
+	}
+
+	pub async fn tariff_search_with_options(&self, query: &str, opts: impl Into<Option<TariffSearchOptions>>) -> Result<TariffSearch> {
+		let opts = opts.into().unwrap_or_default();
 		let mut params = Query::new();
 		push(&mut params, "q", Some(query.to_string()));
-		self.get("/tariff", params, None).await
+		push(&mut params, "edition", opts.edition.clone());
+		push(&mut params, "date", opts.date.clone());
+		let result: TariffSearch = self.get("/tariff", params, None).await?;
+		tariff_selection(opts.edition.as_deref(), opts.date.as_deref(), result.edition.as_deref(), result.date.as_deref())?;
+		Ok(result)
 	}
 
 	/// Calls `/currency/{code}`.
@@ -2108,11 +2302,26 @@ impl Client {
 		timezone: &str,
 		opts: impl Into<Option<TimeOptions>>,
 	) -> Result<Time> {
+		if matches!(timezone.trim().to_ascii_lowercase().as_str(), "zones" | "help") {
+			return Err(Error::Config("Time source must be an IANA timezone ID. Use timezone discovery to list IDs.".into()));
+		}
 		let opts = opts.into().unwrap_or_default();
+		time_source(timezone, &opts)?;
 		let mut query = Query::new();
+		push(&mut query, "ip", opts.ip);
+		push(&mut query, "city", opts.city);
+		push(&mut query, "country", opts.country);
+		push(&mut query, "state", opts.state);
+		push(&mut query, "iata", opts.iata);
+		push(&mut query, "icao", opts.icao);
+		push(&mut query, "unlocode", opts.unlocode);
+		push(&mut query, "address", opts.address);
+
 		push(&mut query, "lang", opts.lang);
 		push(&mut query, "at", opts.at);
+		push(&mut query, "targets", time_targets(opts.targets, opts.to.as_deref())?);
 		push(&mut query, "to", opts.to);
+		push(&mut query, "disambiguation", opts.disambiguation);
 		let path = if timezone.is_empty() { "/time".to_string() } else { format!("/time/{}", seg(timezone)) };
 		push_deep(&mut query, opts.deep);
 		self.get(&path, query, None)
@@ -2132,9 +2341,33 @@ impl Client {
 		push(&mut query, "lat", Some(lat.to_string()));
 		push(&mut query, "lon", Some(lon.to_string()));
 		push(&mut query, "at", opts.at);
+		push(&mut query, "targets", time_targets(opts.targets, opts.to.as_deref())?);
 		push(&mut query, "to", opts.to);
+		push(&mut query, "disambiguation", opts.disambiguation);
 		push_deep(&mut query, opts.deep);
 		self.get("/time", query, None).await
+	}
+
+	/// Search serving timezone IDs. An empty query lists all.
+	pub async fn time_zones(&self, query: &str) -> Result<TimeZones> {
+		self.time_zones_with_options(query, TimeZonesOptions::default()).await
+	}
+
+	/// Filters catalog candidates without choosing an abbreviation's timezone.
+	pub async fn time_zones_with_options(&self, query: &str, opts: impl Into<Option<TimeZonesOptions>>) -> Result<TimeZones> {
+		let opts = opts.into().unwrap_or_default();
+		let mut values = Query::new();
+		if !query.is_empty() { push(&mut values, "q", Some(query.to_owned())); }
+		push(&mut values, "country", opts.country);
+		push(&mut values, "area", opts.area);
+		push(&mut values, "offset", opts.offset);
+		push(&mut values, "abbreviation", opts.abbreviation);
+		push(&mut values, "at", opts.at);
+		push(&mut values, "sort", opts.sort);
+		push(&mut values, "dst", opts.dst.map(|value| value.to_string()));
+		push(&mut values, "observes_dst", opts.observes_dst.map(|value| value.to_string()));
+		if opts.details { push(&mut values, "details", Some("true".into())); }
+		self.get("/time/zones", values, None).await
 	}
 
 	/// Calls `/timezone/{timezone}`.
@@ -2340,6 +2573,60 @@ impl Client {
 		self.get(&format!("/company/{}", seg(number)), query, None)
 			.await
 	}
+	/// Retrieve a directory profile by stable co_ ID. National validation remains company.
+	pub async fn company_id(&self, id: &str) -> Result<CompanyProfile> {
+		self.company_id_with_options(id, None).await
+	}
+
+	/// Deep adds profile detail on every plan in the same pooled request.
+	pub async fn company_id_with_options(
+		&self,
+		id: &str,
+		opts: impl Into<Option<CompanyIdOptions>>,
+	) -> Result<CompanyProfile> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/company/id/{}", seg(id)), query, None)
+			.await
+	}
+
+	/// One bounded page, with optional detail on each profile and no hidden lookups.
+	/// Use one selector or country/industry/selected-registration filters; exchange narrows ticker and authority narrows identifier.
+	/// Empty companies means no match in this edition; failures remain errors.
+	pub async fn company_search(
+		&self,
+		opts: impl Into<Option<CompanySearchOptions>>,
+	) -> Result<CompanySearch> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "q", opts.query);
+		push(&mut query, "domain", opts.domain);
+		push(&mut query, "ticker", opts.ticker);
+		push(&mut query, "identifier", opts.identifier);
+		push(&mut query, "country", opts.country);
+		push(&mut query, "industry", opts.industry);
+		push(&mut query, "industry_type", opts.industry_type);
+		push(&mut query, "registration_authority", opts.registration_authority);
+		push(&mut query, "registration_form", opts.registration_form);
+		push(&mut query, "registration_status", opts.registration_status);
+		push(&mut query, "exchange", opts.exchange);
+		push(&mut query, "authority", opts.authority);
+		push(
+			&mut query,
+			"limit",
+			opts.limit.map(|value| value.to_string()),
+		);
+		push(&mut query, "cursor", opts.cursor);
+		push_deep(&mut query, opts.deep);
+		self.get("/company", query, None).await
+	}
+
+	/// Edition counts, not complete country or worldwide coverage.
+	pub async fn company_coverage(&self) -> Result<CompanyCoverage> {
+		self.get("/company/directory/coverage", Query::new(), None)
+			.await
+	}
 }
 
 #[cfg(test)]
@@ -2377,6 +2664,26 @@ mod stack_defaults_tests {
 			assert_eq!(client.timeout_for("/domain/example.com"), timeout);
 		}
 	}
+}
+
+fn time_source(timezone: &str, opts: &TimeOptions) -> Result<()> {
+	let primary = [&opts.ip, &opts.city, &opts.iata, &opts.icao, &opts.unlocode, &opts.address].into_iter().filter(|value| value.is_some()).count();
+	let values = [&opts.ip, &opts.city, &opts.country, &opts.state, &opts.iata, &opts.icao, &opts.unlocode, &opts.address];
+	if values.iter().any(|value| value.as_ref().is_some_and(|text| text.trim().is_empty())) ||
+		(!timezone.is_empty() && values.iter().any(|value| value.is_some())) || primary > 1 ||
+		(opts.country.is_some() && primary > 0 && opts.city.is_none() && opts.address.is_none()) ||
+		(opts.state.is_some() && ((opts.city.is_none() && opts.address.is_none()) || opts.country.is_none())) || (opts.address.is_some() && opts.country.is_none()) {
+		return Err(Error::Config("Pass one Time source, using country only with city or address and state only with city or address and country.".into()));
+	}
+	Ok(())
+}
+
+fn time_targets(targets: Option<Vec<String>>, to: Option<&str>) -> Result<Option<String>> {
+	let Some(targets) = targets else { return Ok(None); };
+	if to.is_some() || !(1..=10).contains(&targets.len()) || targets.iter().any(|zone| zone.trim().is_empty() || zone.contains(',')) {
+		return Err(Error::Config("Time targets requires 1 to 10 timezone IDs and cannot be combined with to.".into()));
+	}
+	Ok(Some(targets.join(",")))
 }
 
 pub type IndustryOptions = NaicsOptions;

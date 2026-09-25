@@ -650,13 +650,16 @@ pub struct TariffMeasure {
 #[serde(default)]
 #[non_exhaustive]
 pub struct TariffDeep {
+	/// Open-string explanation when effective_rate is None.
+	pub reason: Option<String>,
 	/// The origin country the measures were resolved for.
 	pub origin: Option<String>,
-	/// Composed ad valorem percent. None when the components do not compose cleanly.
+	/// Composed ad valorem percent for matched stored measures only, not complete duty
+	/// or landed cost. None when the components do not compose cleanly.
 	pub effective_rate: Option<f64>,
-	/// Every Chapter 99 tariff measure that applies to this code from this origin.
-	#[serde(default, deserialize_with = "null_default")]
-	pub measures: Vec<TariffMeasure>,
+	/// Matching stored Chapter 99 measures for this code and goods origin. None means unresolved;
+	/// an empty list means the resolved lookup found no matching measures.
+	pub measures: Option<Vec<TariffMeasure>>,
 	/// Units of quantity (No., kg).
 	pub units: Option<Vec<String>>,
 	/// Column 1 special rate, verbatim.
@@ -669,6 +672,9 @@ pub struct TariffDeep {
 #[serde(default)]
 #[non_exhaustive]
 pub struct Tariff {
+	/// Exact edition and answering date. Older servers may omit both.
+	pub edition: Option<String>,
+	pub date: Option<String>,
 	/// Normalized code with dots (8471.30.01.00).
 	pub hts: String,
 	/// The schedule line verbatim.
@@ -690,12 +696,17 @@ pub struct TariffSearchHit {
 	pub hts: String,
 	pub description: String,
 	pub general: Option<String>,
+	/// Parent descriptions, outermost first. Older responses may omit this context.
+	pub lineage: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
 pub struct TariffSearch {
+	/// Exact edition and answering date. Older servers may omit both.
+	pub edition: Option<String>,
+	pub date: Option<String>,
 	pub q: String,
 	pub revision: String,
 	/// Up to 20 tariff lines, best match first.
@@ -1089,10 +1100,22 @@ pub struct TimezoneNextDst {
 /// Local clock and timezone facts. Missing clock fields remain unknown.
 pub type Time = Timezone;
 
+/// Serving timezone IDs and their pinned rule edition.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeZones {
+	pub timezone_database_version: String,
+	pub timezones: Vec<String>,
+	pub at: Option<String>,
+	pub zones: Option<Vec<TimeZoneEntry>>,
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
 pub struct Timezone {
+	pub location: Option<TimeLocation>,
 	pub timezone: Option<String>,
 	pub abbreviation: Option<String>,
 	pub offset: Option<String>,
@@ -1102,6 +1125,7 @@ pub struct Timezone {
 	pub at: Option<String>,
 	pub unix: Option<i64>,
 	pub to: Option<TimezoneConversionTarget>,
+	pub targets: Option<Vec<TimezoneConversionTarget>>,
 	pub deep: Option<TimezoneDeep>,
 }
 
@@ -1870,6 +1894,12 @@ pub struct NameDeep {
 #[serde(default)]
 #[non_exhaustive]
 pub struct TimezoneDeep {
+	pub standard_offset: Option<String>,
+	pub standard_offset_seconds: Option<i32>,
+	pub dst_offset_seconds: Option<i32>,
+	pub season: Option<TimeSeason>,
+	pub timezone_database_version: Option<String>,
+	pub resolution: Option<TimeResolution>,
 	pub name: Option<String>,
 	pub offset_seconds: Option<i32>,
 	pub offset_minutes: Option<i32>,
@@ -2011,6 +2041,336 @@ pub struct PropertyTax {
 	pub currency: String,
 	/// Reporting period, YYYY-YYYY. Monetary amounts use the final year of this period.
 	pub period: String,
+}
+
+// Company directory responses. National Company and CompanyDeep remain separate.
+
+/// An address with its recorded role; role does not imply mailing validity or headquarters.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileAddress {
+	pub r#type: String,
+	pub street: Option<String>,
+	pub city: Option<String>,
+	pub state: Option<String>,
+	pub postal: Option<String>,
+	pub country: Option<String>,
+}
+
+/// A reported exchange/symbol pair. No listings does not establish private ownership.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileListing {
+	pub exchange: String,
+	pub symbol: String,
+}
+
+/// Recorded registration jurisdiction, separate from address or operating location.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileJurisdiction {
+	pub country: String,
+	pub state: Option<String>,
+}
+
+/// Another associated hostname and its recorded URL, when known.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileWebsite {
+	pub domain: String,
+	pub url: Option<String>,
+}
+
+/// An authority-scoped identifier; values preserve leading zeros.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileIdentifier {
+	pub r#type: String,
+	pub authority: String,
+	pub value: String,
+}
+
+/// A reported classification; type is an open scheme string.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileIndustry {
+	pub r#type: String,
+	pub code: String,
+	pub name: Option<String>,
+}
+
+/// Reported founding value and precision (year, month or day), distinct from incorporation.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileFounding {
+	pub value: String,
+	/// Open string; currently year, month or day. Preserve the source value without padding.
+	pub precision: String,
+}
+
+/// Reported total headcount at its explicit measurement date.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileEmployees {
+	pub count: u64,
+	pub as_of: String,
+	/// Open string, currently legal_entity or consolidated_group.
+	pub scope: String,
+	/// Open string, currently reported.
+	pub method: String,
+	pub approximate: bool,
+}
+
+/// Legal form recorded by a register; codes remain open strings.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileRegistrationLegalForm {
+	pub code: String,
+	pub name: String,
+}
+
+/// Recorded principal-address components, not inferred ISO codes or headquarters.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileRegistrationAddress {
+	pub kind: String,
+	pub line1: Option<String>,
+	pub line2: Option<String>,
+	pub city: Option<String>,
+	pub state: Option<String>,
+	pub postal: Option<String>,
+	pub country_raw: Option<String>,
+}
+
+/// Registry-scoped legal facts, not an operation or tax-exemption verdict.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileRegistration {
+	pub authority: String,
+	pub number: String,
+	pub jurisdiction: CompanyProfileJurisdiction,
+	pub role: String,
+	pub legal_form: CompanyProfileRegistrationLegalForm,
+	pub status: String,
+	/// This register's reported entity-form date, not universal incorporation or founding.
+	pub formation_date: Option<String>,
+	pub address: Option<CompanyProfileRegistrationAddress>,
+}
+
+/// Attribution only for the named selected enrichment fields; observation is not a source update.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileSource {
+	pub r#type: String,
+	pub url: String,
+	#[serde(default, deserialize_with = "null_default")]
+	pub fields: Vec<String>,
+	/// Artifact observation timestamp.
+	pub observed_at: String,
+	/// Explicit source update timestamp, or null. Measurement dates belong to employees.as_of.
+	pub updated_at: Option<String>,
+}
+
+/// Optional directory detail. Every member may be missing or null; existing releases may omit enrichment fields.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileDeep {
+	pub legal_name: Option<String>,
+	pub aliases: Option<Vec<String>>,
+	pub jurisdiction: Option<CompanyProfileJurisdiction>,
+	/// Recorded legal status; not an operating or compliance verdict.
+	pub status: Option<String>,
+	pub websites: Option<Vec<CompanyProfileWebsite>>,
+	pub identifiers: Option<Vec<CompanyProfileIdentifier>>,
+	pub incorporated: Option<String>,
+	pub addresses: Option<Vec<CompanyProfileAddress>>,
+	pub industries: Option<Vec<CompanyProfileIndustry>>,
+	pub parent: Option<String>,
+	pub description: Option<String>,
+	/// Reported asset URL; the client does not fetch or license the asset.
+	pub logo: Option<String>,
+	/// Selected company account URLs; an empty array does not prove no accounts exist.
+	pub socials: Option<Vec<String>>,
+	pub founded: Option<CompanyProfileFounding>,
+	pub employees: Option<CompanyProfileEmployees>,
+	pub registrations: Option<Vec<CompanyProfileRegistration>>,
+	/// Attribution for projected enrichment fields only, not the entire legal profile.
+	pub sources: Option<Vec<CompanyProfileSource>>,
+}
+
+/// Search match evidence. Open strings permit future fields and identifier/listing namespaces.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyMatch {
+	pub field: Option<String>,
+	pub value: Option<String>,
+	pub r#type: Option<String>,
+	pub authority: Option<String>,
+	pub exchange: Option<String>,
+}
+
+/// A directory profile, distinct from national company-number validation.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfile {
+	pub id: String,
+	pub name: String,
+	pub country: Option<String>,
+	pub website: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub listings: Vec<CompanyProfileListing>,
+	pub address: Option<CompanyProfileAddress>,
+	pub deep: Option<CompanyProfileDeep>,
+}
+
+/// A directory search profile with match evidence; a match is not proof of legal identity.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyCandidate {
+	pub id: String,
+	pub name: String,
+	pub country: Option<String>,
+	pub website: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub listings: Vec<CompanyProfileListing>,
+	pub address: Option<CompanyProfileAddress>,
+	pub deep: Option<CompanyProfileDeep>,
+	pub r#match: CompanyMatch,
+}
+
+/// One page of company candidates. Reuse next with the same selector, filters and limit.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanySearch {
+	#[serde(default, deserialize_with = "null_default")]
+	pub companies: Vec<CompanyCandidate>,
+	pub next: Option<String>,
+}
+
+/// Counts for this directory edition, not complete country or worldwide coverage.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyCoverage {
+	pub scope: String,
+	pub label: String,
+	pub description: String,
+	pub snapshot_at: String,
+	pub companies: u64,
+	#[serde(default, deserialize_with = "null_default")]
+	pub countries: Vec<String>,
+	pub with_website: u64,
+	pub with_listings: u64,
+	pub with_address: u64,
+}
+
+/// Source wall-time resolution. Missing observations remain unknown.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeResolution {
+	pub kind: Option<String>,
+	pub policy: Option<String>,
+	pub adjustment_seconds: Option<i32>,
+	pub alternatives: Option<Vec<TimeResolutionAlternative>>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeResolutionAlternative {
+	pub at: Option<String>,
+	pub unix: Option<i64>,
+	pub offset: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeZoneEntry {
+	pub timezone: String,
+	#[serde(deserialize_with = "null_default")]
+	pub countries: Vec<String>,
+	pub area: Option<String>,
+	pub abbreviation: String,
+	pub offset: String,
+	pub offset_seconds: i32,
+	pub dst: bool,
+	pub observes_dst: bool,
+}
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeTransitionState {
+	pub at: Option<String>,
+	pub offset: Option<String>,
+	pub offset_seconds: Option<i32>,
+	pub abbreviation: Option<String>,
+	pub dst: Option<bool>,
+}
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeTransition {
+	pub at: Option<String>,
+	pub before: Option<TimeTransitionState>,
+	pub after: Option<TimeTransitionState>,
+	pub change_seconds: Option<i32>,
+}
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeSeason {
+	pub start: Option<TimeTransition>,
+	pub end: Option<TimeTransition>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeLocationInput {
+	pub r#type: String,
+	pub value: String,
+}
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeLocationCandidate {
+	pub id: Option<String>,
+	pub name: Option<String>,
+	pub country: Option<String>,
+	pub state: Option<String>,
+	pub timezone: Option<String>,
+	pub latitude: Option<f64>,
+	pub longitude: Option<f64>,
+}
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct TimeLocation {
+	pub input: TimeLocationInput,
+	pub status: String,
+	#[serde(deserialize_with = "null_default")]
+	pub candidates: Vec<TimeLocationCandidate>,
+	pub truncated: bool,
+	pub source: String,
 }
 
 // Industry names for the existing US NAICS response contract.

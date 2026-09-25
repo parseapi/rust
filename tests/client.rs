@@ -513,55 +513,6 @@ async fn does_not_retry_404() {
 }
 
 #[tokio::test]
-async fn card_rejects_invalid_input_before_dispatch_and_preserves_accepted_bytes() {
-    let server = TestServer::start(vec![(200, "{}"), (200, "{}"), (200, "{}")]);
-    let client = server.client();
-    for raw in ["4111111111111111".to_owned(), "4111-1111-1111-1111".into(), "1".into(), "123456789012".into(), "１２３４５６".into(), "001\u{a0}234".into(), "001\u{200b}234".into(), "00%20234".into(), format!("{}001234", " ".repeat(59))] {
-        let error = client.card(&raw).await.unwrap_err();
-        assert_eq!(error.to_string(), "parseapi: Card requires a 2-11 digit prefix string.");
-    }
-    assert!(server.requests().is_empty());
-    for raw in [" \t00-1234\r\n".to_owned(), format!("{}001234", " ".repeat(58)), "12345678901".into()] {
-        client.card(&raw).await.unwrap();
-        let target = server.requests().last().unwrap().target.clone();
-        assert_eq!(percent_encoding::percent_decode_str(target.trim_start_matches("/card/")).decode_utf8().unwrap(), raw);
-    }
-}
-
-#[tokio::test]
-async fn long_retry_after_returns_original_error_promptly_with_raw_header() {
-    for header in ["60".to_owned(), "9".repeat(400), httpdate::fmt_http_date(std::time::SystemTime::now() + std::time::Duration::from_secs(60))] {
-        let server = TestServer::start_with_headers(vec![(429, r#"{"code":"rate_limited","message":"Later","request_id":"receipt"}"#, format!("Retry-After: {header}\r\n"))]);
-        let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
-        let error = tokio::time::timeout(std::time::Duration::from_secs(1), client.country("US")).await.expect("long waits must return promptly").unwrap_err();
-        match error { Error::Api { status, code, request_id, retry_after, .. } => {
-            assert_eq!(status, 429); assert_eq!(code, "rate_limited"); assert_eq!(request_id.as_deref(), Some("receipt")); assert_eq!(retry_after.as_deref(), Some(header.as_str()));
-        }, other => panic!("unexpected: {other}") }
-        assert_eq!(server.requests().len(), 1);
-    }
-}
-
-#[tokio::test]
-async fn dropping_request_during_retry_wait_stops_further_attempts() {
-    let server = TestServer::start_with_headers(vec![(503, "{}", "Retry-After: 0.1\r\n".into()), (200, "{}", String::new())]);
-    let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
-    assert!(tokio::time::timeout(std::time::Duration::from_millis(30), client.country("US")).await.is_err());
-    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
-    assert_eq!(server.requests().len(), 1);
-}
-
-#[tokio::test]
-async fn retry_after_metadata_survives_exhaustion_and_invalid_headers_back_off() {
-    for header in ["0", "0.01", "invalid"] {
-        let server = TestServer::start_with_headers(vec![(503,"{}",format!("Retry-After: {header}\r\n")),(503,"{}",format!("Retry-After: {header}\r\n"))]);
-        let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
-        let error = client.country("US").await.unwrap_err();
-        assert!(matches!(error, Error::Api { retry_after: Some(value), .. } if value == header));
-        assert_eq!(server.requests().len(), 2);
-    }
-}
-
-#[tokio::test]
 async fn gives_up_after_retries() {
 	let rate_limited = r#"{"code":"rate_limited","message":"slow down"}"#;
 	let server = TestServer::start(vec![
@@ -877,9 +828,41 @@ async fn dns_preserves_presentation_and_question() {
 	assert_eq!(calls[1].target, "/dns/example.com");
 }
 
+url_test!(url_time_compatible, c => c.time("America/New_York", TimeOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("compatible")), "/time/America%2FNew_York?at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=compatible");
+url_test!(url_time_coordinates_compatible, c => c.time_at(40.71, -74.01, TimeAtOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("compatible")), "/time?lat=40.71&lon=-74.01&at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=compatible");
+url_test!(url_time_earlier, c => c.time("America/New_York", TimeOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("earlier")), "/time/America%2FNew_York?at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=earlier");
+url_test!(url_time_coordinates_earlier, c => c.time_at(40.71, -74.01, TimeAtOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("earlier")), "/time?lat=40.71&lon=-74.01&at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=earlier");
+url_test!(url_time_later, c => c.time("America/New_York", TimeOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("later")), "/time/America%2FNew_York?at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=later");
+url_test!(url_time_coordinates_later, c => c.time_at(40.71, -74.01, TimeAtOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("later")), "/time?lat=40.71&lon=-74.01&at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=later");
+url_test!(url_time_reject, c => c.time("America/New_York", TimeOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("reject")), "/time/America%2FNew_York?at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=reject");
+url_test!(url_time_coordinates_reject, c => c.time_at(40.71, -74.01, TimeAtOptions::default().at("2026-11-01T01:30:00").to("UTC").disambiguation("reject")), "/time?lat=40.71&lon=-74.01&at=2026-11-01T01%3A30%3A00&to=UTC&disambiguation=reject");
+url_test!(url_time_zones, c => c.time_zones(""), "/time/zones");
+url_test!(url_time_search, c => c.time_zones("Europe"), "/time/zones?q=Europe");
+url_test!(url_time_targets, c => c.time("UTC", TimeOptions::default().targets(["UTC", "Asia/Tokyo", "UTC"])), "/time/UTC?targets=UTC%2CAsia%2FTokyo%2CUTC");
+url_test!(url_time_coords, c => c.time_at(0.0, 0.0, TimeAtOptions::default().targets(["UTC", "Asia/Tokyo", "UTC"])), "/time?lat=0&lon=0&targets=UTC%2CAsia%2FTokyo%2CUTC");
 url_test!(url_time_utc, c => c.time("", None), "/time");
 url_test!(url_time_conversion, c => c.time("America/New_York", TimeOptions::default().at("2026-09-05T15:00:00").to("Asia/Tokyo")), "/time/America%2FNew_York?at=2026-09-05T15%3A00%3A00&to=Asia%2FTokyo");
 url_test!(url_time_coordinates, c => c.time_at(0.0, 0.0, TimeAtOptions::default().at("1970-01-01T00:00:00Z").to("UTC")), "/time?lat=0&lon=0&at=1970-01-01T00%3A00%3A00Z&to=UTC");
+#[test]
+fn time_target_lists_preserve_unknown_empty_order_and_zero() {
+ for body in [r#"{}"#, r#"{"targets":null}"#] { assert!(serde_json::from_str::<Time>(body).unwrap().targets.is_none()); }
+ assert!(serde_json::from_str::<Time>(r#"{"targets":[]}"#).unwrap().targets.unwrap().is_empty());
+ let data: Time = serde_json::from_str(r#"{"targets":[{"timezone":"UTC","at":"1970-01-01T00:00:00+00:00","unix":0},{"timezone":"UTC","at":"1970-01-01T00:00:00+00:00","unix":0}]}"#).unwrap();
+ let targets = data.targets.unwrap(); assert_eq!(targets.len(), 2); assert_eq!(targets[0].unix, Some(0)); assert_eq!(targets[1].timezone, "UTC");
+ let zones: TimeZones = serde_json::from_str(r#"{"timezone_database_version":"2026c","timezones":[]}"#).unwrap();
+ assert_eq!(zones.timezone_database_version, "2026c"); assert!(zones.timezones.is_empty());
+}
+
+#[tokio::test]
+async fn time_invalid_target_lists_never_dispatch() {
+ let client = Client::new("fixture").unwrap();
+ for targets in [vec![], vec![""], vec!["UTC,UTC"], vec!["UTC"; 11]] {
+  assert!(matches!(client.time("UTC", TimeOptions::default().targets(targets.clone())).await, Err(Error::Config(_))));
+  assert!(matches!(client.time_at(0.0, 0.0, TimeAtOptions::default().targets(targets)).await, Err(Error::Config(_))));
+ }
+ assert!(matches!(client.time("UTC", TimeOptions::default().targets(["UTC"]).to("UTC")).await, Err(Error::Config(_))));
+}
+
 #[test]
 fn time_keeps_epoch_zero_and_unknown() {
  let historical: Time = serde_json::from_str(r#"{"deep":{"offset_seconds":-17762,"offset_minutes":-296},"at":"1880-01-01T00:00:00-04:56:02"}"#).unwrap();
@@ -1304,6 +1287,146 @@ async fn stack_preserves_site_inventory_and_request_options() {
 }
 
 
+#[tokio::test]
+async fn company_directory_routes_and_selectors() {
+	let server = TestServer::start(vec![
+		(200, "{}"),
+		(200, "{}"),
+		(200, "{}"),
+		(200, "{}"),
+		(200, "{}"),
+		(200, "{}"),
+		(200, "{}"),
+	]);
+	let client = server.client();
+	client
+		.company_id_with_options("co_/ ?", CompanyIdOptions::default().deep(true))
+		.await
+		.unwrap();
+	client.company_id("co_222222222222").await.unwrap();
+	client
+		.company_search(
+			CompanySearchOptions::default()
+				.query("A & B")
+				.country("US")
+				.limit(2)
+				.cursor("opaque+/=")
+				.deep(true),
+		)
+		.await
+		.unwrap();
+	client
+		.company_search(CompanySearchOptions::default().domain("https://sub.example.com/a?b=1"))
+		.await
+		.unwrap();
+	client
+		.company_search(
+			CompanySearchOptions::default()
+				.ticker("A/B")
+				.exchange("Future Exchange"),
+		)
+		.await
+		.unwrap();
+	client
+		.company_search(
+			CompanySearchOptions::default()
+				.identifier("0000123")
+				.authority("future:registry"),
+		)
+		.await
+		.unwrap();
+	client.company_coverage().await.unwrap();
+	let expected = [
+		"/company/id/co_%2F%20%3F?deep=true",
+		"/company/id/co_222222222222",
+		"/company?q=A+%26+B&country=US&limit=2&cursor=opaque%2B%2F%3D&deep=true",
+		"/company?domain=https%3A%2F%2Fsub.example.com%2Fa%3Fb%3D1",
+		"/company?ticker=A%2FB&exchange=Future+Exchange",
+		"/company?identifier=0000123&authority=future%3Aregistry",
+		"/company/directory/coverage",
+	];
+	let requests = server.requests();
+	assert_eq!(requests.len(), expected.len());
+	for (request, target) in requests.iter().zip(expected) {
+		assert_eq!(request.target, target);
+		assert_eq!(
+			request.headers.get("parse-version").map(String::as_str),
+			Some("2.0.0")
+		);
+		assert_eq!(
+			request.headers.get("x-api-key").map(String::as_str),
+			Some("test_key_123")
+		);
+	}
+}
+
+#[tokio::test]
+async fn company_directory_selector_errors_are_server_owned() {
+	let server = TestServer::start(vec![(
+		400,
+		r#"{"code":"invalid_request","message":"Choose one selector"}"#,
+	)]);
+	let error = server
+		.client()
+		.company_search(
+			CompanySearchOptions::default()
+				.query("Example")
+				.domain("example.com"),
+		)
+		.await
+		.unwrap_err();
+	assert_eq!(error.code(), Some("invalid_request"));
+	assert_eq!(server.requests().len(), 1);
+}
+
+#[tokio::test]
+async fn card_rejects_invalid_input_before_dispatch_and_preserves_accepted_bytes() {
+    let server = TestServer::start(vec![(200, "{}"), (200, "{}"), (200, "{}")]);
+    let client = server.client();
+    for raw in ["4111111111111111".to_owned(), "4111-1111-1111-1111".into(), "1".into(), "123456789012".into(), "１２３４５６".into(), "001\u{a0}234".into(), "001\u{200b}234".into(), "00%20234".into(), format!("{}001234", " ".repeat(59))] {
+        let error = client.card(&raw).await.unwrap_err();
+        assert_eq!(error.to_string(), "parseapi: Card requires a 2-11 digit prefix string.");
+    }
+    assert!(server.requests().is_empty());
+    for raw in [" \t00-1234\r\n".to_owned(), format!("{}001234", " ".repeat(58)), "12345678901".into()] {
+        client.card(&raw).await.unwrap();
+        let target = server.requests().last().unwrap().target.clone();
+        assert_eq!(percent_encoding::percent_decode_str(target.trim_start_matches("/card/")).decode_utf8().unwrap(), raw);
+    }
+}
+
+#[tokio::test]
+async fn long_retry_after_returns_original_error_promptly_with_raw_header() {
+    for header in ["60".to_owned(), "9".repeat(400), httpdate::fmt_http_date(std::time::SystemTime::now() + std::time::Duration::from_secs(60))] {
+        let server = TestServer::start_with_headers(vec![(429, r#"{"code":"rate_limited","message":"Later","request_id":"receipt"}"#, format!("Retry-After: {header}\r\n"))]);
+        let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
+        let error = tokio::time::timeout(std::time::Duration::from_secs(1), client.country("US")).await.expect("long waits must return promptly").unwrap_err();
+        match error { Error::Api { status, code, request_id, retry_after, .. } => {
+            assert_eq!(status, 429); assert_eq!(code, "rate_limited"); assert_eq!(request_id.as_deref(), Some("receipt")); assert_eq!(retry_after.as_deref(), Some(header.as_str()));
+        }, other => panic!("unexpected: {other}") }
+        assert_eq!(server.requests().len(), 1);
+    }
+}
+
+#[tokio::test]
+async fn dropping_request_during_retry_wait_stops_further_attempts() {
+    let server = TestServer::start_with_headers(vec![(503, "{}", "Retry-After: 0.1\r\n".into()), (200, "{}", String::new())]);
+    let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
+    assert!(tokio::time::timeout(std::time::Duration::from_millis(30), client.country("US")).await.is_err());
+    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+    assert_eq!(server.requests().len(), 1);
+}
+
+#[tokio::test]
+async fn retry_after_metadata_survives_exhaustion_and_invalid_headers_back_off() {
+    for header in ["0", "0.01", "invalid"] {
+        let server = TestServer::start_with_headers(vec![(503,"{}",format!("Retry-After: {header}\r\n")),(503,"{}",format!("Retry-After: {header}\r\n"))]);
+        let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
+        let error = client.country("US").await.unwrap_err();
+        assert!(matches!(error, Error::Api { retry_after: Some(value), .. } if value == header));
+        assert_eq!(server.requests().len(), 2);
+    }
+}
 
 #[tokio::test]
 async fn bank_post_context_domestic_requirements_and_retry_keep_raw_data_out_of_urls() {
@@ -1328,4 +1451,110 @@ async fn bank_post_context_domestic_requirements_and_retry_keep_raw_data_out_of_
 	assert_eq!(server.requests()[0].target,"/bank/requirements?country=GB&format=uk_domestic");
 	assert_eq!(server.requests()[0].method,"GET");
 	assert!(server.requests()[0].body.is_empty());
+}
+
+#[tokio::test]
+async fn tariff_edition_date_serialization() {
+	let server = TestServer::start(vec![(200, r#"{"edition":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","date":"2026-09-15"}"#), (200, r#"{"edition":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","date":"2026-09-15"}"#), (200, r#"{"edition":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","date":null}"#)]);
+	let client = server.client();
+	let edition = "a".repeat(64);
+	client.tariff("0101", TariffOptions::default().deep(true).origin("CA").edition(&edition).date("2026-09-15")).await.unwrap();
+	client.tariff_search_with_options("horses", TariffSearchOptions::default().edition(&edition).date("2026-09-15")).await.unwrap();
+	client.tariff("0101", TariffOptions::default().edition(&edition)).await.unwrap();
+	let requests = server.requests.lock().unwrap();
+	assert_eq!(requests[0].target, format!("/tariff/0101?deep=true&origin=CA&edition={edition}&date=2026-09-15"));
+	assert_eq!(requests[1].target, format!("/tariff?q=horses&edition={edition}&date=2026-09-15"));
+	assert_eq!(requests[2].target, format!("/tariff/0101?edition={edition}"));
+}
+
+#[tokio::test]
+async fn tariff_rejects_ignored_selection() {
+	let server = TestServer::start(vec![(200, "{}"), (200, "{}")]);
+	let client = server.client();
+	let err = client.tariff("0101", TariffOptions::default().edition("a".repeat(64))).await.unwrap_err();
+	assert_eq!(err.code(), Some("tariff_selection_mismatch"));
+	assert_eq!(err.status(), Some(0));
+	let err = client.tariff_search_with_options("horses", TariffSearchOptions::default().date("2026-09-15")).await.unwrap_err();
+	assert_eq!(err.code(), Some("tariff_selection_mismatch"));
+}
+
+#[tokio::test]
+async fn tariff_date_selection_rejects_invalid_returned_edition() {
+	for body in [
+		r#"{"edition":"legacy","date":"2026-09-15"}"#,
+		r#"{"edition":"","date":"2026-09-15"}"#,
+		r#"{"edition":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","date":"2026-09-15"}"#,
+		r#"{"edition":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n","date":"2026-09-15"}"#,
+	] {
+		let server = TestServer::start(vec![(200, body), (200, body)]);
+		let client = server.client();
+		let err = client.tariff("0101", TariffOptions::default().date("2026-09-15")).await.unwrap_err();
+		assert_eq!(err.code(), Some("tariff_selection_mismatch"));
+		assert_eq!(err.status(), Some(0));
+		let err = client.tariff_search_with_options("horses", TariffSearchOptions::default().date("2026-09-15")).await.unwrap_err();
+		assert_eq!(err.code(), Some("tariff_selection_mismatch"));
+		assert_eq!(err.status(), Some(0));
+	}
+}
+
+#[tokio::test]
+async fn time_resolution_and_reserved_source_routes() {
+ let client = Client::new("fixture").unwrap();
+ for zone in ["zones", "help", " ZONES ", "Help"] {
+  assert!(matches!(client.time(zone, None).await, Err(Error::Config(message)) if message.contains("IANA timezone ID")));
+ }
+ let result: Time = serde_json::from_str(r#"{"deep":{"timezone_database_version":"2026c","resolution":{"kind":"gap","policy":"earlier","adjustment_seconds":-1800,"alternatives":[{"at":"1970-01-01T00:00:00.123+00:00","unix":0,"offset":"+00:00"},{"at":"1970-01-01T00:30:00.123+00:00","unix":1800,"offset":"+00:00"}],"future":true}}}"#).unwrap();
+ let deep = result.deep.unwrap();
+ assert_eq!(deep.timezone_database_version.as_deref(), Some("2026c"));
+ let resolution = deep.resolution.unwrap();
+ assert_eq!(resolution.adjustment_seconds, Some(-1800));
+ assert_eq!(resolution.alternatives.unwrap()[0].unix, Some(0));
+ for raw in [r#"{"deep":{}}"#, r#"{"deep":{"resolution":null}}"#] {
+  assert!(serde_json::from_str::<Time>(raw).unwrap().deep.unwrap().resolution.is_none());
+ }
+ let unique: Time = serde_json::from_str(r#"{"deep":{"resolution":{"kind":"unique","alternatives":[]}}}"#).unwrap();
+ assert!(unique.deep.unwrap().resolution.unwrap().alternatives.unwrap().is_empty());
+}
+
+
+#[tokio::test]
+async fn company_directory_country_and_sic_discovery() {
+	let server=TestServer::start(vec![(200,r#"{"companies":[],"next":null}"#);4]);
+	let client=server.client();
+	client.company_search(CompanySearchOptions::default().country("US")).await.unwrap();
+	client.company_search(CompanySearchOptions::default().industry("0700").industry_type("sic")).await.unwrap();
+	client.company_search(CompanySearchOptions::default().country("US").industry("0700").industry_type("sic").limit(2).cursor("opaque+/=").deep(true)).await.unwrap();
+	client.company_search(CompanySearchOptions::default().query("Example").industry("0700").industry_type("sic").deep(false)).await.unwrap();
+	let expected=["/company?country=US","/company?industry=0700&industry_type=sic","/company?country=US&industry=0700&industry_type=sic&limit=2&cursor=opaque%2B%2F%3D&deep=true","/company?q=Example&industry=0700&industry_type=sic"];
+	for (request,wanted) in server.requests().iter().zip(expected) {assert_eq!(request.target,wanted);}
+}
+
+#[tokio::test]
+async fn time_locations_rich_catalog_and_seasons() {
+ let server=TestServer::start(vec![(200,r#"{"timezone_database_version": "2026c", "timezones": ["UTC"], "at": "1970-01-01T00:00:00.000Z", "zones": [{"timezone": "UTC", "countries": [], "area": null, "abbreviation": "UTC", "offset": "+00:00", "offset_seconds": 0, "dst": false, "observes_dst": false}]}"#),(200,r#"{"timezone": null, "targets": null, "location": {"input": {"type": "city", "value": "Springfield"}, "status": "ambiguous", "candidates": [{"id": "city_a", "name": "Springfield", "country": "US", "state": "IL", "timezone": "America/Chicago", "latitude": 0, "longitude": 0}], "truncated": false, "source": "city_reference"}, "deep": {"standard_offset": "+01:00", "standard_offset_seconds": 3600, "dst_offset_seconds": -3600, "season": {"start": {"at": "2026-10-25T01:00:00Z", "before": {"offset_seconds": 3600, "dst": false}, "after": {"offset_seconds": 0, "dst": true}, "change_seconds": -3600}, "end": null}}}"#)]);
+ let client=server.client();
+ let zones=client.time_zones_with_options("",TimeZonesOptions::default().country("US").area("America").offset("+00:00").abbreviation("UTC").dst(false).observes_dst(false).at("1970-01-01T00:00:00Z").details(true).sort("offset")).await.unwrap();
+ let requests=server.requests();
+ assert!(requests[0].target.contains("dst=false")); assert!(requests[0].target.contains("observes_dst=false"));
+ assert_eq!(zones.zones.as_ref().unwrap()[0].offset_seconds,0); assert!(!zones.zones.unwrap()[0].dst);
+ let result=client.time("",TimeOptions::default().city("Springfield").country("US").state("IL").targets(["UTC"]).deep(true)).await.unwrap();
+ assert!(result.timezone.is_none()); let loc=result.location.unwrap(); assert_eq!(loc.status,"ambiguous"); assert_eq!(loc.candidates[0].latitude,Some(0.0));
+ let deep=result.deep.unwrap(); assert_eq!(deep.dst_offset_seconds,Some(-3600)); let start=deep.season.unwrap().start.unwrap(); assert_eq!(start.change_seconds,Some(-3600)); assert_eq!(start.before.unwrap().dst,Some(false));
+ for opts in [TimeOptions::default().ip("8.8.8.8").city("Paris"),TimeOptions::default().ip("8.8.8.8").country("US"),TimeOptions::default().state("NY"),TimeOptions::default().city("Paris").state("IDF"),TimeOptions::default().address("a"),TimeOptions::default().ip("")] { assert!(matches!(client.time("",opts).await,Err(Error::Config(_)))); }
+ assert!(matches!(client.time("UTC",TimeOptions::default().city("Paris")).await,Err(Error::Config(_))));
+ assert_eq!(server.requests().len(),2);
+ for raw in ["{}",r#"{"deep":{}}"#,r#"{"deep":{"season":null}}"#] { let old:Time=serde_json::from_str(raw).unwrap(); assert!(old.location.is_none()); }
+}
+
+
+#[tokio::test]
+async fn company_directory_registration_discovery_exact_strings_and_cursor() {
+ let server=TestServer::start(vec![(200,r#"{"companies":[],"next":null}"#);3]);
+ let client=server.client();
+ client.company_search(CompanySearchOptions::default().registration_authority("ra000599")).await.unwrap();
+ client.company_search(CompanySearchOptions::default().country("US").industry("0700").industry_type("sic").registration_authority("RA000599").registration_form("DPC").registration_status(" Good Standing ").limit(2).cursor("opaque+/=").deep(true)).await.unwrap();
+ client.company_search(CompanySearchOptions::default().identifier("00001").authority("SEC").registration_authority("RA000599").registration_form("future/Form").registration_status("future+& status")).await.unwrap();
+ let expected=["/company?registration_authority=ra000599","/company?country=US&industry=0700&industry_type=sic&registration_authority=RA000599&registration_form=DPC&registration_status=+Good+Standing+&limit=2&cursor=opaque%2B%2F%3D&deep=true","/company?identifier=00001&registration_authority=RA000599&registration_form=future%2FForm&registration_status=future%2B%26+status&authority=SEC"];
+ let requests=server.requests(); assert_eq!(requests.len(),expected.len());
+ for (request,wanted) in requests.iter().zip(expected) {assert_eq!(request.target,wanted);}
 }
