@@ -147,6 +147,14 @@ impl MeasureUnitsOptions {
 	}
 }
 
+/// Optional recorded issuer details for Card.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CardOptions { pub deep: bool }
+impl CardOptions {
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
+}
+
 /// Configures `ip`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
@@ -1882,16 +1890,23 @@ impl Client {
 			.await
 	}
 
-	/// Look up a 6-11 digit card prefix. Preserve leading zeros in the string.
+	/// Look up a 2-11 digit card prefix. Preserve leading zeros in the string.
 	pub async fn card(&self, bin: &str) -> Result<Card> {
+		self.card_with_options(bin, CardOptions::default()).await
+	}
+
+	/// Request optional recorded issuer details, pooled on every plan.
+	pub async fn card_with_options(&self, bin: &str, opts: CardOptions) -> Result<Card> {
 		if bin.len() > 64 {
-			return Err(Error::Config("Card requires a 6-11 digit prefix string.".into()));
+			return Err(Error::Config("Card requires a 2-11 digit prefix string.".into()));
 		}
 		let digits: Vec<_> = bin.bytes().filter(|byte| !b" \t\r\n-".contains(byte)).collect();
-		if !(6..=11).contains(&digits.len()) || !digits.iter().all(u8::is_ascii_digit) {
-			return Err(Error::Config("Card requires a 6-11 digit prefix string.".into()));
+		if !(2..=11).contains(&digits.len()) || !digits.iter().all(u8::is_ascii_digit) {
+			return Err(Error::Config("Card requires a 2-11 digit prefix string.".into()));
 		}
-		self.get(&format!("/card/{}", seg(bin)), Query::new(), None).await
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/card/{}", seg(bin)), query, None).await
 	}
 
 

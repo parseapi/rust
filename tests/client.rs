@@ -510,9 +510,9 @@ async fn does_not_retry_404() {
 async fn card_rejects_invalid_input_before_dispatch_and_preserves_accepted_bytes() {
     let server = TestServer::start(vec![(200, "{}"), (200, "{}"), (200, "{}")]);
     let client = server.client();
-    for raw in ["4111111111111111".to_owned(), "4111-1111-1111-1111".into(), "12345".into(), "123456789012".into(), "１２３４５６".into(), "001\u{a0}234".into(), "001\u{200b}234".into(), "00%20234".into(), format!("{}001234", " ".repeat(59))] {
+    for raw in ["4111111111111111".to_owned(), "4111-1111-1111-1111".into(), "1".into(), "123456789012".into(), "１２３４５６".into(), "001\u{a0}234".into(), "001\u{200b}234".into(), "00%20234".into(), format!("{}001234", " ".repeat(59))] {
         let error = client.card(&raw).await.unwrap_err();
-        assert_eq!(error.to_string(), "parseapi: Card requires a 6-11 digit prefix string.");
+        assert_eq!(error.to_string(), "parseapi: Card requires a 2-11 digit prefix string.");
     }
     assert!(server.requests().is_empty());
     for raw in [" \t00-1234\r\n".to_owned(), format!("{}001234", " ".repeat(58)), "12345678901".into()] {
@@ -909,24 +909,25 @@ fn naics_exclusions_and_match_preserve_older_responses() {
  assert_eq!(evidence.corrections[0].to, "software");
 }
 
+url_test!(url_card_deep, c => c.card_with_options("51", parseapi::CardOptions::default().deep(true)), "/card/51?deep=true");
 url_test!(url_card, c => c.card("001234"), "/card/001234");
 url_test!(url_card_separators, c => c.card("00 1234-56"), "/card/00%201234-56");
 
 #[tokio::test]
 async fn card_preserves_prefix_null_false_and_tolerates_unknown_fields() {
 	let server = TestServer::start(vec![
-		(200, r#"{"bin":"00123456","prefix":"001234","country":null,"issuer":"Fixture Bank","brand":"future-brand","type":null,"prepaid":false,"deep":{},"future":true}"#),
-		(200, r#"{"bin":"000000","prefix":null,"country":null,"issuer":null,"brand":null,"type":null,"prepaid":null}"#),
+		(200, r#"{"bin":"00123456","brand":"future-brand","brand_name":null,"logo":"https://cdn.parseapi.com/card/generic.svg","deep":{"prefix":"001234","issuer":"Fixture Bank","country":null,"type":null,"prepaid":false},"future":true}"#),
+		(200, r#"{"bin":"000000","brand":null,"brand_name":null,"logo":"https://cdn.parseapi.com/card/generic.svg"}"#),
 		(400, r#"{"code":"invalid_input","message":"Expected 6-11 digits"}"#),
 	]);
 	let client = server.client();
-	let known = client.card("00123456").await.unwrap();
+	let known = client.card_with_options("00123456", parseapi::CardOptions::default().deep(true)).await.unwrap();
 	assert_eq!(known.bin, "00123456");
-	assert_eq!(known.prefix.as_deref(), Some("001234"));
-	assert_eq!(known.prepaid, Some(false));
-	assert!(known.country.is_none());
+	assert_eq!(known.deep.as_ref().unwrap().prefix.as_deref(), Some("001234"));
+	assert_eq!(known.deep.as_ref().unwrap().prepaid, Some(false));
+	assert!(known.deep.as_ref().unwrap().country.is_none());
 	let unknown = client.card("000000").await.unwrap();
-	assert!(unknown.prefix.is_none() && unknown.prepaid.is_none());
+	assert!(unknown.deep.is_none() && unknown.brand.is_none());
 	assert!(client.card("junk").await.is_err());
 }
 
@@ -1295,6 +1296,8 @@ async fn stack_preserves_site_inventory_and_request_options() {
   assert_eq!(server.requests()[1].target, "/stack/example.com");
  }
 }
+
+
 
 #[tokio::test]
 async fn bank_post_context_domestic_requirements_and_retry_keep_raw_data_out_of_urls() {

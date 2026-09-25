@@ -858,22 +858,29 @@ pub struct Mac {
 	pub multicast: Option<bool>,
 }
 
-/// Card-prefix reference data. None means unknown.
+/// Network identity. None means unknown or ambiguous.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
 pub struct Card {
 	pub bin: String,
-	/// Actual longest matched prefix, which may be shorter than the input.
-	pub prefix: Option<String>,
-	pub country: Option<String>,
-	pub issuer: Option<String>,
 	pub brand: Option<String>,
 	pub brand_name: Option<String>,
+	pub logo: String,
+	pub deep: Option<CardDeep>,
+}
+
+/// Optional recorded issuer data. None fields mean unknown.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CardDeep {
+	pub prefix: Option<String>,
+	pub issuer: Option<String>,
+	pub country: Option<String>,
 	pub r#type: Option<String>,
 	pub prepaid: Option<bool>,
 }
-
 
 /// A published DNS record. Value retains DNS presentation syntax, including TXT quoting.
 #[derive(Debug, Clone, Default, Deserialize)]
