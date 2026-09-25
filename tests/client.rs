@@ -247,11 +247,11 @@ async fn bank_preserves_raw_input_for_server_validation() {
 		assert_eq!(requests[0].headers.get("parse-version").map(String::as_str), Some("2.0.0"));
 	}
 }
-url_test!(url_npi, c => c.npi("1881018208", None), "/npi/1881018208");
+url_test!(url_npi, c => c.provider("1881018208", None), "/provider/1881018208");
 url_test!(
 	url_npi_deep,
-	c => c.npi("1881018208", parseapi::NpiOptions::default().deep(true)),
-	"/npi/1881018208?deep=true"
+	c => c.provider("1881018208", parseapi::ProviderOptions::default().deep(true)),
+	"/provider/1881018208?deep=true"
 );
 url_test!(
 	url_vat_from_deep,
@@ -1203,7 +1203,7 @@ language_request_test!(language_postal, c => c.postal("SW1A 1AA", PostalOptions:
 language_request_test!(language_postal_nearby, c => c.postal_nearby("28202", PostalNearbyOptions::default().country("US").radius(8.0).lang("fr-CA")), c.postal_nearby("28202", PostalNearbyOptions::default().country("US").radius(8.0)), "/postal/28202/nearby", "country=US&radius=8");
 language_request_test!(language_postal_distance, c => c.postal_distance("28202", "10001", PostalDistanceOptions::default().country("US").lang("fr-CA")), c.postal_distance("28202", "10001", PostalDistanceOptions::default().country("US")), "/postal/28202/distance/10001", "country=US");
 language_request_test!(language_company, c => c.company("732829320", CompanyOptions::default().country("FR").deep(true).lang("fr-CA")), c.company("732829320", CompanyOptions::default().country("FR").deep(true)), "/company/732829320", "country=FR&deep=true");
-language_request_test!(language_npi, c => c.npi("1881018208", NpiOptions::default().deep(true).lang("fr-CA")), c.npi("1881018208", NpiOptions::default().deep(true)), "/npi/1881018208", "deep=true");
+language_request_test!(language_npi, c => c.provider("1881018208", ProviderOptions::default().deep(true).lang("fr-CA")), c.provider("1881018208", ProviderOptions::default().deep(true)), "/provider/1881018208", "deep=true");
 language_request_test!(language_asn, c => c.asn_with_options("AS13335", AsnOptions::default().lang("fr-CA")), c.asn("AS13335"), "/asn/AS13335", "");
 language_request_test!(language_currency, c => c.currency_with_options("USD", CurrencyOptions::default().deep(true).lang("fr-CA")), c.currency_with_options("USD", CurrencyOptions::default().deep(true)), "/currency/USD", "deep=true");
 language_request_test!(language_language, c => c.language_with_options("ja", LanguageOptions::default().lang("fr-CA")), c.language_with_options("ja", LanguageOptions::default()), "/language/ja", "");

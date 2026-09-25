@@ -538,16 +538,16 @@ impl NameOptions {
 	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
-/// Configures `npi`. Omitted fields use API defaults.
+/// Configures `provider`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct NpiOptions {
+pub struct ProviderOptions {
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
 }
 
-impl NpiOptions {
+impl ProviderOptions {
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `deep` query option.
 	pub fn deep(mut self, value: bool) -> Self {
@@ -1779,13 +1779,13 @@ impl Client {
 		self.get("/bank/requirements", query, None).await
 	}
 
-	/// Calls `/npi/{npi}`.
-	pub async fn npi(&self, npi: &str, opts: impl Into<Option<NpiOptions>>) -> Result<Npi> {
+	/// Calls `/provider/{npi}`.
+	pub async fn provider(&self, npi: &str, opts: impl Into<Option<ProviderOptions>>) -> Result<Provider> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "lang", opts.lang);
 		push_deep(&mut query, opts.deep);
-		self.get(&format!("/npi/{}", seg(npi)), query, None).await
+		self.get(&format!("/provider/{}", seg(npi)), query, None).await
 	}
 
 	/// Parse a phone number and its formats. Pass country for national numbers when needed. Deep

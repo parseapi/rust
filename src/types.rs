@@ -524,7 +524,39 @@ pub struct BankRequirementField {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct Npi {
+pub struct ProviderTaxonomy {
+	pub taxonomy: Option<String>,
+	pub specialty: Option<String>,
+	pub primary: Option<bool>,
+	pub license: Option<String>,
+	pub state: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct ProviderSource {
+	pub edition: Option<String>,
+	pub published_at: Option<String>,
+	pub through: Option<String>,
+	pub imported_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct ProviderSources {
+	pub nppes: Option<ProviderSource>,
+	pub leie: Option<ProviderSource>,
+	pub pecos: Option<ProviderSource>,
+	pub optout: Option<ProviderSource>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Provider {
+	pub sources: Option<ProviderSources>,
 	/// Input with accepted separators removed; None when empty. Invalid values remain visible.
 	pub npi: Option<String>,
 	/// Format and NPI checksum only; does not verify a provider or credentials.
@@ -552,13 +584,13 @@ pub struct Npi {
 	pub postal: Option<String>,
 	pub country: Option<String>,
 	pub phone: Option<String>,
-	pub deep: Option<NpiDeep>,
+	pub deep: Option<ProviderDeep>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct NpiEnrollment {
+pub struct ProviderEnrollment {
 	/// part_a, part_b, practitioner, dme, order_refer, mdpp. None when unknown.
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
@@ -569,13 +601,17 @@ pub struct NpiEnrollment {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct NpiDeep {
+pub struct ProviderDeep {
+	pub enumerated_at: Option<String>,
+	pub updated_at: Option<String>,
+	pub reactivated_at: Option<String>,
+	pub taxonomies: Option<Vec<ProviderTaxonomy>>,
 	/// Present in the stored Medicare FFS enrollment extract; not payment eligibility.
 	pub medicare: Option<bool>,
 	/// NPI-only match in the stored CMS opt-out affidavit list. None when unavailable.
 	pub opt_out: Option<bool>,
 	/// Stored enrollment rows. None when unavailable; empty when no rows are returned.
-	pub enrollments: Option<Vec<NpiEnrollment>>,
+	pub enrollments: Option<Vec<ProviderEnrollment>>,
 	/// Recorded NPI deactivation date, YYYY-MM-DD. None when active or unavailable.
 	pub deactivated_at: Option<String>,
 }
