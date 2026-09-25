@@ -1959,6 +1959,14 @@ impl Client {
 		self.get("/useragent", query, Some(ua)).await
 	}
 
+	/// Calls `/vehicle/{vin}`.
+	pub async fn vehicle(&self, vin: &str, opts: impl Into<Option<VehicleOptions>>) -> Result<Vehicle> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/vehicle/{}", seg(vin)), query, None).await
+	}
+
 	/// Calls `/vin/{vin}`.
 	pub async fn vin(&self, vin: &str, opts: impl Into<Option<VinOptions>>) -> Result<Vin> {
 		let opts = opts.into().unwrap_or_default();
@@ -2373,3 +2381,6 @@ mod stack_defaults_tests {
 
 pub type IndustryOptions = NaicsOptions;
 pub type IndustrySearchOptions = NaicsSearchOptions;
+
+/// Options for a Vehicle lookup by VIN.
+pub type VehicleOptions = VinOptions;

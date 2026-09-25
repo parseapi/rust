@@ -279,6 +279,12 @@ url_test!(url_asn, c => c.asn("AS13335"), "/asn/AS13335");
 url_test!(url_mac, c => c.mac("00:1B:63:84:45:E6"), "/mac/00%3A1B%3A63%3A84%3A45%3AE6");
 url_test!(url_mx, c => c.mx("example.com"), "/mx/example.com");
 url_test!(url_useragent, c => c.useragent("TestUA/1.0", None), "/useragent");
+url_test!(url_vehicle, c => c.vehicle("1HGCM82633A004352", None), "/vehicle/1HGCM82633A004352");
+url_test!(
+	url_vehicle_deep,
+	c => c.vehicle("1HGCM82633A004352", parseapi::VehicleOptions::default().deep(true)),
+	"/vehicle/1HGCM82633A004352?deep=true"
+);
 url_test!(url_vin, c => c.vin("1HGCM82633A004352", None), "/vin/1HGCM82633A004352");
 url_test!(
 	url_vin_deep,

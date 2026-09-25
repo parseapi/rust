@@ -96,7 +96,7 @@ parse.mac("00:1B:63:84:45:E6").await?;
 parse.name("Andrea").await?;
 parse.name_with_options("Andrea", NameOptions::default().country("IT")).await?;
 parse.name_with_options("Robert James Smith", NameOptions::default().deep(true).name_locale("en")).await?;
-parse.vin("1HGCM82633A004352", None).await?;
+parse.vehicle("1HGCM82633A004352", None).await?;
 parse.carrier("+14155552671", None).await?;
 parse.caller("+18004633339", None).await?;
 parse.hlr("+447712345678", None).await?;
@@ -298,3 +298,5 @@ Pass a public hostname without a scheme, path, port or IP address. Stack returns
 The complete technology result is included in the core response. The generic `deep=true` option adds only an empty object and is unnecessary for Stack. Successful checks may be reused for up to 24 hours. `pretty` optionally formats the wire JSON. Each lookup uses one request and API version 2.0.0 selected by this client.
 
 Stack defaults to 35 seconds per attempt so a first scan has time to finish. Other lookups retain their 10-second default. An explicit client timeout takes precedence.
+
+Vehicle lookups use `vin` as the input and response field. Existing VIN methods remain available for compatibility.

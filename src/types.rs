@@ -707,7 +707,7 @@ pub struct TariffSearch {
 #[serde(default)]
 #[non_exhaustive]
 pub struct VinDeep {
-	/// Open recall campaigns for the decoded vehicle. Empty when none,
+	/// Recall campaigns for the decoded year, make and model. Empty when none,
 	/// None when the recall registry did not answer.
 	pub recalls: Option<Vec<VinRecall>>,
 	pub series: Option<String>,
@@ -2022,3 +2022,7 @@ pub type IndustryExclusion = NaicsExclusion;
 pub type IndustryMatch = NaicsMatch;
 pub type IndustrySearch = NaicsSearch;
 pub type IndustrySearchResult = NaicsSearchResult;
+
+pub type Vehicle = Vin;
+pub type VehicleDeep = VinDeep;
+pub type VehicleRecall = VinRecall;
