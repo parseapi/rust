@@ -2043,6 +2043,298 @@ pub struct PropertyTax {
 	pub period: String,
 }
 
+// Company directory responses. National Company and CompanyDeep remain separate.
+
+/// An address with its recorded role; role does not imply mailing validity or headquarters.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileAddress {
+	pub r#type: String,
+	pub street: Option<String>,
+	pub city: Option<String>,
+	pub state: Option<String>,
+	pub postal: Option<String>,
+	pub country: Option<String>,
+}
+
+/// A reported exchange/symbol pair. No listings does not establish private ownership.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileListing {
+	pub exchange: String,
+	pub symbol: String,
+}
+
+/// Recorded registration jurisdiction, separate from address or operating location.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileJurisdiction {
+	pub country: String,
+	pub state: Option<String>,
+}
+
+/// Another associated hostname and its recorded URL, when known.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileWebsite {
+	pub domain: String,
+	pub url: Option<String>,
+}
+
+/// An authority-scoped identifier; values preserve leading zeros.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileIdentifier {
+	pub r#type: String,
+	pub authority: String,
+	pub value: String,
+}
+
+/// A reported classification; type is an open scheme string.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileIndustry {
+	pub r#type: String,
+	pub code: String,
+	pub name: Option<String>,
+}
+
+/// Reported founding value and precision (year, month or day), distinct from incorporation.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileFounding {
+	pub value: String,
+	/// Open string; currently year, month or day. Preserve the source value without padding.
+	pub precision: String,
+}
+
+/// Reported workforce count at its explicit measurement date.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileEmployees {
+	pub count: u64,
+	pub as_of: String,
+	/// Open string: headcount, full_time or full_time_equivalent. None on older responses.
+	pub basis: Option<String>,
+	/// Open string, currently legal_entity or consolidated_group.
+	pub scope: String,
+	/// Open string, currently reported.
+	pub method: String,
+	pub approximate: bool,
+}
+
+/// Legal form recorded by a register; codes remain open strings.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileRegistrationLegalForm {
+	pub code: String,
+	pub name: String,
+}
+
+/// Recorded principal-address components, not inferred ISO codes or headquarters.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileRegistrationAddress {
+	pub kind: String,
+	pub line1: Option<String>,
+	pub line2: Option<String>,
+	pub city: Option<String>,
+	pub state: Option<String>,
+	pub postal: Option<String>,
+	pub country_raw: Option<String>,
+}
+
+/// Registry-scoped legal facts, not an operation or tax-exemption verdict.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileRegistration {
+	pub authority: String,
+	pub number: String,
+	pub jurisdiction: CompanyProfileJurisdiction,
+	pub role: String,
+	pub legal_form: CompanyProfileRegistrationLegalForm,
+	pub status: String,
+	/// This register's reported entity-form date, not universal incorporation or founding.
+	pub formation_date: Option<String>,
+	pub address: Option<CompanyProfileRegistrationAddress>,
+}
+
+/// Attribution only for the named selected enrichment fields; observation is not a source update.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileSource {
+	pub r#type: String,
+	pub url: String,
+	#[serde(default, deserialize_with = "null_default")]
+	pub fields: Vec<String>,
+	/// Artifact observation timestamp.
+	pub observed_at: String,
+	/// Explicit source update timestamp, or null. Measurement dates belong to employees.as_of.
+	pub updated_at: Option<String>,
+}
+
+/// Selected public business number, not a reachability verdict.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfilePhone {
+	pub number: String,
+	pub kind: Option<String>,
+}
+
+/// Selected public business email, not a delivery verdict.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileEmail {
+	pub address: String,
+	pub kind: Option<String>,
+}
+
+/// An associated domain and its recorded URL.
+pub type CompanyProfileDomain = CompanyProfileWebsite;
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanySocialProfile {
+ pub platform: Option<String>,
+ pub url: String,
+ pub handle: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyPhoneNumber {
+ pub number: String,
+ pub r#type: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyEmailAddress {
+ pub address: String,
+ pub r#type: Option<String>,
+}
+
+/// Optional directory detail. Every member may be missing or null; existing releases may omit enrichment fields.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfileDeep {
+ pub domains: Option<Vec<CompanyProfileDomain>>,
+ pub social_profiles: Option<Vec<CompanySocialProfile>>,
+ pub phone_numbers: Option<Vec<CompanyPhoneNumber>>,
+ pub email_addresses: Option<Vec<CompanyEmailAddress>>,
+	pub legal_name: Option<String>,
+	pub aliases: Option<Vec<String>>,
+	pub jurisdiction: Option<CompanyProfileJurisdiction>,
+	/// Recorded legal status; not an operating or compliance verdict.
+	pub status: Option<String>,
+	pub websites: Option<Vec<CompanyProfileWebsite>>,
+	pub identifiers: Option<Vec<CompanyProfileIdentifier>>,
+	pub incorporated: Option<String>,
+	pub addresses: Option<Vec<CompanyProfileAddress>>,
+	pub industries: Option<Vec<CompanyProfileIndustry>>,
+	pub parent: Option<String>,
+	pub description: Option<String>,
+	/// Reported asset URL; the client does not fetch or license the asset.
+	pub logo: Option<String>,
+	/// Selected company account URLs; an empty array does not prove no accounts exist.
+	pub socials: Option<Vec<String>>,
+	pub phones: Option<Vec<CompanyProfilePhone>>,
+	pub emails: Option<Vec<CompanyProfileEmail>>,
+	pub founded: Option<CompanyProfileFounding>,
+	pub employees: Option<CompanyProfileEmployees>,
+	pub registrations: Option<Vec<CompanyProfileRegistration>>,
+	/// Attribution for projected enrichment fields only, not the entire legal profile.
+	pub sources: Option<Vec<CompanyProfileSource>>,
+}
+
+/// Search match evidence. Open strings permit future fields and identifier/listing namespaces.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyMatch {
+	pub field: Option<String>,
+	pub value: Option<String>,
+	pub r#type: Option<String>,
+	pub authority: Option<String>,
+	pub exchange: Option<String>,
+}
+
+/// A directory profile, distinct from national company-number validation.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyProfile {
+	pub id: String,
+	pub name: String,
+	pub country: Option<String>,
+	pub website: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub listings: Vec<CompanyProfileListing>,
+	pub address: Option<CompanyProfileAddress>,
+	pub deep: Option<CompanyProfileDeep>,
+}
+
+/// A directory search profile with match evidence; a match is not proof of legal identity.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyCandidate {
+	pub id: String,
+	pub name: String,
+	pub country: Option<String>,
+	pub website: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub listings: Vec<CompanyProfileListing>,
+	pub address: Option<CompanyProfileAddress>,
+	pub deep: Option<CompanyProfileDeep>,
+	pub r#match: CompanyMatch,
+}
+
+/// One page of company candidates. Reuse next with the same selector, filters and limit.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanySearch {
+	#[serde(default, deserialize_with = "null_default")]
+	pub companies: Vec<CompanyCandidate>,
+	pub next: Option<String>,
+}
+
+/// Counts for this directory edition, not complete country or worldwide coverage.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CompanyCoverage {
+	pub scope: String,
+	pub label: String,
+	pub description: String,
+	pub snapshot_at: String,
+	pub companies: u64,
+	#[serde(default, deserialize_with = "null_default")]
+	pub countries: Vec<String>,
+	pub with_website: u64,
+	pub with_listings: u64,
+	pub with_address: u64,
+}
+
 /// Source wall-time resolution. Missing observations remain unknown.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]

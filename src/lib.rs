@@ -1131,6 +1131,91 @@ impl AddressSearchOptions {
 	}
 }
 
+
+/// Directory detail in the same pooled request on every plan.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CompanyIdOptions {
+	pub deep: bool,
+}
+impl CompanyIdOptions {
+	pub fn deep(mut self, value: bool) -> Self {
+		self.deep = value;
+		self
+	}
+}
+
+/// Use at most one selector, or discover by country, industry or selected registration. The API validates
+/// combinations. Reuse cursor with the same selector, filters and limit.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CompanySearchOptions {
+	pub query: Option<String>,
+	pub domain: Option<String>,
+	pub ticker: Option<String>,
+	pub identifier: Option<String>,
+	pub country: Option<String>,
+	/// Exact four-digit SIC string; pair with industry_type.
+	pub industry: Option<String>,
+	/// Open namespace string, currently sic.
+	pub industry_type: Option<String>,
+	pub exchange: Option<String>,
+	pub authority: Option<String>,
+	pub limit: Option<u32>,
+	pub cursor: Option<String>,
+	pub deep: bool,
+}
+impl CompanySearchOptions {
+	pub fn industry(mut self, value: impl Into<String>) -> Self {
+		self.industry = Some(value.into());
+		self
+	}
+	pub fn industry_type(mut self, value: impl Into<String>) -> Self {
+		self.industry_type = Some(value.into());
+		self
+	}
+	pub fn query(mut self, value: impl Into<String>) -> Self {
+		self.query = Some(value.into());
+		self
+	}
+	pub fn domain(mut self, value: impl Into<String>) -> Self {
+		self.domain = Some(value.into());
+		self
+	}
+	pub fn ticker(mut self, value: impl Into<String>) -> Self {
+		self.ticker = Some(value.into());
+		self
+	}
+	pub fn identifier(mut self, value: impl Into<String>) -> Self {
+		self.identifier = Some(value.into());
+		self
+	}
+	pub fn country(mut self, value: impl Into<String>) -> Self {
+		self.country = Some(value.into());
+		self
+	}
+	pub fn exchange(mut self, value: impl Into<String>) -> Self {
+		self.exchange = Some(value.into());
+		self
+	}
+	pub fn authority(mut self, value: impl Into<String>) -> Self {
+		self.authority = Some(value.into());
+		self
+	}
+	pub fn limit(mut self, value: u32) -> Self {
+		self.limit = Some(value);
+		self
+	}
+	pub fn cursor(mut self, value: impl Into<String>) -> Self {
+		self.cursor = Some(value.into());
+		self
+	}
+	pub fn deep(mut self, value: bool) -> Self {
+		self.deep = value;
+		self
+	}
+}
+
 /// Configures `company`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
@@ -2495,6 +2580,57 @@ impl Client {
 		push(&mut query, "country", opts.country);
 		push_deep(&mut query, opts.deep);
 		self.get(&format!("/company/{}", seg(number)), query, None)
+			.await
+	}
+	/// Retrieve a directory profile by stable co_ ID. National validation remains company.
+	pub async fn company_id(&self, id: &str) -> Result<CompanyProfile> {
+		self.company_id_with_options(id, None).await
+	}
+
+	/// Deep adds profile detail on every plan in the same pooled request.
+	pub async fn company_id_with_options(
+		&self,
+		id: &str,
+		opts: impl Into<Option<CompanyIdOptions>>,
+	) -> Result<CompanyProfile> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/company/id/{}", seg(id)), query, None)
+			.await
+	}
+
+	/// One bounded page, with optional detail on each profile and no hidden lookups.
+	/// Use one selector or country/industry/selected-registration filters; exchange narrows ticker and authority narrows identifier.
+	/// Empty companies means no match in this edition; failures remain errors.
+	pub async fn company_search(
+		&self,
+		opts: impl Into<Option<CompanySearchOptions>>,
+	) -> Result<CompanySearch> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "q", opts.query);
+		push(&mut query, "domain", opts.domain);
+		push(&mut query, "ticker", opts.ticker);
+		push(&mut query, "identifier", opts.identifier);
+		push(&mut query, "country", opts.country);
+		push(&mut query, "industry", opts.industry);
+		push(&mut query, "industry_type", opts.industry_type);
+		push(&mut query, "exchange", opts.exchange);
+		push(&mut query, "authority", opts.authority);
+		push(
+			&mut query,
+			"limit",
+			opts.limit.map(|value| value.to_string()),
+		);
+		push(&mut query, "cursor", opts.cursor);
+		push_deep(&mut query, opts.deep);
+		self.get("/company", query, None).await
+	}
+
+	/// Edition counts, not complete country or worldwide coverage.
+	pub async fn company_coverage(&self) -> Result<CompanyCoverage> {
+		self.get("/company/directory/coverage", Query::new(), None)
 			.await
 	}
 }
