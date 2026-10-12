@@ -51,6 +51,37 @@ Results are plain data. Pass a returned code or coordinate to another operation 
 
 Name paid deep includes flat `short`, `directory`, and `initials` fields beside `gender` and `salutation`. `name_locale` selects CLDR formatting rules and defaults to `en`. It changes formatting only. Country remains gender context, and unavailable formatting is null. Older responses may omit these fields.
 
+## Currency reference rates
+
+Use maintained reference rates and keep their original observation dates visible. These additions in the source candidate require the matching Currency API release.
+```rust
+let rate = parse.currency_rate("USD", "EUR",
+    parseapi::CurrencyRateOptions::default().amount(100.0),
+).await?;
+let batch = parse.currency_rates("EUR", ["USD", "JPY"],
+    parseapi::CurrencyRatesOptions::default(),
+).await?;
+let history = parse.currency_history("USD", "JPY", "1971-01-04", "2026-10-02",
+    parseapi::CurrencyHistoryOptions::default().interval("month"),
+).await?;
+let comparison = parse.currency_rates_history("EUR", ["USD", "JPY"], "2024-01-01", "2024-01-31",
+    parseapi::CurrencyRatesHistoryOptions::default(),
+).await?;
+    parseapi::CurrencyRatesHistoryOptions::default(),
+).await?;
+let summary = parse.currency_rates_summary("USD", ["EUR", "JPY"], "2024-01-01", "2024-12-31",
+    parseapi::CurrencySummaryOptions::default().interval("month"),
+).await?;
+let all = parse.currency_rates_all("USD", None).await?;
+let catalog = parse.currency_list(parseapi::CurrencyListOptions::default().q("dollar")).await?;
+
+```
+
+Dated rates and history automatically select from the maintained archives. Missing quotes and dates stay explicit. Amount conversion uses known currency decimal precision. Rates, amounts and converted values are JSON numbers.
+
+
+Batch rates use a currency-keyed `rates` object. Read `batch.rates["USD"].rate` directly. Each quote retains its source observation date and optional conversion, while `missing` retains unavailable quotes and their reasons. History, catalogs and summaries keep ordered `data` arrays with their context. The catalog uses `/currency`. Its optional `lang` translates available currency names and Deep plural names using the same policy as individual metadata lookups; identifiers, symbols and numeric facts stay unchanged. History keeps shared base, pair and requested amount on the envelope. Its ordered rows retain requested days, source observation dates and necessary qualifications. All-quotes lookup uses the complete available rate vector. Optional Core `units` identifies troy ounces or indexed units. The API omits empty missing arrays. Lists and all-quotes batches exclude metals and test/no-currency codes.
+
 ## Display language
 
 This source candidate accepts an optional language for supported display fields.

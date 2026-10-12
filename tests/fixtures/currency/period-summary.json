@@ -1,0 +1,67 @@
+{
+  "data": [
+    {
+      "quote": "EUR",
+      "from": "2024-01-01",
+      "to": "2024-01-31",
+      "average": 0.825,
+      "min": 0.8,
+      "max": 0.85,
+      "observation_count": 2,
+      "first_date": "2024-01-02",
+      "last_date": "2024-01-07",
+      "missing_day_count": 1
+    },
+    {
+      "quote": "JPY",
+      "from": "2024-01-01",
+      "to": "2024-01-31",
+      "average": 151,
+      "min": 150,
+      "max": 152,
+      "observation_count": 2,
+      "first_date": "2024-01-02",
+      "last_date": "2024-01-07",
+      "missing_day_count": 1
+    }
+  ],
+  "base": "USD",
+  "quotes": [
+    "EUR",
+    "JPY",
+    "XCG"
+  ],
+  "from": "2024-01-01",
+  "to": "2024-02-15",
+  "interval": "month",
+  "missing": [
+    {
+      "quote": "XCG",
+      "from": "2024-01-01",
+      "to": "2024-01-31",
+      "reason": "no_rate",
+      "missing_day_count": 31
+    },
+    {
+      "quote": "EUR",
+      "from": "2024-02-01",
+      "to": "2024-02-15",
+      "reason": "no_observations",
+      "missing_day_count": 9
+    },
+    {
+      "quote": "JPY",
+      "from": "2024-02-01",
+      "to": "2024-02-15",
+      "reason": "no_observations",
+      "missing_day_count": 9
+    },
+    {
+      "quote": "XCG",
+      "from": "2024-02-01",
+      "to": "2024-02-15",
+      "reason": "no_rate",
+      "missing_day_count": 15
+    }
+  ]
+}

@@ -11,8 +11,10 @@
 //! <https://parseapi.com>
 
 mod types;
+mod currency;
 
 pub use types::*;
+pub use currency::*;
 
 use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
 use serde::de::DeserializeOwned;
@@ -754,9 +756,12 @@ impl TariffSearchOptions {
 pub struct CurrencyRateOptions {
 	pub date: Option<String>,
 	pub amount: Option<f64>,
+	pub source: Option<String>,
+
 }
 
 impl CurrencyRateOptions {
+	pub fn source(mut self, value: impl Into<String>) -> Self { self.source = Some(value.into()); self }
 	/// Sets the `date` query option.
 	pub fn date(mut self, value: impl Into<String>) -> Self {
 		self.date = Some(value.into());
@@ -1547,6 +1552,11 @@ impl Client {
 	}
 
 	async fn request<T: DeserializeOwned>(&self, path: &str, query: Query, ua: Option<&str>, body: Option<serde_json::Value>) -> Result<T> {
+		self.request_response(path, query, ua, body).await?
+			.json::<T>().await.map_err(|err| Error::Transport(Box::new(err)))
+	}
+
+	async fn request_response(&self, path: &str, query: Query, ua: Option<&str>, body: Option<serde_json::Value>) -> Result<reqwest::Response> {
 		let retries = if !self.retries_explicit && metered_request(path, &query) {
 			0
 		} else {
@@ -1581,10 +1591,7 @@ impl Client {
 
 			let status = response.status();
 			if status.is_success() {
-				return response
-					.json::<T>()
-					.await
-					.map_err(|err| Error::Transport(Box::new(err)));
+				return Ok(response);
 			}
 
 			let retry_after = response.headers().get("retry-after").and_then(|value| value.to_str().ok()).map(str::to_owned);
@@ -2297,6 +2304,7 @@ impl Client {
 			"amount",
 			opts.amount.map(|value| value.to_string()),
 		);
+		push(&mut query, "source", opts.source);
 		self.get(
 			&format!("/currency/{}/{}", seg(base), seg(quote)),
 			query,

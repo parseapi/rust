@@ -1078,6 +1078,8 @@ pub struct Name {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CurrencyRate {
+	pub dates: Option<crate::CurrencyRateDates>,
+	pub units: Option<crate::CurrencyRateUnits>,
 	pub base: String,
 	pub quote: String,
 	pub rate: f64,
@@ -1085,6 +1087,7 @@ pub struct CurrencyRate {
 	pub amount: Option<f64>,
 	pub converted: Option<f64>,
 	pub source: Option<String>,
+	pub stale: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

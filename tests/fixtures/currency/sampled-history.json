@@ -1,0 +1,23 @@
+{
+  "data": [
+    {
+      "requested_date": "2024-01-02",
+      "rate": 0.8,
+      "date": "2024-01-02"
+    },
+    {
+      "requested_date": "2024-02-02",
+      "rate": 0.85,
+      "date": "2024-01-07",
+      "stale": true
+    }
+  ],
+  "base": "USD",
+  "quote": "EUR",
+  "from": "2024-01-02",
+  "to": "2024-02-15",
+  "interval": "month",
+  "missing": [
+    "2024-02-15"
+  ]
+}
