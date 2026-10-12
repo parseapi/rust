@@ -1054,13 +1054,27 @@ impl NaicsSearchOptions {
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct EmojiSearchOptions {
+	pub category: Option<String>,
+	pub subcategory: Option<String>,
+	pub version: Option<String>,
+	pub max_version: Option<String>,
+	pub include_skin_tones: Option<bool>,
+	pub offset: Option<u32>,
 	pub limit: Option<u32>,
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
 }
 
+pub type EmojiBrowseOptions = EmojiSearchOptions;
+
 impl EmojiSearchOptions {
+	pub fn category(mut self, value: impl Into<String>) -> Self { self.category = Some(value.into()); self }
+	pub fn subcategory(mut self, value: impl Into<String>) -> Self { self.subcategory = Some(value.into()); self }
+	pub fn version(mut self, value: impl Into<String>) -> Self { self.version = Some(value.into()); self }
+	pub fn max_version(mut self, value: impl Into<String>) -> Self { self.max_version = Some(value.into()); self }
+	pub fn include_skin_tones(mut self, value: bool) -> Self { self.include_skin_tones = Some(value); self }
+	pub fn offset(mut self, value: u32) -> Self { self.offset = Some(value); self }
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `limit` query option.
 	pub fn limit(mut self, value: u32) -> Self {
@@ -1307,10 +1321,12 @@ impl LanguageOptions {
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct EmojiOptions { pub deep: bool,
+	pub shortcode_source: Option<String>,
 	/// Display language for this request.
 	pub lang: Option<String>,
 }
 impl EmojiOptions {
+	pub fn shortcode_source(mut self, value: impl Into<String>) -> Self { self.shortcode_source = Some(value.into()); self }
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
 
 /// Display language for `continent`.
@@ -2510,29 +2526,53 @@ impl Client {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "lang", opts.lang);
+		push(&mut query, "shortcode_source", opts.shortcode_source);
 		push_deep(&mut query, opts.deep);
-		self.get(&format!("/emoji/{}", seg(emoji)), query, None)
-			.await
+		self.get(&format!("/emoji/{}", seg(emoji)), query, None).await
 	}
 
-	/// Calls `/emoji`.
-	pub async fn emoji_search(
-		&self,
-		query: &str,
-		opts: impl Into<Option<EmojiSearchOptions>>,
-	) -> Result<EmojiSearch> {
-		let opts = opts.into().unwrap_or_default();
-		let mut params = Query::new();
-		push(&mut params, "lang", opts.lang);
-		push(&mut params, "q", Some(query.to_string()));
-		push(
-			&mut params,
-			"limit",
-			opts.limit.map(|value| value.to_string()),
-		);
-		push_deep(&mut params, opts.deep);
+	/// Searches `/emoji`, with optional catalog filters and pagination.
+	pub async fn emoji_search(&self, query: &str, opts: impl Into<Option<EmojiSearchOptions>>) -> Result<EmojiSearch> {
+		let mut params = emoji_query(opts.into().unwrap_or_default());
+		let at = if params.first().map(|(name, _)| *name) == Some("lang") { 1 } else { 0 };
+		params.insert(at, ("q", query.to_string()));
 		self.get("/emoji", params, None).await
 	}
+
+	/// Browses the catalog without a search query.
+	pub async fn emoji_browse(&self, opts: impl Into<Option<EmojiBrowseOptions>>) -> Result<EmojiBrowse> {
+		self.get("/emoji", emoji_query(opts.into().unwrap_or_default()), None).await
+	}
+
+	/// Download the full filtered JSON inventory, including offline resolution maps.
+	pub async fn emoji_catalog(&self, opts: impl Into<Option<EmojiCatalogOptions>>) -> Result<EmojiCatalog> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = emoji_query(EmojiSearchOptions { lang: opts.lang, category: opts.category, subcategory: opts.subcategory, version: opts.version, max_version: opts.max_version, include_skin_tones: opts.include_skin_tones, ..Default::default() });
+		query.push(("deep", opts.deep.to_string()));
+		push(&mut query, "profile", opts.profile);
+		self.get("/emoji/catalog", query, None).await
+	}
+
+	pub async fn emoji_convert(&self, text: &str, direction: &str, shortcode_source: &str) -> Result<EmojiConversion> {
+		self.request("/emoji/convert", vec![("direction",direction.to_owned()),("shortcode_source",shortcode_source.to_owned())], None, Some(serde_json::json!({"text":text}))).await
+	}
+	pub async fn emoji_metadata(&self) -> Result<EmojiMetadata> {
+		self.get("/emoji/metadata", Query::new(), None).await
+	}
+
+	pub async fn emoji_categories(&self) -> Result<EmojiCategories> {
+		self.get("/emoji/categories", Query::new(), None).await
+	}
+
+	/// Extracts complete sequences. Positions use UTF-16 code units; end is exclusive.
+	pub async fn emoji_parse(&self, text: &str, opts: impl Into<Option<EmojiParseOptions>>) -> Result<EmojiParse> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
+		push_deep(&mut query, opts.deep);
+		self.request("/emoji/parse", query, None, Some(serde_json::json!({"text": text}))).await
+	}
+
 
 	/// Calls `/address/{address}`.
 	pub async fn address(
@@ -2752,4 +2792,54 @@ impl NpiOptions {
 		self.deep = value;
 		self
 	}
+}
+
+/// Optional detail and display language for extraction.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct EmojiParseOptions { pub deep: bool, pub lang: Option<String> }
+impl EmojiParseOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
+}
+
+fn emoji_query(opts: EmojiSearchOptions) -> Query {
+	let mut query = Query::new();
+	push(&mut query, "lang", opts.lang);
+	push(&mut query, "category", opts.category);
+	push(&mut query, "subcategory", opts.subcategory);
+	push(&mut query, "version", opts.version);
+	push(&mut query, "max_version", opts.max_version);
+	push(&mut query, "limit", opts.limit.map(|v| v.to_string()));
+	push(&mut query, "offset", opts.offset.map(|v| v.to_string()));
+	push(&mut query, "include_skin_tones", opts.include_skin_tones.map(|v| v.to_string()));
+	push_deep(&mut query, opts.deep);
+	query
+}
+
+/// Complete JSON catalog export. Deep defaults true.
+#[derive(Debug, Clone)]
+#[non_exhaustive]
+pub struct EmojiCatalogOptions {
+	pub profile: Option<String>,
+	pub deep: bool,
+	pub lang: Option<String>,
+	pub category: Option<String>,
+	pub subcategory: Option<String>,
+	pub version: Option<String>,
+	pub max_version: Option<String>,
+	pub include_skin_tones: Option<bool>,
+}
+impl Default for EmojiCatalogOptions {
+	fn default() -> Self { Self { profile: None, deep: true, lang: None, category: None, subcategory: None, version: None, max_version: None, include_skin_tones: None } }
+}
+impl EmojiCatalogOptions {
+	pub fn profile(mut self, value: impl Into<String>) -> Self { self.profile = Some(value.into()); self }
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
+	pub fn category(mut self, value: impl Into<String>) -> Self { self.category = Some(value.into()); self }
+	pub fn subcategory(mut self, value: impl Into<String>) -> Self { self.subcategory = Some(value.into()); self }
+	pub fn version(mut self, value: impl Into<String>) -> Self { self.version = Some(value.into()); self }
+	pub fn max_version(mut self, value: impl Into<String>) -> Self { self.max_version = Some(value.into()); self }
+	pub fn include_skin_tones(mut self, value: bool) -> Self { self.include_skin_tones = Some(value); self }
 }

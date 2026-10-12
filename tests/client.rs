@@ -1441,3 +1441,94 @@ async fn bank_post_context_domestic_requirements_and_retry_keep_raw_data_out_of_
 	assert_eq!(server.requests()[0].method,"GET");
 	assert!(server.requests()[0].body.is_empty());
 }
+
+
+#[test]
+fn emoji_actual_artwork() {
+ let fixture:serde_json::Value=serde_json::from_str(include_str!("fixtures/emoji-artwork.json")).unwrap();
+ let metadata:EmojiMetadata=serde_json::from_value(fixture["metadata"].clone()).unwrap();
+ let emoji:Emoji=serde_json::from_value(fixture["emoji"].clone()).unwrap();
+ assert_eq!(metadata.artwork_sources.len(),3);assert!(!metadata.artwork_sources[0].notices.is_empty());let artwork=emoji.deep.unwrap().artwork.unwrap();assert_eq!(artwork.len(),3);
+ assert_eq!(artwork["openmoji"].svg.as_deref(),Some("https://cdn.parseapi.com/emoji/openmoji/17.0.0/1f680.svg"));
+ assert_eq!(artwork["openmoji"].png["72"],"https://cdn.parseapi.com/emoji/openmoji/17.0.0/72/1f680.png");
+}
+
+#[tokio::test]
+async fn emoji_private_conversion() {
+ let server=TestServer::start(vec![(200,r#"{"text":"🚀","unresolved":[]}"#)]);
+ assert_eq!(server.client().emoji_convert(":rocket:","to_emoji","github").await.unwrap().text,"🚀");
+ let calls=server.requests();assert_eq!(calls.len(),1);assert_eq!(calls[0].method,"POST");
+ assert_eq!(serde_json::from_str::<serde_json::Value>(&calls[0].body).unwrap(),serde_json::json!({"text":":rocket:"}));
+}
+
+#[tokio::test]
+async fn emoji_catalog_and_private_text_body() {
+	let server = TestServer::start(vec![
+		(200, r#"{"emoji":"🐱","name":"cat face","shortcodes":[],"deep":{}}"#),
+		(200, r#"{"q":"face","emojis":[],"total":0,"next_offset":null}"#),
+		(200, r#"{"q":"","emojis":[],"total":0,"next_offset":null}"#),
+		(200, r#"{"categories":[{"category":"People & Body","subcategories":["hand-fingers-closed"]}]}"#),
+		(200, r#"{"emojis":[{"emoji":"👍🏿","name":"thumbs up","shortcodes":[],"positions":[{"start":2,"end":6},{"start":7,"end":11}],"deep":{"base":"👍","variants":[{"emoji":"👍🏿","tones":["dark"]}],"shortcode_sources":{"cldr":[],"github":[],"slack":[],"discord":[]}}}]}"#),
+	]);
+	let client = server.client();
+	let lookup = client.emoji_with_options(":cat:", EmojiOptions::default().shortcode_source("github")).await.unwrap();
+	assert!(lookup.deep.unwrap().variants.is_none());
+	let page = client.emoji_search("face", EmojiSearchOptions::default().category("Smileys & Emotion").version("17.0").max_version("18.0").include_skin_tones(false).offset(0)).await.unwrap();
+	assert_eq!(page.total, Some(0));
+	let browse = client.emoji_browse(EmojiBrowseOptions::default().include_skin_tones(false).offset(2)).await.unwrap();
+	assert_eq!(browse.emojis.len(), 0);
+	assert_eq!(browse.total, 0);
+	assert_eq!(client.emoji_categories().await.unwrap().categories[0].subcategories, vec!["hand-fingers-closed"]);
+	let parsed = client.emoji_parse("x 👍🏿 👍🏿", EmojiParseOptions::default().deep(true).lang("fr")).await.unwrap();
+	assert_eq!(parsed.emojis.len(), 1);
+	assert_eq!(parsed.emojis[0].positions.len(), 2);
+	assert_eq!(parsed.emojis[0].positions[1].end, 11);
+	assert_eq!(parsed.emojis[0].deep.as_ref().unwrap().variants.as_ref().unwrap()[0].tones, vec!["dark"]);
+	let calls = server.requests();
+	assert_eq!(calls[0].target, "/emoji/%3Acat%3A?shortcode_source=github");
+	let params: std::collections::BTreeMap<_,_> = reqwest::Url::parse(&format!("http://test{}", calls[1].target)).unwrap().query_pairs().map(|(k,v)|(k.into_owned(),v.into_owned())).collect();
+	assert_eq!(params.get("include_skin_tones").map(String::as_str), Some("false"));
+	assert_eq!(params.get("offset").map(String::as_str), Some("0"));
+	assert_eq!(params.get("max_version").map(String::as_str), Some("18.0"));
+	assert_eq!(calls[2].target, "/emoji?offset=2&include_skin_tones=false");
+	assert_eq!(calls[3].target, "/emoji/categories");
+	assert_eq!(calls[4].method, "POST");
+	assert_eq!(calls[4].target, "/emoji/parse?lang=fr&deep=true");
+	assert_eq!(serde_json::from_str::<serde_json::Value>(&calls[4].body).unwrap(), serde_json::json!({"text":"x 👍🏿 👍🏿"}));
+	assert_eq!(calls[4].headers.get("parse-version").map(String::as_str),Some("2.0.0"));
+}
+
+#[tokio::test]
+async fn emoji_catalog_metadata_and_artwork() {
+    let bundle: serde_json::Value = serde_json::from_str(include_str!("fixtures/emoji-catalog.json")).unwrap();
+    let body = include_str!("fixtures/emoji-catalog.json");
+    let metadata_body: &'static str = Box::leak(serde_json::to_string(&bundle["metadata"]).unwrap().into_boxed_str());
+    let server = TestServer::start(vec![(200,body),(200,body),(200,metadata_body)]);
+    let client = server.client();
+    let catalog = client.emoji_catalog(None).await.unwrap();
+    assert_eq!(catalog.forms["❤"], "❤️");
+    assert_eq!(catalog.total, 1);
+    assert!(catalog.scope.as_ref().unwrap().complete_inventory);
+    assert_eq!(catalog.localization.as_ref().unwrap().resolved_locale.as_deref(), Some("fr"));
+    assert_eq!(catalog.search.as_ref().unwrap().native["❤️"].keywords, vec!["love"]);
+    assert!(catalog.emojis[0].deep.as_ref().unwrap().artwork.as_ref().unwrap().is_empty());
+    client.emoji_catalog(EmojiCatalogOptions::default().deep(false).include_skin_tones(false).max_version("17.0")).await.unwrap();
+    let metadata = client.emoji_metadata().await.unwrap();
+    assert_eq!(metadata.total, 1);
+    assert_eq!(metadata.sources[0].source_url, "https://unicode.org/emoji");
+    assert_eq!(metadata.notices[0].notice, "Full source notice");
+    let requests = server.requests();
+    assert_eq!(requests[0].target, "/emoji/catalog?deep=true");
+    assert_eq!(requests[1].target, "/emoji/catalog?max_version=17.0&include_skin_tones=false&deep=false");
+    assert_eq!(requests[2].target, "/emoji/metadata");
+}
+
+#[test]
+fn emoji_actual_metadata_preset_coverage() {
+ let metadata:EmojiMetadata=serde_json::from_str(include_str!("fixtures/emoji-metadata.json")).unwrap();
+ let presets=metadata.shortcode_sources.unwrap();
+ assert_eq!(presets["cldr"].records,3963);
+ assert_eq!(presets["github"].records,1870);
+ assert_eq!(presets["github"].missing_records,2093);
+ assert_eq!(presets["cldr"].ambiguous_aliases,1);
+}

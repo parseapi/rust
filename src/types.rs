@@ -1380,6 +1380,8 @@ pub struct Emoji {
 #[serde(default)]
 #[non_exhaustive]
 pub struct EmojiSearch {
+	pub total: Option<u32>,
+	pub next_offset: Option<u32>,
 	pub q: String,
 	#[serde(default, deserialize_with = "null_default")]
 	pub emojis: Vec<Emoji>,
@@ -1940,6 +1942,10 @@ pub struct DateInfoDeep {
 #[serde(default)]
 #[non_exhaustive]
 pub struct EmojiDeep {
+	pub artwork: Option<std::collections::HashMap<String, EmojiArtwork>>,
+	pub subcategory: Option<String>,
+	pub base: Option<String>,
+	pub variants: Option<Vec<EmojiVariant>>,
 
 	pub codepoints: Option<Vec<String>>,
 	pub hex: Option<String>,
@@ -2548,4 +2554,293 @@ pub struct IbanDeep {
 	/// Branch identifier when that country has one.
 	pub branch: Option<String>,
 	pub account: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiBrowse {
+	pub total: u32,
+	pub next_offset: Option<u32>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub emojis: Vec<Emoji>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiVariant {
+	pub emoji: String,
+	#[serde(default, deserialize_with = "null_default")]
+	pub tones: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiCategory {
+	pub category: String,
+	#[serde(default, deserialize_with = "null_default")]
+	pub subcategories: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiCategories {
+	#[serde(default, deserialize_with = "null_default")]
+	pub categories: Vec<EmojiCategory>,
+}
+
+/// UTF-16 code-unit positions. End is exclusive.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiPosition { pub start: u32, pub end: u32 }
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiParseItem {
+	pub emoji: String,
+	pub name: String,
+	pub category: Option<String>,
+	pub deep: Option<EmojiDeep>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub shortcodes: Vec<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub positions: Vec<EmojiPosition>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiParse {
+	#[serde(default, deserialize_with = "null_default")]
+	pub emojis: Vec<EmojiParseItem>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiArtwork {
+	pub license: Option<String>,
+	pub license_url: Option<String>,
+	pub attribution: Option<String>,
+	pub svg: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub png: std::collections::HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiCompleteness {
+	pub missing_count: u32,
+	pub unexpected_count: u32,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiSource {
+	pub id: String,
+	pub version: Option<String>,
+	pub source_url: String,
+	pub license: String,
+	pub license_url: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiNotice {
+	pub id: String,
+	pub license: String,
+	pub notice: String,
+}
+
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiArtworkCoverage {
+	pub svg: u32,
+	pub png: u32,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiFlagLicense {
+	pub license: String,
+	pub license_url: String,
+	pub description: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiArtworkSource {
+	pub style: String,
+	pub version: Option<String>,
+	pub unicode_version: Option<String>,
+	pub source_url: String,
+	pub license: String,
+	pub license_url: String,
+	pub attribution: String,
+	pub loaded_coverage: Option<EmojiArtworkCoverage>,
+	pub flag_license: Option<EmojiFlagLicense>,
+	pub notices: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiMetadata {
+ pub shortcode_sources: Option<std::collections::HashMap<String,EmojiShortcodeSourceMetadata>>,
+	pub edition: String,
+	pub max_version: Option<String>,
+	pub source_version: String,
+	pub total: u32,
+	pub completeness: EmojiCompleteness,
+	#[serde(default, deserialize_with = "null_default")]
+	pub sources: Vec<EmojiSource>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub artwork_sources: Vec<EmojiArtworkSource>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub notices: Vec<EmojiNotice>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiCatalog {
+ pub localization: Option<EmojiCatalogLocalization>,
+	pub profile: Option<String>,
+	pub scope: Option<EmojiCatalogScope>,
+	pub search: Option<EmojiCatalogSearchFacts>,
+	pub metadata: EmojiMetadata,
+	pub total: u32,
+	#[serde(default, deserialize_with = "null_default")]
+	pub emojis: Vec<Emoji>,
+	pub forms: std::collections::HashMap<String, String>,
+	pub shortcodes: std::collections::HashMap<String, std::collections::HashMap<String, Vec<String>>>,
+	pub legacy: std::collections::HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiCatalogScope {
+	pub filters: std::collections::HashMap<String,String>,
+	pub complete_inventory: bool,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiNativeSearchFacts {
+ pub order: Option<u32>,
+	pub name: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub keywords: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiCatalogSearchFacts {
+ pub localized_keywords: Option<Vec<String>>,
+	pub native: std::collections::HashMap<String, EmojiNativeSearchFacts>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiUnresolved {
+	pub emoji: Option<String>,
+	pub shortcode: Option<String>,
+	pub start: u32,
+	pub end: u32,
+	pub reason: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiConversion {
+	pub text: String,
+	pub unresolved: Vec<EmojiUnresolved>,
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiCatalogLocalization {
+ pub requested_locale: Option<String>, pub resolved_locale: Option<String>,
+ pub translated_names: u32, pub translated_keywords: u32, pub fallback_names: u32, pub fallback_keywords: u32,
+}
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct EmojiShortcodeSourceMetadata {
+ pub records: u32, pub missing_records: u32, pub ambiguous_aliases: u32,
 }
