@@ -1546,8 +1546,10 @@ pub struct Measure {
 	/// Decimal string preserving the API's precision.
 	pub amount: Option<String>,
 	pub unit: Option<String>,
+	/// Failure reason. None when omitted by a successful response.
 	pub reason: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
+	/// Unit alternatives. Empty when omitted by the response.
 	pub choices: Vec<MeasureChoice>,
 }
 
