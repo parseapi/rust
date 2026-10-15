@@ -1532,3 +1532,21 @@ fn emoji_actual_metadata_preset_coverage() {
  assert_eq!(presets["github"].missing_records,2093);
  assert_eq!(presets["cldr"].ambiguous_aliases,1);
 }
+
+#[tokio::test]
+async fn tariff_short_ids_roundtrip_and_invalid_ids_fail_closed() {
+ for edition in ["ted_1", "ted_9007199254740993", "ted_18446744073709551615"] {
+  let body: &'static str = Box::leak(format!(r#"{{"hts":"0101","edition":"{edition}","date":null,"lines":[]}}"#).into_boxed_str());
+  let server=TestServer::start(vec![(200,body),(200,body)]);let client=server.client();
+  let lookup=client.tariff("0101",TariffOptions::default().edition(edition)).await.unwrap();
+  let search=client.tariff_search_with_options("horses",TariffSearchOptions::default().edition(edition)).await.unwrap();
+  assert_eq!(lookup.edition.as_deref(),Some(edition));assert_eq!(search.edition.as_deref(),Some(edition));
+  for request in server.requests(){assert!(request.target.contains(&format!("edition={edition}")));}
+ }
+ for edition in ["ted_0","ted_01","ted_18446744073709551616","ted_1\n","TED_1"] {
+  let body: &'static str=Box::leak(serde_json::json!({"edition":edition,"date":"2026-09-15","lines":[]}).to_string().into_boxed_str());
+  let server=TestServer::start(vec![(200,body),(200,body)]);let client=server.client();
+  assert_eq!(client.tariff("0101",TariffOptions::default().date("2026-09-15")).await.unwrap_err().code(),Some("tariff_selection_mismatch"));
+  assert_eq!(client.tariff_search_with_options("horses",TariffSearchOptions::default().date("2026-09-15")).await.unwrap_err().code(),Some("tariff_selection_mismatch"));
+ }
+}

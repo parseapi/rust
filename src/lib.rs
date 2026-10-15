@@ -804,8 +804,14 @@ impl VinOptions {
 	}
 }
 
+fn tariff_edition_id(value: &str) -> bool {
+ if value.len()==64 && value.bytes().all(|b|b.is_ascii_digit()||(b'a'..=b'f').contains(&b)) { return true; }
+ let Some(digits)=value.strip_prefix("ted_") else{return false};
+ !digits.is_empty() && digits.len()<=20 && !digits.starts_with('0') && digits.bytes().all(|b|b.is_ascii_digit()) && (digits.len()<20 || digits<="18446744073709551615")
+}
+
 fn tariff_selection(edition: Option<&str>, date: Option<&str>, got_edition: Option<&str>, got_date: Option<&str>) -> Result<()> {
-	if (edition.is_some() || date.is_some()) && (!got_edition.is_some_and(|value| value.len() == 64 && value.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))) || (edition.is_some() && got_edition != edition) || got_date != date) {
+	if (edition.is_some() || date.is_some()) && (!got_edition.is_some_and(tariff_edition_id) || (edition.is_some() && got_edition != edition) || got_date != date) {
 		return Err(Error::Api { status: 0, code: "tariff_selection_mismatch".into(), retry_after: None, candidates: None, message: "Tariff response did not confirm the requested edition/date. The server may not support this selection.".into(), docs: None, request_id: None });
 	}
 	Ok(())
