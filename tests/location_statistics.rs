@@ -9,7 +9,7 @@ fn location_statistics_preserve_unknown_and_zero() {
  let body = r#"{"population":0,"population_period":"2020-2024","property_tax":{"annual_median":0,"currency":"USD","period":"2020-2024"}}"#;
  let place: PostalDeep = serde_json::from_str(body).unwrap();
  assert_eq!(place.population, Some(0));
- assert_eq!(place.population_period.as_deref(), Some("2020-2024"));
+ assert_eq!(place.population_period.as_deref(), None);
  let tax = place.property_tax.unwrap();
  assert_eq!(tax.annual_median, 0.0);
  assert_eq!(tax.currency, "USD");

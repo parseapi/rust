@@ -205,6 +205,9 @@ pub struct District {
 #[serde(default)]
 #[non_exhaustive]
 pub struct City {
+	pub name_romanized: Option<String>,
+	pub romanization_language: Option<String>,
+	pub r#match: Option<CityMatch>,
 	pub name: String,
 	pub name_local: Option<String>,
 	#[serde(rename = "type")]
@@ -221,6 +224,9 @@ pub struct City {
 	/// Minted parse id (`city_` + 12 chars). Stable pin via `/city/id/{id}`.
 	pub id: String,
 	pub deep: Option<CityDeep>,
+	/// Present when hierarchy is requested; missing and null remain unknown.
+	pub grain: Option<String>,
+	pub parent: Option<CityParent>,
 }
 
 /// A [`City`] plus the distance from the query point.
@@ -243,6 +249,7 @@ pub struct CitySearch {
 	pub state: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub cities: Vec<City>,
+	pub next_cursor: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -256,6 +263,7 @@ pub struct CityNearby {
 	pub unit: String,
 	#[serde(default, deserialize_with = "null_default")]
 	pub nearby: Vec<CityNearest>,
+	pub next_cursor: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1654,7 +1662,9 @@ pub struct CountryDeep {
 	pub region: Option<String>,
 	pub subregion: Option<String>,
 	pub population: Option<i64>,
-	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	/// Retained for source compatibility. No longer returned or decoded.
+	#[deprecated(note = "Population observation periods are no longer returned")]
+	#[serde(skip)]
 	pub population_period: Option<String>,
 	pub area: Option<f64>,
 	/// Land area in km2.
@@ -1706,7 +1716,9 @@ pub struct CountryElevationPoint {
 #[non_exhaustive]
 pub struct StateDeep {
 	pub population: Option<i64>,
-	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	/// Retained for source compatibility. No longer returned or decoded.
+	#[deprecated(note = "Population observation periods are no longer returned")]
+	#[serde(skip)]
 	pub population_period: Option<String>,
 	pub area: Option<f64>,
 	pub fips: Option<String>,
@@ -1725,7 +1737,9 @@ pub struct StateDeep {
 #[non_exhaustive]
 pub struct DistrictDeep {
 	pub population: Option<i64>,
-	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	/// Retained for source compatibility. No longer returned or decoded.
+	#[deprecated(note = "Population observation periods are no longer returned")]
+	#[serde(skip)]
 	pub population_period: Option<String>,
 	/// Total area in km2 (land + water, or the official total).
 	pub area: Option<f64>,
@@ -1748,8 +1762,13 @@ pub struct CityDeep {
 	pub elevation: Option<f64>,
 	pub elevation_ft: Option<f64>,
 	pub population: Option<i64>,
-	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	/// Retained for source compatibility. No longer returned or decoded.
+	#[deprecated(note = "Population observation periods are no longer returned")]
+	#[serde(skip)]
 	pub population_period: Option<String>,
+	/// Official observation date and basis; absent or null means unknown.
+	pub population_observed_on: Option<String>,
+	pub population_basis: Option<String>,
 	/// Total area in km2 (land + water, or the official total).
 	pub area: Option<f64>,
 	/// Land area in km2. None when the source publishes total only.
@@ -1766,7 +1785,9 @@ pub struct PostalDeep {
 	pub elevation: Option<f64>,
 	pub elevation_ft: Option<f64>,
 	pub population: Option<i64>,
-	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	/// Retained for source compatibility. No longer returned or decoded.
+	#[deprecated(note = "Population observation periods are no longer returned")]
+	#[serde(skip)]
 	pub population_period: Option<String>,
 	/// Total area in km2. None when the source has no water split.
 	pub area: Option<f64>,
@@ -2009,7 +2030,9 @@ pub struct PostalMetroDeep {
 #[non_exhaustive]
 pub struct StateDistrictItemDeep {
 	pub population: Option<i64>,
-	/// Reporting year or period for population (YYYY or YYYY-YYYY). Null when unknown or unverifiable.
+	/// Retained for source compatibility. No longer returned or decoded.
+	#[deprecated(note = "Population observation periods are no longer returned")]
+	#[serde(skip)]
 	pub population_period: Option<String>,
 
 }
@@ -2846,3 +2869,91 @@ pub struct EmojiCatalogLocalization {
 pub struct EmojiShortcodeSourceMetadata {
  pub records: u32, pub missing_records: u32, pub ambiguous_aliases: u32,
 }
+
+
+/// A reviewed immediate parent with nullable display and native names.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CityParent {
+	pub id: String,
+	pub name: Option<String>,
+	pub name_local: Option<String>,
+	pub country: String,
+	pub state: Option<String>,
+	#[serde(rename = "type")]
+	pub kind: Option<String>,
+	pub grain: Option<String>,
+}
+
+/// A page from the curated City collection.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CityList {
+	pub object: String,
+	pub has_more:Option<bool>,
+	pub url:Option<String>,
+	pub q: Option<String>,
+	pub country: Option<String>,
+	pub state: Option<String>,
+	#[serde(rename = "type")]
+	pub kind: Option<String>,
+	pub grain: Option<String>,
+	#[serde(default, deserialize_with = "null_default")]
+	pub data: Vec<CityResource>,
+	pub next_cursor: Option<String>,
+}
+
+/// A page of cities around the supplied coordinate.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CityNearbyCoords {
+	pub object: String,
+	pub has_more:Option<bool>,
+	pub url:Option<String>,
+	pub latitude: f64,
+	pub longitude: f64,
+	pub radius: f64,
+	pub unit: String,
+	#[serde(default, deserialize_with = "null_default")]
+	pub data: Vec<CityResource>,
+	pub next_cursor: Option<String>,
+}
+
+/// Complete City Core facts. Unknown facts remain null; requested detail is optional.
+#[derive(Debug,Clone,Deserialize)]
+#[non_exhaustive]
+pub struct CityResource {
+	pub name_romanized: Option<String>,
+	pub romanization_language: Option<String>,
+ pub r#match: Option<CityMatch>,
+ pub id:String, pub object:String, pub name:Option<String>, pub name_local:Option<String>, pub country:Option<String>, pub country_name:Option<String>, pub state:Option<String>, pub state_name:Option<String>, pub district:Option<String>, pub district_name:Option<String>,
+ #[serde(rename="type")] pub kind:Option<String>,
+ pub grain:Option<String>, pub latitude:Option<f64>, pub longitude:Option<f64>, pub timezone:Option<String>, pub distance:Option<f64>, pub distance_mi:Option<f64>, pub parent:Option<CityParent>, pub deep:Option<CityDeep>,
+}
+
+/// Bounded safe identities on HTTP409 ambiguous_city. No Deep fields.
+#[derive(Debug,Clone,Deserialize)]
+#[non_exhaustive]
+pub struct CityAmbiguityCandidate {
+ pub id:String, pub object:String, pub name:Option<String>, pub name_local:Option<String>, pub country:Option<String>, pub country_name:Option<String>, pub state:Option<String>, pub state_name:Option<String>,
+ #[serde(rename="type")] pub kind:Option<String>,
+}
+
+#[derive(Debug,Clone,Deserialize)]
+#[non_exhaustive]
+pub struct CityRelations {
+ pub object:String, pub data:Vec<CityResource>, pub has_more:Option<bool>, pub url:Option<String>, pub next_cursor:Option<String>, pub city_id:String, pub relationship:String, pub coverage:String, pub parent_id:Option<String>,
+}
+
+#[derive(Debug,Clone,Deserialize)]
+#[non_exhaustive]
+pub struct CityDistance {
+ pub object:String, pub from:String, pub to:String, pub distance:Option<f64>, pub distance_mi:Option<f64>, pub method:String,
+}
+
+#[derive(Debug,Clone,Deserialize)]
+#[non_exhaustive]
+pub struct CityMatch { pub r#type:String, pub source:String, pub value:String, pub language:Option<String>, pub edit_distance:Option<u8> }

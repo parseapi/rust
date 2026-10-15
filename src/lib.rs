@@ -50,6 +50,8 @@ pub enum Error {
 		request_id: Option<String>,
 		/// Raw Retry-After response header, when supplied.
 		retry_after: Option<String>,
+		/// Safe bounded identities, only for structured HTTP409 ambiguous_city.
+		candidates: Option<Vec<CityAmbiguityCandidate>>,
 	},
 	/// Network failure after retries (DNS, timeout, connect).
 	Transport(Box<dyn std::error::Error + Send + Sync>),
@@ -264,14 +266,28 @@ impl DistrictOptions {
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct CityOptions {
+	pub romanized: bool,
+
 	pub country: Option<String>,
 	pub state: Option<String>,
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
+	pub r#type: Option<String>,
+	pub grain: Option<String>,
+	pub hierarchy: bool,
+	pub aliases: bool,
+	pub ambiguity: Option<String>,
 }
 
 impl CityOptions {
+	pub fn romanized(mut self,value:bool)->Self{self.romanized=value;self}
+	pub fn r#type(mut self, value: impl Into<String>) -> Self { self.r#type = Some(value.into()); self }
+	pub fn grain(mut self, value: impl Into<String>) -> Self { self.grain = Some(value.into()); self }
+	pub fn hierarchy(mut self, value: bool) -> Self { self.hierarchy = value; self }
+	pub fn aliases(mut self, value: bool) -> Self { self.aliases = value; self }
+	pub fn ambiguity(mut self, value: impl Into<String>) -> Self { self.ambiguity = Some(value.into()); self }
+
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
@@ -291,15 +307,59 @@ impl CityOptions {
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct CitySearchOptions {
+	pub romanized: bool,
+
+	pub r#match: Option<String>,
+	pub max_distance: Option<u8>,
 	pub country: Option<String>,
 	pub state: Option<String>,
 	pub limit: Option<u32>,
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
+	pub r#type: Option<String>,
+	pub grain: Option<String>,
+	pub hierarchy: bool,
+	pub aliases: bool,
+	pub min_population: Option<u64>,
+	pub max_population: Option<u64>,
+	pub timezone: Option<String>,
+	/// Bounding box in west,south,east,north order; west > east crosses the dateline.
+	pub bbox: Option<String>,
+	pub sort: Option<String>,
+	pub order: Option<String>,
+	pub cursor: Option<String>,
+	pub page: bool,
+	pub countries: Option<Vec<String>>,
+	pub exclude_countries: Option<Vec<String>>,
+	pub timezones: Option<Vec<String>>,
+	pub min_elevation: Option<f64>,
+	pub max_elevation: Option<f64>,
 }
 
 impl CitySearchOptions {
+	pub fn romanized(mut self,value:bool)->Self{self.romanized=value;self}
+	pub fn match_mode(mut self,v:impl Into<String>)->Self {self.r#match=Some(v.into());self}
+	pub fn max_distance(mut self,v:u8)->Self {self.max_distance=Some(v);self}
+	pub fn countries<I,S>(mut self, values:I)->Self where I:IntoIterator<Item=S>,S:Into<String> { self.countries=Some(values.into_iter().map(Into::into).collect());self }
+	pub fn exclude_countries<I,S>(mut self, values:I)->Self where I:IntoIterator<Item=S>,S:Into<String> { self.exclude_countries=Some(values.into_iter().map(Into::into).collect());self }
+	pub fn timezones<I,S>(mut self, values:I)->Self where I:IntoIterator<Item=S>,S:Into<String> { self.timezones=Some(values.into_iter().map(Into::into).collect());self }
+	pub fn min_elevation(mut self,value:f64)->Self {self.min_elevation=Some(value);self}
+	pub fn max_elevation(mut self,value:f64)->Self {self.max_elevation=Some(value);self}
+	pub fn min_population(mut self, value: u64) -> Self { self.min_population = Some(value); self }
+	pub fn max_population(mut self, value: u64) -> Self { self.max_population = Some(value); self }
+	pub fn timezone(mut self, value: impl Into<String>) -> Self { self.timezone = Some(value.into()); self }
+	pub fn bbox(mut self, value: impl Into<String>) -> Self { self.bbox = Some(value.into()); self }
+	pub fn sort(mut self, value: impl Into<String>) -> Self { self.sort = Some(value.into()); self }
+	pub fn order(mut self, value: impl Into<String>) -> Self { self.order = Some(value.into()); self }
+	pub fn cursor(mut self, value: impl Into<String>) -> Self { self.cursor = Some(value.into()); self }
+	pub fn page(mut self, value: bool) -> Self { self.page = value; self }
+
+	pub fn r#type(mut self, value: impl Into<String>) -> Self { self.r#type = Some(value.into()); self }
+	pub fn grain(mut self, value: impl Into<String>) -> Self { self.grain = Some(value.into()); self }
+	pub fn hierarchy(mut self, value: bool) -> Self { self.hierarchy = value; self }
+	pub fn aliases(mut self, value: bool) -> Self { self.aliases = value; self }
+
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
@@ -324,6 +384,8 @@ impl CitySearchOptions {
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct CityNearbyOptions {
+	pub romanized: bool,
+
 	pub country: Option<String>,
 	pub state: Option<String>,
 	pub radius: Option<f64>,
@@ -332,9 +394,49 @@ pub struct CityNearbyOptions {
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
+	pub r#type: Option<String>,
+	pub grain: Option<String>,
+	pub hierarchy: bool,
+	pub aliases: bool,
+	pub ambiguity: Option<String>,
+	pub min_population: Option<u64>,
+	pub max_population: Option<u64>,
+	pub timezone: Option<String>,
+	/// Bounding box in west,south,east,north order; west > east crosses the dateline.
+	pub bbox: Option<String>,
+	pub sort: Option<String>,
+	pub order: Option<String>,
+	pub cursor: Option<String>,
+	pub page: bool,
+	pub countries: Option<Vec<String>>,
+	pub exclude_countries: Option<Vec<String>>,
+	pub timezones: Option<Vec<String>>,
+	pub min_elevation: Option<f64>,
+	pub max_elevation: Option<f64>,
 }
 
 impl CityNearbyOptions {
+	pub fn romanized(mut self,value:bool)->Self{self.romanized=value;self}
+	pub fn countries<I,S>(mut self, values:I)->Self where I:IntoIterator<Item=S>,S:Into<String> { self.countries=Some(values.into_iter().map(Into::into).collect());self }
+	pub fn exclude_countries<I,S>(mut self, values:I)->Self where I:IntoIterator<Item=S>,S:Into<String> { self.exclude_countries=Some(values.into_iter().map(Into::into).collect());self }
+	pub fn timezones<I,S>(mut self, values:I)->Self where I:IntoIterator<Item=S>,S:Into<String> { self.timezones=Some(values.into_iter().map(Into::into).collect());self }
+	pub fn min_elevation(mut self,value:f64)->Self {self.min_elevation=Some(value);self}
+	pub fn max_elevation(mut self,value:f64)->Self {self.max_elevation=Some(value);self}
+	pub fn min_population(mut self, value: u64) -> Self { self.min_population = Some(value); self }
+	pub fn max_population(mut self, value: u64) -> Self { self.max_population = Some(value); self }
+	pub fn timezone(mut self, value: impl Into<String>) -> Self { self.timezone = Some(value.into()); self }
+	pub fn bbox(mut self, value: impl Into<String>) -> Self { self.bbox = Some(value.into()); self }
+	pub fn sort(mut self, value: impl Into<String>) -> Self { self.sort = Some(value.into()); self }
+	pub fn order(mut self, value: impl Into<String>) -> Self { self.order = Some(value.into()); self }
+	pub fn cursor(mut self, value: impl Into<String>) -> Self { self.cursor = Some(value.into()); self }
+	pub fn page(mut self, value: bool) -> Self { self.page = value; self }
+
+	pub fn r#type(mut self, value: impl Into<String>) -> Self { self.r#type = Some(value.into()); self }
+	pub fn grain(mut self, value: impl Into<String>) -> Self { self.grain = Some(value.into()); self }
+	pub fn hierarchy(mut self, value: bool) -> Self { self.hierarchy = value; self }
+	pub fn aliases(mut self, value: bool) -> Self { self.aliases = value; self }
+	pub fn ambiguity(mut self, value: impl Into<String>) -> Self { self.ambiguity = Some(value.into()); self }
+
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
@@ -704,7 +806,7 @@ impl VinOptions {
 
 fn tariff_selection(edition: Option<&str>, date: Option<&str>, got_edition: Option<&str>, got_date: Option<&str>) -> Result<()> {
 	if (edition.is_some() || date.is_some()) && (!got_edition.is_some_and(|value| value.len() == 64 && value.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))) || (edition.is_some() && got_edition != edition) || got_date != date) {
-		return Err(Error::Api { status: 0, code: "tariff_selection_mismatch".into(), retry_after: None, message: "Tariff response did not confirm the requested edition/date. The server may not support this selection.".into(), docs: None, request_id: None });
+		return Err(Error::Api { status: 0, code: "tariff_selection_mismatch".into(), retry_after: None, candidates: None, message: "Tariff response did not confirm the requested edition/date. The server may not support this selection.".into(), docs: None, request_id: None });
 	}
 	Ok(())
 }
@@ -1269,22 +1371,42 @@ impl CountryOptions {
 /// Options for `city_id`. Deep reveals the same question in more detail.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct CityIdOptions { pub deep: bool,
+pub struct CityIdOptions {
+	pub romanized: bool,
+	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
+	pub hierarchy: bool,
 }
 impl CityIdOptions {
+	pub fn romanized(mut self,value:bool)->Self{self.romanized=value;self}
+	pub fn hierarchy(mut self, value: bool) -> Self { self.hierarchy = value; self }
+
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
 
 
 /// Options for `city_nearest`. Deep reveals the same question in more detail.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct CityNearestOptions { pub deep: bool,
+pub struct CityNearestOptions {
+	pub romanized: bool,
+	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
+	pub country: Option<String>,
+	pub state: Option<String>,
+	pub r#type: Option<String>,
+	pub grain: Option<String>,
+	pub hierarchy: bool,
 }
 impl CityNearestOptions {
+	pub fn romanized(mut self,value:bool)->Self{self.romanized=value;self}
+	pub fn country(mut self, value: impl Into<String>) -> Self { self.country = Some(value.into()); self }
+	pub fn state(mut self, value: impl Into<String>) -> Self { self.state = Some(value.into()); self }
+	pub fn r#type(mut self, value: impl Into<String>) -> Self { self.r#type = Some(value.into()); self }
+	pub fn grain(mut self, value: impl Into<String>) -> Self { self.grain = Some(value.into()); self }
+	pub fn hierarchy(mut self, value: bool) -> Self { self.hierarchy = value; self }
+
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
 
 
@@ -1499,6 +1621,7 @@ fn build_error(status: u16, body: &str, retry_after: Option<String>) -> Error {
 		docs: field("docs"),
 		request_id: field("request_id"),
 		retry_after,
+		candidates: if status==409 && field("code").as_deref()==Some("ambiguous_city") {city_error_candidates(parsed.get("candidates"))} else {None},
 	}
 }
 
@@ -1773,7 +1896,13 @@ impl Client {
 		push(&mut query, "lang", opts.lang);
 		push(&mut query, "country", opts.country);
 		push(&mut query, "state", opts.state);
+		push(&mut query, "type", opts.r#type);
+		push(&mut query, "grain", opts.grain);
+		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
+		push(&mut query, "aliases", opts.aliases.then(|| "true".to_string()));
+		push(&mut query, "ambiguity", opts.ambiguity);
 		push_deep(&mut query, opts.deep);
+		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
 		self.get(&format!("/city/{}", seg(name)), query, None).await
 	}
 
@@ -1787,7 +1916,9 @@ impl Client {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "lang", opts.lang);
+		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
 		push_deep(&mut query, opts.deep);
+		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
 		self.get(&format!("/city/id/{}", seg(id)), query, None)
 			.await
 	}
@@ -1802,6 +1933,7 @@ impl Client {
 		let mut params = Query::new();
 		push(&mut params, "lang", opts.lang);
 		push(&mut params, "q", Some(query.to_string()));
+		push(&mut params,"match",opts.r#match);push(&mut params,"max_distance",opts.max_distance.map(|v|v.to_string()));
 		push(&mut params, "country", opts.country);
 		push(&mut params, "state", opts.state);
 		push(
@@ -1809,7 +1941,19 @@ impl Client {
 			"limit",
 			opts.limit.map(|value| value.to_string()),
 		);
+		push(&mut params, "type", opts.r#type);
+		push(&mut params, "grain", opts.grain);
+		push(&mut params, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
+		push(&mut params, "aliases", opts.aliases.then(|| "true".to_string()));
 		push_deep(&mut params, opts.deep);
+		push(&mut params,"romanized",opts.romanized.then(||"true".into()));
+		push_city_collection(&mut params, opts.min_population, opts.max_population, opts.timezone, opts.bbox, opts.sort, opts.order, opts.page, opts.cursor);
+		push_city_extra(&mut params, opts.countries, opts.exclude_countries, opts.timezones, opts.min_elevation, opts.max_elevation);
+		if params.iter().any(|(key,_)|*key=="match"||*key=="max_distance") {
+			let mut page:serde_json::Value=self.get("/city/search",params,None).await?;
+			if let Some(object)=page.as_object_mut() {if let Some(data)=object.remove("data"){object.insert("cities".into(),data);}}
+			return serde_json::from_value(page).map_err(|error|Error::Transport(Box::new(error)));
+		}
 		self.get("/city", params, None).await
 	}
 
@@ -1825,7 +1969,13 @@ impl Client {
 		push(&mut query, "lang", opts.lang);
 		push(&mut query, "lat", Some(lat.to_string()));
 		push(&mut query, "lon", Some(lon.to_string()));
+		push(&mut query, "country", opts.country);
+		push(&mut query, "state", opts.state);
+		push(&mut query, "type", opts.r#type);
+		push(&mut query, "grain", opts.grain);
+		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
 		push_deep(&mut query, opts.deep);
+		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
 		self.get("/city", query, None).await
 	}
 
@@ -1851,7 +2001,15 @@ impl Client {
 			"limit",
 			opts.limit.map(|value| value.to_string()),
 		);
+		push(&mut query, "type", opts.r#type);
+		push(&mut query, "grain", opts.grain);
+		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
+		push(&mut query, "aliases", opts.aliases.then(|| "true".to_string()));
+		push(&mut query, "ambiguity", opts.ambiguity);
 		push_deep(&mut query, opts.deep);
+		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
+		push_city_collection(&mut query, opts.min_population, opts.max_population, opts.timezone, opts.bbox, opts.sort, opts.order, opts.page, opts.cursor);
+		push_city_extra(&mut query, opts.countries, opts.exclude_countries, opts.timezones, opts.min_elevation, opts.max_elevation);
 		self.get(&format!("/city/{}/nearby", seg(name)), query, None)
 			.await
 	}
@@ -2842,4 +3000,356 @@ impl EmojiCatalogOptions {
 	pub fn version(mut self, value: impl Into<String>) -> Self { self.version = Some(value.into()); self }
 	pub fn max_version(mut self, value: impl Into<String>) -> Self { self.max_version = Some(value.into()); self }
 	pub fn include_skin_tones(mut self, value: bool) -> Self { self.include_skin_tones = Some(value); self }
+}
+
+
+/// Configures `city_list`. Paging is automatic and cursors remain opaque.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CityListOptions {
+	pub romanized: bool,
+
+	pub country: Option<String>,
+	pub state: Option<String>,
+	pub limit: Option<u32>,
+	pub deep: bool,
+	pub lang: Option<String>,
+	pub r#type: Option<String>,
+	pub grain: Option<String>,
+	pub hierarchy: bool,
+	pub min_population: Option<u64>,
+	pub max_population: Option<u64>,
+	pub timezone: Option<String>,
+	/// Bounding box in west,south,east,north order; west > east crosses the dateline.
+	pub bbox: Option<String>,
+	pub sort: Option<String>,
+	pub order: Option<String>,
+	pub cursor: Option<String>,
+	pub countries: Option<Vec<String>>,
+	pub exclude_countries: Option<Vec<String>>,
+	pub timezones: Option<Vec<String>>,
+	pub min_elevation: Option<f64>,
+	pub max_elevation: Option<f64>,
+}
+
+impl CityListOptions {
+	pub fn romanized(mut self,value:bool)->Self{self.romanized=value;self}
+	pub fn countries<I,S>(mut self, values:I)->Self where I:IntoIterator<Item=S>,S:Into<String> { self.countries=Some(values.into_iter().map(Into::into).collect());self }
+	pub fn exclude_countries<I,S>(mut self, values:I)->Self where I:IntoIterator<Item=S>,S:Into<String> { self.exclude_countries=Some(values.into_iter().map(Into::into).collect());self }
+	pub fn timezones<I,S>(mut self, values:I)->Self where I:IntoIterator<Item=S>,S:Into<String> { self.timezones=Some(values.into_iter().map(Into::into).collect());self }
+	pub fn min_elevation(mut self,value:f64)->Self {self.min_elevation=Some(value);self}
+	pub fn max_elevation(mut self,value:f64)->Self {self.max_elevation=Some(value);self}
+	pub fn country(mut self, value: impl Into<String>) -> Self { self.country = Some(value.into()); self }
+	pub fn state(mut self, value: impl Into<String>) -> Self { self.state = Some(value.into()); self }
+	pub fn limit(mut self, value: u32) -> Self { self.limit = Some(value); self }
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
+	pub fn r#type(mut self, value: impl Into<String>) -> Self { self.r#type = Some(value.into()); self }
+	pub fn grain(mut self, value: impl Into<String>) -> Self { self.grain = Some(value.into()); self }
+	pub fn hierarchy(mut self, value: bool) -> Self { self.hierarchy = value; self }
+	pub fn min_population(mut self, value: u64) -> Self { self.min_population = Some(value); self }
+	pub fn max_population(mut self, value: u64) -> Self { self.max_population = Some(value); self }
+	pub fn timezone(mut self, value: impl Into<String>) -> Self { self.timezone = Some(value.into()); self }
+	pub fn bbox(mut self, value: impl Into<String>) -> Self { self.bbox = Some(value.into()); self }
+	pub fn sort(mut self, value: impl Into<String>) -> Self { self.sort = Some(value.into()); self }
+	pub fn order(mut self, value: impl Into<String>) -> Self { self.order = Some(value.into()); self }
+	pub fn cursor(mut self, value: impl Into<String>) -> Self { self.cursor = Some(value.into()); self }
+}
+
+/// Configures cities around a supplied coordinate; country and state filter results.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CityNearbyCoordsOptions {
+	pub romanized: bool,
+
+	pub country: Option<String>,
+	pub state: Option<String>,
+	pub limit: Option<u32>,
+	pub deep: bool,
+	pub lang: Option<String>,
+	pub r#type: Option<String>,
+	pub grain: Option<String>,
+	pub hierarchy: bool,
+	pub radius: Option<f64>,
+	pub unit: Option<String>,
+	pub min_population: Option<u64>,
+	pub max_population: Option<u64>,
+	pub timezone: Option<String>,
+	/// Bounding box in west,south,east,north order; west > east crosses the dateline.
+	pub bbox: Option<String>,
+	pub sort: Option<String>,
+	pub order: Option<String>,
+	pub cursor: Option<String>,
+	pub countries: Option<Vec<String>>,
+	pub exclude_countries: Option<Vec<String>>,
+	pub timezones: Option<Vec<String>>,
+	pub min_elevation: Option<f64>,
+	pub max_elevation: Option<f64>,
+}
+
+impl CityNearbyCoordsOptions {
+	pub fn romanized(mut self,value:bool)->Self{self.romanized=value;self}
+	pub fn countries<I,S>(mut self, values:I)->Self where I:IntoIterator<Item=S>,S:Into<String> { self.countries=Some(values.into_iter().map(Into::into).collect());self }
+	pub fn exclude_countries<I,S>(mut self, values:I)->Self where I:IntoIterator<Item=S>,S:Into<String> { self.exclude_countries=Some(values.into_iter().map(Into::into).collect());self }
+	pub fn timezones<I,S>(mut self, values:I)->Self where I:IntoIterator<Item=S>,S:Into<String> { self.timezones=Some(values.into_iter().map(Into::into).collect());self }
+	pub fn min_elevation(mut self,value:f64)->Self {self.min_elevation=Some(value);self}
+	pub fn max_elevation(mut self,value:f64)->Self {self.max_elevation=Some(value);self}
+	pub fn country(mut self, value: impl Into<String>) -> Self { self.country = Some(value.into()); self }
+	pub fn state(mut self, value: impl Into<String>) -> Self { self.state = Some(value.into()); self }
+	pub fn limit(mut self, value: u32) -> Self { self.limit = Some(value); self }
+	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
+	pub fn r#type(mut self, value: impl Into<String>) -> Self { self.r#type = Some(value.into()); self }
+	pub fn grain(mut self, value: impl Into<String>) -> Self { self.grain = Some(value.into()); self }
+	pub fn hierarchy(mut self, value: bool) -> Self { self.hierarchy = value; self }
+	pub fn min_population(mut self, value: u64) -> Self { self.min_population = Some(value); self }
+	pub fn max_population(mut self, value: u64) -> Self { self.max_population = Some(value); self }
+	pub fn timezone(mut self, value: impl Into<String>) -> Self { self.timezone = Some(value.into()); self }
+	pub fn bbox(mut self, value: impl Into<String>) -> Self { self.bbox = Some(value.into()); self }
+	pub fn sort(mut self, value: impl Into<String>) -> Self { self.sort = Some(value.into()); self }
+	pub fn order(mut self, value: impl Into<String>) -> Self { self.order = Some(value.into()); self }
+	pub fn cursor(mut self, value: impl Into<String>) -> Self { self.cursor = Some(value.into()); self }
+	pub fn radius(mut self, value: f64) -> Self { self.radius = Some(value); self }
+	pub fn unit(mut self, value: impl Into<String>) -> Self { self.unit = Some(value.into()); self }
+}
+
+fn push_city_collection(query: &mut Query, min_population: Option<u64>, max_population: Option<u64>, timezone: Option<String>, bbox: Option<String>, sort: Option<String>, order: Option<String>, page: bool, cursor: Option<String>) {
+	push(query, "min_population", min_population.map(|value| value.to_string()));
+	push(query, "max_population", max_population.map(|value| value.to_string()));
+	push(query, "timezone", timezone);
+	push(query, "bbox", bbox);
+	push(query, "sort", sort);
+	push(query, "order", order);
+	push(query, "page", page.then(|| "true".to_string()));
+	push(query, "cursor", cursor);
+}
+
+#[derive(Debug,Clone,Default)]
+#[non_exhaustive]
+pub struct CityRelationsOptions {
+	pub romanized: bool,
+
+ pub limit: Option<u16>, pub cursor: Option<String>, pub hierarchy: bool, pub deep: bool, pub lang: Option<String>,
+}
+
+impl CityRelationsOptions {
+	pub fn romanized(mut self,value:bool)->Self{self.romanized=value;self}
+ pub fn limit(mut self,v:u16)->Self{self.limit=Some(v);self}
+ pub fn cursor(mut self,v:impl Into<String>)->Self{self.cursor=Some(v.into());self}
+ pub fn hierarchy(mut self,v:bool)->Self{self.hierarchy=v;self}
+ pub fn deep(mut self,v:bool)->Self{self.deep=v;self}
+ pub fn lang(mut self,v:impl Into<String>)->Self{self.lang=Some(v.into());self}
+}
+
+#[derive(Debug,Clone,Default)]
+#[non_exhaustive]
+pub struct CityAncestorsOptions {
+	pub romanized: bool,
+
+ pub hierarchy: bool, pub deep: bool, pub lang: Option<String>,
+}
+
+impl CityAncestorsOptions {
+	pub fn romanized(mut self,value:bool)->Self{self.romanized=value;self}
+ pub fn hierarchy(mut self,v:bool)->Self{self.hierarchy=v;self}
+ pub fn deep(mut self,v:bool)->Self{self.deep=v;self}
+ pub fn lang(mut self,v:impl Into<String>)->Self{self.lang=Some(v.into());self}
+}
+
+fn push_city_extra(query:&mut Query,countries:Option<Vec<String>>,excluded:Option<Vec<String>>,timezones:Option<Vec<String>>,minimum:Option<f64>,maximum:Option<f64>) {
+ push(query,"countries",countries.map(|v|v.join(",")));push(query,"exclude_countries",excluded.map(|v|v.join(",")));push(query,"timezones",timezones.map(|v|v.join(",")));push(query,"min_elevation",minimum.map(|v|v.to_string()));push(query,"max_elevation",maximum.map(|v|v.to_string()));
+}
+
+fn city_error_candidates(value:Option<&serde_json::Value>)->Option<Vec<CityAmbiguityCandidate>> {
+ let rows=value?.as_array()?;Some(rows.iter().take(2).filter_map(|row| {
+  let id=row.get("id")?.as_str()?;if id.len()!=17 || !id.starts_with("city_") || !id[5..].bytes().all(|b|b.is_ascii_lowercase()||b.is_ascii_digit()) || row.get("object")?.as_str()? != "city" {return None}
+  let mut safe=serde_json::Map::new();safe.insert("id".into(),serde_json::json!(id));safe.insert("object".into(),serde_json::json!("city"));
+  for key in ["name","name_local","country","country_name","state","state_name","type"] {if let Some(item)=row.get(key) {if item.is_null()||item.as_str().is_some_and(|v|v.chars().count()<=255){safe.insert(key.into(),item.clone());}}}
+  serde_json::from_value(serde_json::Value::Object(safe)).ok()
+ }).collect())
+}
+
+
+impl Client {
+/// Browses `/city?browse=true` and always returns pagination metadata.
+	pub async fn city_list(&self, opts: impl Into<Option<CityListOptions>>) -> Result<CityList> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "browse", Some("true".to_string()));
+		push(&mut query, "country", opts.country);
+		push(&mut query, "state", opts.state);
+		push(&mut query, "limit", opts.limit.map(|value| value.to_string()));
+		push(&mut query, "lang", opts.lang);
+		push(&mut query, "type", opts.r#type);
+		push(&mut query, "grain", opts.grain);
+		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
+		push_deep(&mut query, opts.deep);
+		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
+		push_city_collection(&mut query, opts.min_population, opts.max_population, opts.timezone, opts.bbox, opts.sort, opts.order, false, opts.cursor);
+		push_city_extra(&mut query, opts.countries, opts.exclude_countries, opts.timezones, opts.min_elevation, opts.max_elevation);
+		push(&mut query,"format",Some("list".into()));
+
+		self.get("/city", query, None).await
+	}
+
+/// Lists cities around a coordinate through `/city?nearby=true`.
+	pub async fn city_nearby_coords(&self, lat: f64, lon: f64, opts: impl Into<Option<CityNearbyCoordsOptions>>) -> Result<CityNearbyCoords> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "nearby", Some("true".to_string()));
+		push(&mut query, "lat", Some(lat.to_string()));
+		push(&mut query, "lon", Some(lon.to_string()));
+		push(&mut query, "radius", opts.radius.map(|value| value.to_string()));
+		push(&mut query, "unit", opts.unit);
+		push(&mut query, "country", opts.country);
+		push(&mut query, "state", opts.state);
+		push(&mut query, "limit", opts.limit.map(|value| value.to_string()));
+		push(&mut query, "lang", opts.lang);
+		push(&mut query, "type", opts.r#type);
+		push(&mut query, "grain", opts.grain);
+		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
+		push_deep(&mut query, opts.deep);
+		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
+		push_city_collection(&mut query, opts.min_population, opts.max_population, opts.timezone, opts.bbox, opts.sort, opts.order, false, opts.cursor);
+		push_city_extra(&mut query, opts.countries, opts.exclude_countries, opts.timezones, opts.min_elevation, opts.max_elevation);
+		push(&mut query,"format",Some("list".into()));
+
+		self.get("/city", query, None).await
+	}
+
+/// Canonical City resource with complete Core facts and optional detail.
+	pub async fn city_resource(&self, name: &str, opts: impl Into<Option<CityOptions>>) -> Result<CityResource> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
+		push(&mut query, "country", opts.country);
+		push(&mut query, "state", opts.state);
+		push(&mut query, "type", opts.r#type);
+		push(&mut query, "grain", opts.grain);
+		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
+		push(&mut query, "aliases", opts.aliases.then(|| "true".to_string()));
+		push(&mut query, "ambiguity", opts.ambiguity);
+		push_deep(&mut query, opts.deep);
+		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
+		push(&mut query,"format",Some("resource".into()));
+
+		self.get(&format!("/city/{}", seg(name)), query, None).await
+	}
+
+pub async fn city_id_resource(&self, id: &str, opts: impl Into<Option<CityIdOptions>>) -> Result<CityResource> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
+		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
+		push_deep(&mut query, opts.deep);
+		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
+		push(&mut query,"format",Some("resource".into()));
+
+		self.get(&format!("/city/id/{}", seg(id)), query, None)
+			.await
+	}
+
+pub async fn city_nearest_resource(&self, lat: f64, lon: f64, opts: impl Into<Option<CityNearestOptions>>) -> Result<CityResource> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
+		push(&mut query, "lat", Some(lat.to_string()));
+		push(&mut query, "lon", Some(lon.to_string()));
+		push(&mut query, "country", opts.country);
+		push(&mut query, "state", opts.state);
+		push(&mut query, "type", opts.r#type);
+		push(&mut query, "grain", opts.grain);
+		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
+		push_deep(&mut query, opts.deep);
+		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
+		push(&mut query,"format",Some("resource".into()));
+
+		self.get("/city", query, None).await
+	}
+
+pub async fn city_search_list(
+		&self,
+		query: &str,
+		opts: impl Into<Option<CitySearchOptions>>,
+	) -> Result<CityList> {
+		let opts = opts.into().unwrap_or_default();
+		let mut params = Query::new();
+		push(&mut params, "lang", opts.lang);
+		push(&mut params, "q", Some(query.to_string()));
+		push(&mut params,"match",opts.r#match);push(&mut params,"max_distance",opts.max_distance.map(|v|v.to_string()));
+		push(&mut params, "country", opts.country);
+		push(&mut params, "state", opts.state);
+		push(
+			&mut params,
+			"limit",
+			opts.limit.map(|value| value.to_string()),
+		);
+		push(&mut params, "type", opts.r#type);
+		push(&mut params, "grain", opts.grain);
+		push(&mut params, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
+		push(&mut params, "aliases", opts.aliases.then(|| "true".to_string()));
+		push_deep(&mut params, opts.deep);
+		push(&mut params,"romanized",opts.romanized.then(||"true".into()));
+		push_city_collection(&mut params, opts.min_population, opts.max_population, opts.timezone, opts.bbox, opts.sort, opts.order, opts.page, opts.cursor);
+		push_city_extra(&mut params, opts.countries, opts.exclude_countries, opts.timezones, opts.min_elevation, opts.max_elevation);
+		push(&mut params,"format",Some("list".into()));
+
+		let endpoint=if params.iter().any(|(key,_)|*key=="match"||*key=="max_distance"){"/city/search"}else{"/city"};
+		self.get(endpoint, params, None).await
+	}
+
+pub async fn city_nearby_list(
+		&self,
+		name: &str,
+		opts: impl Into<Option<CityNearbyOptions>>,
+	) -> Result<CityList> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
+		push(&mut query, "country", opts.country);
+		push(&mut query, "state", opts.state);
+		push(
+			&mut query,
+			"radius",
+			opts.radius.map(|value| value.to_string()),
+		);
+		push(&mut query, "unit", opts.unit);
+		push(
+			&mut query,
+			"limit",
+			opts.limit.map(|value| value.to_string()),
+		);
+		push(&mut query, "type", opts.r#type);
+		push(&mut query, "grain", opts.grain);
+		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
+		push(&mut query, "aliases", opts.aliases.then(|| "true".to_string()));
+		push(&mut query, "ambiguity", opts.ambiguity);
+		push_deep(&mut query, opts.deep);
+		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
+		push_city_collection(&mut query, opts.min_population, opts.max_population, opts.timezone, opts.bbox, opts.sort, opts.order, opts.page, opts.cursor);
+		push_city_extra(&mut query, opts.countries, opts.exclude_countries, opts.timezones, opts.min_elevation, opts.max_elevation);
+		push(&mut query,"format",Some("list".into()));
+
+		self.get(&format!("/city/{}/nearby", seg(name)), query, None)
+			.await
+	}
+
+/// Reviewed immediate children. Relationship coverage remains partial.
+    pub async fn city_children(&self,id:&str,opts:impl Into<Option<CityRelationsOptions>>)->Result<CityRelations> {self.city_relations(id,"children",opts.into().unwrap_or_default()).await}
+
+pub async fn city_siblings(&self,id:&str,opts:impl Into<Option<CityRelationsOptions>>)->Result<CityRelations> {self.city_relations(id,"siblings",opts.into().unwrap_or_default()).await}
+
+async fn city_relations(&self,id:&str,relation:&str,opts:CityRelationsOptions)->Result<CityRelations> {
+        let mut query=Query::new();push(&mut query,"limit",opts.limit.map(|v|v.to_string()));push(&mut query,"cursor",opts.cursor);push(&mut query,"romanized",opts.romanized.then(||"true".into()));push(&mut query,"hierarchy",opts.hierarchy.then(||"true".into()));push(&mut query,"lang",opts.lang);push_deep(&mut query,opts.deep);
+        self.get(&format!("/city/id/{}/{relation}",seg(id)),query,None).await
+    }
+
+pub async fn city_ancestors(&self,id:&str,opts:impl Into<Option<CityAncestorsOptions>>)->Result<CityRelations> {
+        let opts=opts.into().unwrap_or_default();let mut query=Query::new();push(&mut query,"romanized",opts.romanized.then(||"true".into()));push(&mut query,"hierarchy",opts.hierarchy.then(||"true".into()));push(&mut query,"lang",opts.lang);push_deep(&mut query,opts.deep);self.get(&format!("/city/id/{}/ancestors",seg(id)),query,None).await
+    }
+
+
+
+/// Great-circle km/miles between stored centers. Unknown coordinates remain None.
+    pub async fn city_distance(&self,from:&str,to:&str)->Result<CityDistance> { self.get(&format!("/city/id/{}/distance/{}",seg(from),seg(to)),Query::new(),None).await }
 }

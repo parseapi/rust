@@ -224,7 +224,7 @@ let place = parse.postal("28202", PostalOptions::default().country("US").deep(tr
 let property_tax = place.deep.as_ref().and_then(|deep| deep.property_tax.as_ref());
 ```
 
-Read `population_period` alongside `population`: a reporting year (`YYYY`) or period (`YYYY-YYYY`), null when unknown or unverifiable. Keep missing or null values unknown and preserve a known zero. These fields belong to full place profiles. State district lists include each district's population and period. Postal nearby and distance detail remains metropolitan associations only. Continent population stays in core.
+Read `population` as the source’s count for that place boundary. Keep missing or null values unknown and preserve a known zero. State district lists include each district’s population. Postal nearby and distance detail remains metropolitan associations only. Continent population stays in core.
 
 Point returns the timezone ID with the core location. Its optional deep detail adds terrain and compact nearest-city context on every plan. A nearest city is null when none is within 200 km.
 
@@ -413,3 +413,55 @@ A device's emoji font remains the ordinary display.
 
 These additions are a local release candidate until the matching SDK and
 backend are published. Existing lookup and search contracts are preserved.
+
+
+## City collections
+
+```rust
+let page = parse.city_list(parseapi::CityListOptions::default()
+    .country("JP").min_population(100000).sort("population").limit(20)).await?;
+let nearby = parse.city_nearby_coords(34.57, 135.48,
+    parseapi::CityNearbyCoordsOptions::default().radius(20.0).unit("km").country("JP")).await?;
+let search = parse.city_search("Sak", parseapi::CitySearchOptions::default().page(true)).await?;
+```
+
+Browse the curated City catalog or list cities around a supplied coordinate. These operations return `next_cursor`, which is null at the end. Treat it as opaque and reuse all filters, limit, language, hierarchy and deep settings for the next page. Existing name searches and named nearby calls include pagination metadata only when paging or a cursor is requested.
+
+Collection options include minimum and maximum population, an exact IANA timezone, and `bbox` in `west,south,east,north` order. A west bound greater than east crosses the dateline. Population filtering and sorting use the same count as paid Deep: an admitted observation when available, otherwise the stored count. Missing counts do not match a population range and sort last; legacy counts keep unknown dates. Coverage and observation dates vary by place.
+
+Collections support `name`, `population`, `country` and `elevation`; search also supports `relevance`, and nearby supports `distance`. Combine up to three signed terms, for example `sort=-population,name`. A signed multi-key sort does not also take `order`. Population defaults to descending order; other sorts default to ascending. Set `order` to `asc` or `desc`, except relevance only supports ascending. Named nearby uses country and state to select the anchor; population, timezone and bounding box filter the returned neighbors. Coordinate nearby applies country and state to its returned cities.
+
+
+
+## Canonical City operations (local source candidate)
+
+These compatible additions are local and unpublished. Classic lookup, search, nearest and named-nearby methods retain their default envelopes and required-field models. Browse and coordinate-nearby use canonical lists: `object`, `data` and nullable `next_cursor` (camelCase properties in Swift/Kotlin). Keep all query options unchanged when continuing a page; no client fetches pages automatically.
+
+```rust
+let page = parse.city_search_list("Viena",
+    CitySearchOptions::default().match_mode("fuzzy").max_distance(1)).await?;
+let children = parse.city_children("city_7aj899nvwyku", None).await?;
+let distance = parse.city_distance("city_7aj899nvwyku", "city_7aj899nvwyku").await?;
+```
+
+Explicit resource and search-list/nearby-list methods return complete City resources with `id` and `object`. Existing classic methods keep their published return types. Country inclusion/exclusion sets, timezone sets, inclusive population and meter-elevation bounds, stored-center `bbox` and signed multi-key sorting are available for collections. Unknown numeric facts do not match range filters.
+
+Search defaults to prefix matching. Exact and fuzzy matching are explicit; fuzzy accepts maximum edit distance 1 or 2 and returns `match` evidence (`type`, `source`, `value`, `language`, `edit_distance`). Review a fuzzy choice before storing its ID.
+
+Reviewed children, ancestors and siblings use canonical lists with partial relationship coverage. Empty data does not prove there are no geographic relatives. Children/siblings accept page controls; ancestors do not. Distance reports great-circle kilometers and miles between stored centers: zero is known zero, null is unknown, and it does not imply travel time or containment.
+
+Strict `ambiguity=error` can return HTTP 409 `ambiguous_city` with up to two safe candidate identities. The existing error constructor and unrelated error metadata are preserved; candidates are retained only for that status/code and never contain Deep. GeoJSON is available through HTTP; these typed City list methods do not return GeoJSON.
+
+
+Reviewed name forms:
+
+```rust
+let city = parse.city_id_resource("city_7aj899nvwyku", None, CityIdOptions::default().romanized(true)).await?;
+```
+
+Coverage by country and available fields is described at https://parseapi.com/city#coverage.
+
+`romanized=true` requests reviewed official name forms as `name_romanized` and `romanization_language` (camelCase in Swift/Kotlin). Current reviewed forms cover 20 Japanese whole-city aliases in ja-Latn. Missing or conflicting forms stay null; ASCII folding is not substituted for an official form.
+
+
+Conditional `If-None-Match` reads and GeoJSON currently use HTTP directly. A matching City ETag returns 304 without a body; ordinary billing and rate limits apply. These JSON client methods do not supply conditional-cache handling.
