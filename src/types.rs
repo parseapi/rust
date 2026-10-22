@@ -72,33 +72,11 @@ pub struct ContinentCountries {
 	pub countries: Vec<ContinentCountryItem>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct Bloc {
-	pub bloc: String,
-	pub name: String,
-	pub members: i32,
-}
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct BlocCountryItem {
-	pub country: String,
-	pub name: String,
-	pub emoji: Option<String>,
-	pub calling_code: Option<String>,
-}
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct BlocCountries {
-	pub bloc: String,
-	#[serde(default, deserialize_with = "null_default")]
-	pub countries: Vec<BlocCountryItem>,
-}
+
+
+
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
@@ -391,38 +369,11 @@ pub struct Email {
 	pub didyoumean: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct VatAddress {
-	pub street: Option<String>,
-	pub city: Option<String>,
-	pub postal: Option<String>,
-	pub country: Option<String>,
-}
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct VatDeep {
-	pub registered: Option<bool>,
-	pub name: Option<String>,
-	pub address: Option<VatAddress>,
-	pub consultation: Option<String>,
-	/// Registry-provided check time, or None when unavailable.
-	pub consulted_at: Option<String>,
-}
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct Vat {
-	pub vat: Option<String>,
-	pub valid: bool,
-	pub country: Option<String>,
-	pub from: Option<String>,
-	pub deep: Option<VatDeep>,
-}
+
+
+
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
@@ -529,186 +480,28 @@ pub struct BankRequirementField {
 	pub normalization: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct ProviderTaxonomy {
-	pub taxonomy: Option<String>,
-	pub specialty: Option<String>,
-	pub primary: Option<bool>,
-	pub license: Option<String>,
-	pub state: Option<String>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct ProviderSource {
-	pub edition: Option<String>,
-	pub published_at: Option<String>,
-	pub through: Option<String>,
-	pub imported_at: Option<String>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct ProviderSources {
-	pub nppes: Option<ProviderSource>,
-	pub leie: Option<ProviderSource>,
-	pub pecos: Option<ProviderSource>,
-	pub optout: Option<ProviderSource>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct Provider {
-	pub sources: Option<ProviderSources>,
-	/// Input with accepted separators removed; None when empty. Invalid values remain visible.
-	pub npi: Option<String>,
-	/// Format and NPI checksum only; does not verify a provider or credentials.
-	pub valid: bool,
-	/// Found in the stored NPPES snapshot. None when input is invalid.
-	pub registered: Option<bool>,
-	/// Recorded NPI activation status. None when unknown; not licensure or practice status.
-	pub active: Option<bool>,
-	/// NPI-only match in the stored OIG LEIE file. False is not complete exclusion clearance.
-	pub excluded: Option<bool>,
-	/// individual or organization.
-	#[serde(rename = "type")]
-	pub kind: Option<String>,
-	pub name: Option<String>,
-	pub first: Option<String>,
-	pub last: Option<String>,
-	pub credential: Option<String>,
-	pub specialty: Option<String>,
-	/// NUCC taxonomy code.
-	pub taxonomy: Option<String>,
-	pub address: Option<String>,
-	pub city: Option<String>,
-	pub state: Option<String>,
-	pub state_name: Option<String>,
-	pub postal: Option<String>,
-	pub country: Option<String>,
-	pub phone: Option<String>,
-	pub deep: Option<ProviderDeep>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct ProviderEnrollment {
-	/// part_a, part_b, practitioner, dme, order_refer, mdpp. None when unknown.
-	#[serde(rename = "type")]
-	pub kind: Option<String>,
-	pub specialty: Option<String>,
-	pub state: Option<String>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct ProviderDeep {
-	pub enumerated_at: Option<String>,
-	pub updated_at: Option<String>,
-	pub reactivated_at: Option<String>,
-	pub taxonomies: Option<Vec<ProviderTaxonomy>>,
-	/// Present in the stored Medicare FFS enrollment extract; not payment eligibility.
-	pub medicare: Option<bool>,
-	/// NPI-only match in the stored CMS opt-out affidavit list. None when unavailable.
-	pub opt_out: Option<bool>,
-	/// Stored enrollment rows. None when unavailable; empty when no rows are returned.
-	pub enrollments: Option<Vec<ProviderEnrollment>>,
-	/// Recorded NPI deactivation date, YYYY-MM-DD. None when active or unavailable.
-	pub deactivated_at: Option<String>,
-}
 
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct TariffMeasure {
-	/// Chapter 99 heading, dotted (9903.01.24).
-	pub heading: String,
-	/// The measure text verbatim.
-	pub description: String,
-	/// The rate string verbatim.
-	pub rate: Option<String>,
-	/// Effective from, ISO YYYY-MM-DD. None when the schedule states none.
-	pub from: Option<String>,
-	/// Expires, ISO YYYY-MM-DD. None when open-ended.
-	pub until: Option<String>,
-	pub conditional: Option<bool>,
-}
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct TariffDeep {
-	/// Open-string explanation when effective_rate is None.
-	pub reason: Option<String>,
-	/// The origin country the measures were resolved for.
-	pub origin: Option<String>,
-	/// Composed ad valorem percent for matched stored measures only, not complete duty
-	/// or landed cost. None when the components do not compose cleanly.
-	pub effective_rate: Option<f64>,
-	/// Matching stored Chapter 99 measures for this code and goods origin. None means unresolved;
-	/// an empty list means the resolved lookup found no matching measures.
-	pub measures: Option<Vec<TariffMeasure>>,
-	/// Units of quantity (No., kg).
-	pub units: Option<Vec<String>>,
-	/// Column 1 special rate, verbatim.
-	pub special: Option<String>,
-	/// Column 2 rate, verbatim.
-	pub other: Option<String>,
-}
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct Tariff {
-	/// Exact edition and answering date. Older servers may omit both.
-	pub edition: Option<String>,
-	pub date: Option<String>,
-	/// Normalized code with dots (8471.30.01.00).
-	pub hts: String,
-	/// The schedule line verbatim.
-	pub description: String,
-	/// Parent descriptions from the schedule outline, outermost first.
-	#[serde(default, deserialize_with = "null_default")]
-	pub lineage: Vec<String>,
-	/// Column 1 general rate, verbatim.
-	pub general: Option<String>,
-	/// The official release that answered (2026HTSRev17).
-	pub revision: String,
-	pub deep: Option<TariffDeep>,
-}
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct TariffSearchHit {
-	pub hts: String,
-	pub description: String,
-	pub general: Option<String>,
-	/// Parent descriptions, outermost first. Older responses may omit this context.
-	pub lineage: Option<Vec<String>>,
-}
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct TariffSearch {
-	/// Exact edition and answering date. Older servers may omit both.
-	pub edition: Option<String>,
-	pub date: Option<String>,
-	pub q: String,
-	pub revision: String,
-	/// Up to 20 tariff lines, best match first.
-	#[serde(default, deserialize_with = "null_default")]
-	pub lines: Vec<TariffSearchHit>,
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2434,64 +2227,13 @@ pub struct Iban {
 }
 
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct Npi {
-	/// Normalized 10-digit NPI. Invalid input still echoes the fold.
-	pub npi: Option<String>,
-	pub valid: bool,
-	/// Exists in the healthcare provider registry.
-	pub registered: Option<bool>,
-	pub active: Option<bool>,
-	/// On the OIG exclusion list.
-	pub excluded: Option<bool>,
-	/// individual or organization.
-	#[serde(rename = "type")]
-	pub kind: Option<String>,
-	pub name: Option<String>,
-	pub first: Option<String>,
-	pub last: Option<String>,
-	pub credential: Option<String>,
-	pub specialty: Option<String>,
-	/// NUCC taxonomy code.
-	pub taxonomy: Option<String>,
-	pub address: Option<String>,
-	pub city: Option<String>,
-	pub state: Option<String>,
-	pub state_name: Option<String>,
-	pub postal: Option<String>,
-	pub country: Option<String>,
-	pub phone: Option<String>,
-	pub deep: Option<NpiDeep>,
-}
 
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct NpiEnrollment {
-	/// part_a, part_b, practitioner, dme, order_refer, mdpp. None when unknown.
-	#[serde(rename = "type")]
-	pub kind: Option<String>,
-	pub specialty: Option<String>,
-	pub state: Option<String>,
-}
 
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct NpiDeep {
-	/// In the published Medicare FFS enrollment extract.
-	pub medicare: Option<bool>,
-	/// Has a Medicare opt-out affidavit.
-	pub opt_out: Option<bool>,
-	/// Enrollment rows. Empty when medicare is false.
-	pub enrollments: Option<Vec<NpiEnrollment>>,
-	/// Date the NPI was deactivated, YYYY-MM-DD. None when still active.
-	pub deactivated_at: Option<String>,
-}
+
+
+
 
 
 /// Card-prefix reference data. None means unknown.

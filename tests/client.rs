@@ -168,12 +168,8 @@ url_test!(
 	c => c.continent_countries("NA"),
 	"/continent/NA/countries"
 );
-url_test!(url_bloc, c => c.bloc("EU"), "/bloc/EU");
-url_test!(
-	url_bloc_countries,
-	c => c.bloc_countries("SCHENGEN"),
-	"/bloc/SCHENGEN/countries"
-);
+
+
 url_test!(url_country, c => c.country("US"), "/country/US");
 url_test!(url_country_states, c => c.country_states("US"), "/country/US/states");
 url_test!(url_state, c => c.state("NC", parseapi::StateOptions::default().country("US")), "/state/NC?country=US");
@@ -218,7 +214,7 @@ url_test!(
 	"/postal/28202/distance/10001?country=US"
 );
 url_test!(url_email, c => c.email("a@b.com", None), "/email/a%40b.com");
-url_test!(url_vat, c => c.vat("DE136695976", None), "/vat/DE136695976");
+
 url_test!(
 	url_iban,
 	c => c.bank("DE89370400440532013000", None),
@@ -247,17 +243,9 @@ async fn bank_preserves_raw_input_for_server_validation() {
 		assert_eq!(requests[0].headers.get("parse-version").map(String::as_str), Some("2.0.0"));
 	}
 }
-url_test!(url_npi, c => c.provider("1881018208", None), "/provider/1881018208");
-url_test!(
-	url_npi_deep,
-	c => c.provider("1881018208", parseapi::ProviderOptions::default().deep(true)),
-	"/provider/1881018208?deep=true"
-);
-url_test!(
-	url_vat_from_deep,
-	c => c.vat("DE136695976", parseapi::VatOptions::default().from("IE6388047V").deep(true)),
-	"/vat/DE136695976?from=IE6388047V&deep=true"
-);
+
+
+
 url_test!(
 	url_phone_encodes_plus,
 	c => c.phone("+14155552671", parseapi::PhoneOptions::default().deep(true)),
@@ -675,8 +663,6 @@ async fn metered_retry_defaults_and_explicit_override() {
 		"hlr",
 		"email",
 		"email_deep",
-		"vat",
-		"vat_deep",
 		"address",
 		"address_deep",
 		"country",
@@ -687,7 +673,6 @@ async fn metered_retry_defaults_and_explicit_override() {
 				"caller",
 				"hlr",
 				"email_deep",
-				"vat_deep",
 				"address_deep",
 			]
 			.contains(&product)
@@ -718,17 +703,12 @@ async fn metered_retry_defaults_and_explicit_override() {
 					.email("a@b.com", EmailOptions::default().deep(true))
 					.await
 					.unwrap_err(),
-				"vat" => c.vat("DE136695976", None).await.unwrap_err(),
 				"address" => c.address("123 Main St", None).await.unwrap_err(),
 				"address_deep" => c
 					.address(
 						"123 Main St",
 						parseapi::AddressOptions::default().deep(true),
 					)
-					.await
-					.unwrap_err(),
-				"vat_deep" => c
-					.vat("DE136695976", VatOptions::default().deep(true))
 					.await
 					.unwrap_err(),
 				_ => c.country("US").await.unwrap_err(),
@@ -1218,7 +1198,7 @@ language_request_test!(language_ip, c => c.ip("8.8.8.8", IpOptions::default().de
 language_request_test!(language_ip_self, c => c.ip_self(IpSelfOptions::default().deep(true).lang("fr-CA")), c.ip_self(IpSelfOptions::default().deep(true)), "/ip", "deep=true");
 language_request_test!(language_continent, c => c.continent_with_options("EU", ContinentOptions::default().lang("fr-CA")), c.continent("EU"), "/continent/EU", "");
 language_request_test!(language_continent_countries, c => c.continent_countries_with_options("EU", ContinentCountriesOptions::default().lang("fr-CA")), c.continent_countries("EU"), "/continent/EU/countries", "");
-language_request_test!(language_bloc_countries, c => c.bloc_countries_with_options("EU", BlocCountriesOptions::default().lang("fr-CA")), c.bloc_countries("EU"), "/bloc/EU/countries", "");
+
 language_request_test!(language_country, c => c.country_with_options("DE", CountryOptions::default().deep(true).lang("fr-CA")), c.country_with_options("DE", CountryOptions::default().deep(true)), "/country/DE", "deep=true");
 language_request_test!(language_country_states, c => c.country_states_with_options("DE", CountryStatesOptions::default().lang("fr-CA")), c.country_states("DE"), "/country/DE/states", "");
 language_request_test!(language_state, c => c.state("CA", StateOptions::default().country("US").lang("fr-CA")), c.state("CA", StateOptions::default().country("US")), "/state/CA", "country=US");
@@ -1233,7 +1213,7 @@ language_request_test!(language_postal, c => c.postal("SW1A 1AA", PostalOptions:
 language_request_test!(language_postal_nearby, c => c.postal_nearby("28202", PostalNearbyOptions::default().country("US").radius(8.0).lang("fr-CA")), c.postal_nearby("28202", PostalNearbyOptions::default().country("US").radius(8.0)), "/postal/28202/nearby", "country=US&radius=8");
 language_request_test!(language_postal_distance, c => c.postal_distance("28202", "10001", PostalDistanceOptions::default().country("US").lang("fr-CA")), c.postal_distance("28202", "10001", PostalDistanceOptions::default().country("US")), "/postal/28202/distance/10001", "country=US");
 language_request_test!(language_company, c => c.company("732829320", CompanyOptions::default().country("FR").deep(true).lang("fr-CA")), c.company("732829320", CompanyOptions::default().country("FR").deep(true)), "/company/732829320", "country=FR&deep=true");
-language_request_test!(language_npi, c => c.provider("1881018208", ProviderOptions::default().deep(true).lang("fr-CA")), c.provider("1881018208", ProviderOptions::default().deep(true)), "/provider/1881018208", "deep=true");
+
 language_request_test!(language_asn, c => c.asn_with_options("AS13335", AsnOptions::default().lang("fr-CA")), c.asn("AS13335"), "/asn/AS13335", "");
 language_request_test!(language_currency, c => c.currency_with_options("USD", CurrencyOptions::default().deep(true).lang("fr-CA")), c.currency_with_options("USD", CurrencyOptions::default().deep(true)), "/currency/USD", "deep=true");
 language_request_test!(language_language, c => c.language_with_options("ja", LanguageOptions::default().lang("fr-CA")), c.language_with_options("ja", LanguageOptions::default()), "/language/ja", "");
@@ -1363,49 +1343,12 @@ async fn time_locations_rich_catalog_and_seasons() {
  for raw in ["{}",r#"{"deep":{}}"#,r#"{"deep":{"season":null}}"#] { let old:Time=serde_json::from_str(raw).unwrap(); assert!(old.location.is_none()); }
 }
 
-#[tokio::test]
-async fn tariff_edition_date_serialization() {
-	let server = TestServer::start(vec![(200, r#"{"edition":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","date":"2026-09-15"}"#), (200, r#"{"edition":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","date":"2026-09-15"}"#), (200, r#"{"edition":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","date":null}"#)]);
-	let client = server.client();
-	let edition = "a".repeat(64);
-	client.tariff("0101", TariffOptions::default().deep(true).origin("CA").edition(&edition).date("2026-09-15")).await.unwrap();
-	client.tariff_search_with_options("horses", TariffSearchOptions::default().edition(&edition).date("2026-09-15")).await.unwrap();
-	client.tariff("0101", TariffOptions::default().edition(&edition)).await.unwrap();
-	let requests = server.requests.lock().unwrap();
-	assert_eq!(requests[0].target, format!("/tariff/0101?deep=true&origin=CA&edition={edition}&date=2026-09-15"));
-	assert_eq!(requests[1].target, format!("/tariff?q=horses&edition={edition}&date=2026-09-15"));
-	assert_eq!(requests[2].target, format!("/tariff/0101?edition={edition}"));
-}
 
-#[tokio::test]
-async fn tariff_rejects_ignored_selection() {
-	let server = TestServer::start(vec![(200, "{}"), (200, "{}")]);
-	let client = server.client();
-	let err = client.tariff("0101", TariffOptions::default().edition("a".repeat(64))).await.unwrap_err();
-	assert_eq!(err.code(), Some("tariff_selection_mismatch"));
-	assert_eq!(err.status(), Some(0));
-	let err = client.tariff_search_with_options("horses", TariffSearchOptions::default().date("2026-09-15")).await.unwrap_err();
-	assert_eq!(err.code(), Some("tariff_selection_mismatch"));
-}
 
-#[tokio::test]
-async fn tariff_date_selection_rejects_invalid_returned_edition() {
-	for body in [
-		r#"{"edition":"legacy","date":"2026-09-15"}"#,
-		r#"{"edition":"","date":"2026-09-15"}"#,
-		r#"{"edition":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","date":"2026-09-15"}"#,
-		r#"{"edition":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n","date":"2026-09-15"}"#,
-	] {
-		let server = TestServer::start(vec![(200, body), (200, body)]);
-		let client = server.client();
-		let err = client.tariff("0101", TariffOptions::default().date("2026-09-15")).await.unwrap_err();
-		assert_eq!(err.code(), Some("tariff_selection_mismatch"));
-		assert_eq!(err.status(), Some(0));
-		let err = client.tariff_search_with_options("horses", TariffSearchOptions::default().date("2026-09-15")).await.unwrap_err();
-		assert_eq!(err.code(), Some("tariff_selection_mismatch"));
-		assert_eq!(err.status(), Some(0));
-	}
-}
+
+
+
+
 
 
 
@@ -1523,22 +1466,4 @@ fn emoji_actual_metadata_preset_coverage() {
  assert_eq!(presets["github"].records,1870);
  assert_eq!(presets["github"].missing_records,2093);
  assert_eq!(presets["cldr"].ambiguous_aliases,1);
-}
-
-#[tokio::test]
-async fn tariff_short_ids_roundtrip_and_invalid_ids_fail_closed() {
- for edition in ["ted_1", "ted_9007199254740993", "ted_18446744073709551615"] {
-  let body: &'static str = Box::leak(format!(r#"{{"hts":"0101","edition":"{edition}","date":null,"lines":[]}}"#).into_boxed_str());
-  let server=TestServer::start(vec![(200,body),(200,body)]);let client=server.client();
-  let lookup=client.tariff("0101",TariffOptions::default().edition(edition)).await.unwrap();
-  let search=client.tariff_search_with_options("horses",TariffSearchOptions::default().edition(edition)).await.unwrap();
-  assert_eq!(lookup.edition.as_deref(),Some(edition));assert_eq!(search.edition.as_deref(),Some(edition));
-  for request in server.requests(){assert!(request.target.contains(&format!("edition={edition}")));}
- }
- for edition in ["ted_0","ted_01","ted_18446744073709551616","ted_1\n","TED_1"] {
-  let body: &'static str=Box::leak(serde_json::json!({"edition":edition,"date":"2026-09-15","lines":[]}).to_string().into_boxed_str());
-  let server=TestServer::start(vec![(200,body),(200,body)]);let client=server.client();
-  assert_eq!(client.tariff("0101",TariffOptions::default().date("2026-09-15")).await.unwrap_err().code(),Some("tariff_selection_mismatch"));
-  assert_eq!(client.tariff_search_with_options("horses",TariffSearchOptions::default().date("2026-09-15")).await.unwrap_err().code(),Some("tariff_selection_mismatch"));
- }
 }

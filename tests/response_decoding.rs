@@ -29,15 +29,13 @@ fn actual_handler_representations_keep_published_getters() {
   let read=|name:&str| std::fs::read_to_string(format!("{}/tests/fixtures/response-fixtures/{profile}-{name}.json",env!("CARGO_MANIFEST_DIR"))).unwrap();
   let zones:TimeZones=serde_json::from_str(&read("timezones")).unwrap();
   let time:Time=serde_json::from_str(&read("time")).unwrap();
-  let tariff:Tariff=serde_json::from_str(&read("tariff")).unwrap();
-  let search:TariffSearch=serde_json::from_str(&read("tariff-search")).unwrap();
   let metadata:EmojiMetadata=serde_json::from_str(&read("emoji-metadata")).unwrap();
   let _:EmojiCatalog=serde_json::from_str(&read("emoji-catalog")).unwrap();
   let coverage:CompanyCoverage=serde_json::from_str(&read("company-coverage")).unwrap();
   let company:CompanyProfile=serde_json::from_str(&read("company-profile")).unwrap();
   let employees=company.deep.unwrap().employees.unwrap();
-  let getters:Vec<String>=vec![zones.timezone_database_version,time.location.unwrap().source,tariff.revision,search.revision,metadata.source_version,coverage.snapshot_at,employees.method.clone()];
-  assert_eq!(getters.len(),7);assert_eq!(employees.method,if profile=="standard" {"reported"} else {""});assert_eq!(employees.count,12);assert!(!employees.approximate);
+  let getters:Vec<String>=vec![zones.timezone_database_version,time.location.unwrap().source,metadata.source_version,coverage.snapshot_at,employees.method.clone()];
+  assert_eq!(getters.len(),5);assert_eq!(employees.method,if profile=="standard" {"reported"} else {""});assert_eq!(employees.count,12);assert!(!employees.approximate);
   assert!(!metadata.artwork_sources.is_empty());
  }
 }

@@ -10,8 +10,8 @@ async fn frozen_consumer_calls(client: &Client) -> Result<()> {
 	let _: Ip = client.ip_self(IpSelfOptions::default().deep(true)).await?;
 	let _: Continent = client.continent("example").await?;
 	let _: ContinentCountries = client.continent_countries("example").await?;
-	let _: Bloc = client.bloc("example").await?;
-	let _: BlocCountries = client.bloc_countries("example").await?;
+
+
 	let _: Asn = client.asn("AS13335").await?;
 	let _: Mac = client.mac("00:1B:63:84:45:E6").await?;
 	let _: Card = client.card("001234").await?;
@@ -84,21 +84,11 @@ async fn frozen_consumer_calls(client: &Client) -> Result<()> {
 	let _: Email = client
 		.email("example", EmailOptions::default().deep(true))
 		.await?;
-	let _: Vat = client
-		.vat(
-			"example",
-			VatOptions::default()
-				.country("example")
-				.from("example")
-				.deep(true),
-		)
-		.await?;
+
 	let _: Bank = client
 		.bank("example", BankOptions::default().country("example"))
 		.await?;
-	let _: Provider = client
-		.provider("example", ProviderOptions::default().deep(true))
-		.await?;
+
 	let _: Phone = client
 		.phone(
 			"example",
@@ -121,13 +111,8 @@ async fn frozen_consumer_calls(client: &Client) -> Result<()> {
 	let _: Useragent = client
 		.useragent("example", UseragentOptions::default().deep(true))
 		.await?;
-	let _: Tariff = client
-		.tariff(
-			"example",
-			TariffOptions::default().deep(true).origin("example"),
-		)
-		.await?;
-	let _: TariffSearch = client.tariff_search("example").await?;
+
+
 	let _: Currency = client.currency("example").await?;
 	let _: Language = client.language("example").await?;
 	let _: Name = client.name("example").await?;

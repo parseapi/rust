@@ -557,32 +557,9 @@ impl EmailOptions {
 	}
 }
 
-/// Configures `vat`. Omitted fields use API defaults.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct VatOptions {
-	pub country: Option<String>,
-	pub from: Option<String>,
-	pub deep: bool,
-}
 
-impl VatOptions {
-	/// Sets the `country` query option.
-	pub fn country(mut self, value: impl Into<String>) -> Self {
-		self.country = Some(value.into());
-		self
-	}
-	/// Sets the `from` query option.
-	pub fn from(mut self, value: impl Into<String>) -> Self {
-		self.from = Some(value.into());
-		self
-	}
-	/// Sets the `deep` query option.
-	pub fn deep(mut self, value: bool) -> Self {
-		self.deep = value;
-		self
-	}
-}
+
+
 
 /// Configures `bank`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
@@ -640,23 +617,9 @@ impl NameOptions {
 	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
 }
 
-/// Configures `provider`. Omitted fields use API defaults.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct ProviderOptions {
-	pub deep: bool,
-	/// Display language for this request.
-	pub lang: Option<String>,
-}
 
-impl ProviderOptions {
-	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
-	/// Sets the `deep` query option.
-	pub fn deep(mut self, value: bool) -> Self {
-		self.deep = value;
-		self
-	}
-}
+
+
 
 /// Configures `phone`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
@@ -791,57 +754,18 @@ impl UseragentOptions {
 
 
 
-fn tariff_edition_id(value: &str) -> bool {
- if value.len()==64 && value.bytes().all(|b|b.is_ascii_digit()||(b'a'..=b'f').contains(&b)) { return true; }
- let Some(digits)=value.strip_prefix("ted_") else{return false};
- !digits.is_empty() && digits.len()<=20 && !digits.starts_with('0') && digits.bytes().all(|b|b.is_ascii_digit()) && (digits.len()<20 || digits<="18446744073709551615")
-}
 
-fn tariff_selection(edition: Option<&str>, date: Option<&str>, got_edition: Option<&str>, got_date: Option<&str>) -> Result<()> {
-	if (edition.is_some() || date.is_some()) && (!got_edition.is_some_and(tariff_edition_id) || (edition.is_some() && got_edition != edition) || got_date != date) {
-		return Err(Error::Api { status: 0, code: "tariff_selection_mismatch".into(), retry_after: None, candidates: None, message: "Tariff response did not confirm the requested edition/date. The server may not support this selection.".into(), docs: None, request_id: None });
-	}
-	Ok(())
-}
 
-/// Configures `tariff`. Omitted fields use API defaults.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct TariffOptions {
-	pub edition: Option<String>,
-	pub date: Option<String>,
-	/// Add units and the special and other schedule columns on paid plans.
-	pub deep: bool,
-	/// ISO 3166-1 alpha-2 origin. With paid deep, resolves country-specific measures. Optional for schedule detail.
-	pub origin: Option<String>,
-}
 
-impl TariffOptions {
-	pub fn edition(mut self, value: impl Into<String>) -> Self { self.edition = Some(value.into()); self }
-	pub fn date(mut self, value: impl Into<String>) -> Self { self.date = Some(value.into()); self }
-	/// Add units and the special and other schedule columns on paid plans.
-	pub fn deep(mut self, value: bool) -> Self {
-		self.deep = value;
-		self
-	}
-	/// ISO 3166-1 alpha-2 origin. With paid deep, resolves country-specific measures. Optional for schedule detail.
-	pub fn origin(mut self, value: impl Into<String>) -> Self {
-		self.origin = Some(value.into());
-		self
-	}
-}
 
-/// Edition and date selection for tariff description search.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct TariffSearchOptions {
-	pub edition: Option<String>,
-	pub date: Option<String>,
-}
-impl TariffSearchOptions {
-	pub fn edition(mut self, value: impl Into<String>) -> Self { self.edition = Some(value.into()); self }
-	pub fn date(mut self, value: impl Into<String>) -> Self { self.date = Some(value.into()); self }
-}
+
+
+
+
+
+
+
+
 
 /// Configures `currency_rate`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
@@ -1460,13 +1384,8 @@ impl ContinentCountriesOptions {
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 }
 
-/// Display language for `bloc_countries`.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct BlocCountriesOptions { pub lang: Option<String> }
-impl BlocCountriesOptions {
-	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
-}
+
+
 
 /// Display language for `country_states`.
 #[derive(Debug, Clone, Default)]
@@ -1783,28 +1702,10 @@ impl Client {
 	}
 
 
-	/// Calls `/bloc/{code}`.
-	pub async fn bloc(&self, code: &str) -> Result<Bloc> {
-		self.get(&format!("/bloc/{}", seg(code)), Query::new(), None)
-			.await
-	}
 
-	/// Calls `/bloc/{code}/countries`.
-	pub async fn bloc_countries(&self, code: &str) -> Result<BlocCountries> {
-		self.get(
-			&format!("/bloc/{}/countries", seg(code)),
-			Query::new(),
-			None,
-		)
-		.await
-	}
-	/// Calls the same operation with a display language.
-	pub async fn bloc_countries_with_options(&self, code: &str, opts: impl Into<Option<BlocCountriesOptions>>) -> Result<BlocCountries> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "lang", opts.lang);
-		self.get(&format!("/bloc/{}/countries", seg(code)), query, None).await
-	}
+
+
+
 
 
 	/// Calls `/country/{code}`.
@@ -2075,18 +1976,6 @@ impl Client {
 			.await
 	}
 
-	/// Check VAT format and checksum. Deep requests a metered registry check where supported. Deep
-	/// checks use one attempt by default. Supply your own VAT number for a consultation reference
-	/// when supported.
-	pub async fn vat(&self, number: &str, opts: impl Into<Option<VatOptions>>) -> Result<Vat> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "country", opts.country);
-		push(&mut query, "from", opts.from);
-		push_deep(&mut query, opts.deep);
-		self.get(&format!("/vat/{}", seg(number)), query, None)
-			.await
-	}
 
 	/// Validate an IBAN using a JSON body; raw input is preserved.
 	pub async fn iban(&self, iban: &str, opts: impl Into<Option<IbanOptions>>) -> Result<Iban> {
@@ -2098,13 +1987,8 @@ impl Client {
 	}
 
 
-	pub async fn npi(&self, npi: &str, opts: impl Into<Option<NpiOptions>>) -> Result<Npi> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "lang", opts.lang);
-		push_deep(&mut query, opts.deep);
-		self.get(&format!("/npi/{}", seg(npi)), query, None).await
-	}
+
+
 
 
 	pub async fn bin(&self, bin: &str, opts: impl Into<Option<BinOptions>>) -> Result<Bin> {
@@ -2137,14 +2021,7 @@ impl Client {
 		self.get("/bank/requirements", query, None).await
 	}
 
-	/// Calls `/provider/{npi}`.
-	pub async fn provider(&self, npi: &str, opts: impl Into<Option<ProviderOptions>>) -> Result<Provider> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "lang", opts.lang);
-		push_deep(&mut query, opts.deep);
-		self.get(&format!("/provider/{}", seg(npi)), query, None).await
-	}
+
 
 	/// Parse a phone number and its formats. Pass country for national numbers when needed. Deep
 	/// reveals numbering-plan location and timezone on every plan. Carrier, caller, and HLR are separate metered lookups.
@@ -2354,41 +2231,11 @@ impl Client {
 		self.get("/industry", params, None).await
 	}
 
-	/// Look up the general US duty schedule line. Paid deep adds units and the special and other
-	/// schedule columns. Add origin with deep to resolve country-specific measures. Without origin,
-	/// schedule detail remains available and origin-dependent fields are null. A null effective rate
-	/// is not a zero rate.
-	pub async fn tariff(
-		&self,
-		code: &str,
-		opts: impl Into<Option<TariffOptions>>,
-	) -> Result<Tariff> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push_deep(&mut query, opts.deep);
-		push(&mut query, "origin", opts.origin);
-		push(&mut query, "edition", opts.edition.clone());
-		push(&mut query, "date", opts.date.clone());
-		let result: Tariff = self.get(&format!("/tariff/{}", seg(code)), query, None).await?;
-		tariff_selection(opts.edition.as_deref(), opts.date.as_deref(), result.edition.as_deref(), result.date.as_deref())?;
-		Ok(result)
-	}
 
-	/// Calls `/tariff`.
-	pub async fn tariff_search(&self, query: &str) -> Result<TariffSearch> {
-		self.tariff_search_with_options(query, None).await
-	}
 
-	pub async fn tariff_search_with_options(&self, query: &str, opts: impl Into<Option<TariffSearchOptions>>) -> Result<TariffSearch> {
-		let opts = opts.into().unwrap_or_default();
-		let mut params = Query::new();
-		push(&mut params, "q", Some(query.to_string()));
-		push(&mut params, "edition", opts.edition.clone());
-		push(&mut params, "date", opts.date.clone());
-		let result: TariffSearch = self.get("/tariff", params, None).await?;
-		tariff_selection(opts.edition.as_deref(), opts.date.as_deref(), result.edition.as_deref(), result.date.as_deref())?;
-		Ok(result)
-	}
+
+
+
 
 	/// Calls `/currency/{code}`.
 	pub async fn currency(&self, code: &str) -> Result<Currency> {
@@ -2891,14 +2738,7 @@ pub struct IbanOptions {
 }
 
 
-/// Configures `npi`. Omitted fields use API defaults.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct NpiOptions {
-	pub deep: bool,
-	/// Display language for this request.
-	pub lang: Option<String>,
-}
+
 
 
 impl BinOptions {
@@ -2920,14 +2760,7 @@ impl IbanOptions {
 }
 
 
-impl NpiOptions {
-	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
-	/// Sets the `deep` query option.
-	pub fn deep(mut self, value: bool) -> Self {
-		self.deep = value;
-		self
-	}
-}
+
 
 /// Optional detail and display language for extraction.
 #[derive(Debug, Clone, Default)]

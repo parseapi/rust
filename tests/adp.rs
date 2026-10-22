@@ -38,12 +38,6 @@ fn adp_models_decode_absent_locked_and_populated_depth() {
  assert!(rich.deep.is_some());
  let rich: Bank = serde_json::from_str(r#"{"iban":"DE89370400440532013000","valid":true,"deep":{"checksum":"89","branch":null,"account":"0532013000"}}"#).unwrap();
  assert!(rich.deep.is_some());
- let plain: Provider = serde_json::from_str(r#"{"npi":"1881018208","valid":true,"excluded":true,"credential":"MD","state_name":"Minnesota"}"#).unwrap();
- assert!(plain.deep.is_none());
- let rich: Provider = serde_json::from_str(r#"{"npi":"1881018208","valid":true,"excluded":true,"credential":"MD","state_name":"Minnesota","deep":{}}"#).unwrap();
- assert!(rich.deep.is_some());
- let rich: Provider = serde_json::from_str(r#"{"npi":"1881018208","valid":true,"excluded":true,"credential":"MD","state_name":"Minnesota","deep":{"deactivated_at":"2026-09-01","enrollments":[]}}"#).unwrap();
- assert!(rich.deep.is_some());
  let plain: Phone = serde_json::from_str(r#"{"phone":"+14155552671","valid":true}"#).unwrap();
  assert!(plain.deep.is_none());
  let rich: Phone = serde_json::from_str(r#"{"phone":"+14155552671","valid":true,"deep":{}}"#).unwrap();
@@ -61,12 +55,6 @@ fn adp_models_decode_absent_locked_and_populated_depth() {
  let rich: Hlr = serde_json::from_str(r#"{"phone":"+14155552671","valid":true,"live":true,"connected":false,"deep":{}}"#).unwrap();
  assert!(rich.deep.is_some());
  let rich: Hlr = serde_json::from_str(r#"{"phone":"+14155552671","valid":true,"live":true,"connected":false,"deep":{"roaming":false,"mcc":"310","mnc":"01"}}"#).unwrap();
- assert!(rich.deep.is_some());
- let plain: Tariff = serde_json::from_str(r#"{"hts":"8471.30.01.00","description":"Portable computers","revision":"2026"}"#).unwrap();
- assert!(plain.deep.is_none());
- let rich: Tariff = serde_json::from_str(r#"{"hts":"8471.30.01.00","description":"Portable computers","revision":"2026","deep":{}}"#).unwrap();
- assert!(rich.deep.is_some());
- let rich: Tariff = serde_json::from_str(r#"{"hts":"8471.30.01.00","description":"Portable computers","revision":"2026","deep":{"units":[],"special":"Free","origin":null,"effective_rate":null,"measures":null}}"#).unwrap();
  assert!(rich.deep.is_some());
  let plain: Industry = serde_json::from_str(r#"{"naics":"541511","name":"Programming","level":6,"parent":"54151","year":2022,"country":"US"}"#).unwrap();
  assert!(plain.deep.is_none());

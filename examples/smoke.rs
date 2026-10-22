@@ -85,20 +85,8 @@ async fn main() {
 				.unwrap_or(Some("empty".into()))
 		},
 	);
-	s.ok("bloc", parse.bloc("EU").await, |r| {
-		(r.name == "European Union" && r.members == 27)
-			.then_some(None)
-			.unwrap_or(Some("wrong bloc".into()))
-	});
-	s.ok(
-		"bloc_countries",
-		parse.bloc_countries("SCHENGEN").await,
-		|r| {
-			(r.countries.len() == 29)
-				.then_some(None)
-				.unwrap_or(Some("wrong members".into()))
-		},
-	);
+
+
 	s.ok("country", parse.country("US").await, |r| {
 		(r.country == "US")
 			.then_some(None)
@@ -239,11 +227,7 @@ async fn main() {
 	s.ok("email", parse.email("hello@gmail.com", None).await, |r| {
 		r.valid.then_some(None).unwrap_or(Some("not valid".into()))
 	});
-	s.ok("vat", parse.vat("DE136695976", None).await, |r| {
-		(r.valid && r.country.as_deref() == Some("DE"))
-			.then_some(None)
-			.unwrap_or(Some("not valid DE".into()))
-	});
+
 	s.ok("card", parse.card("00 0000").await, |r| {
 		if r.bin == "000000" { None } else { Some("BIN echo mismatch".into()) }
 	});
@@ -261,16 +245,8 @@ async fn main() {
 			.then_some(None)
 			.unwrap_or(Some("expected invalid".into()))
 	});
-	s.ok("npi", parse.provider("1881018208", None).await, |r| {
-		(r.valid && r.registered == Some(true))
-			.then_some(None)
-			.unwrap_or(Some("not registered".into()))
-	});
-	s.ok("npi junk", parse.provider("hello", None).await, |r| {
-		(!r.valid)
-			.then_some(None)
-			.unwrap_or(Some("expected invalid".into()))
-	});
+
+
 	s.ok("phone", parse.phone("+14155552671", None).await, |r| {
 		(r.phone.as_deref() == Some("+14155552671"))
 			.then_some(None)
