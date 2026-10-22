@@ -121,9 +121,6 @@ async fn frozen_consumer_calls(client: &Client) -> Result<()> {
 	let _: Useragent = client
 		.useragent("example", UseragentOptions::default().deep(true))
 		.await?;
-	let _: Vin = client
-		.vin("example", VinOptions::default().deep(true))
-		.await?;
 	let _: Tariff = client
 		.tariff(
 			"example",

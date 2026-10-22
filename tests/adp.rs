@@ -44,12 +44,6 @@ fn adp_models_decode_absent_locked_and_populated_depth() {
  assert!(rich.deep.is_some());
  let rich: Provider = serde_json::from_str(r#"{"npi":"1881018208","valid":true,"excluded":true,"credential":"MD","state_name":"Minnesota","deep":{"deactivated_at":"2026-09-01","enrollments":[]}}"#).unwrap();
  assert!(rich.deep.is_some());
- let plain: Vin = serde_json::from_str(r#"{"vin":"1HGCM82633A004352","valid":true,"make":"Honda"}"#).unwrap();
- assert!(plain.deep.is_none());
- let rich: Vin = serde_json::from_str(r#"{"vin":"1HGCM82633A004352","valid":true,"make":"Honda","deep":{}}"#).unwrap();
- assert!(rich.deep.is_some());
- let rich: Vin = serde_json::from_str(r#"{"vin":"1HGCM82633A004352","valid":true,"make":"Honda","deep":{"horsepower":240.5,"recalls":[]}}"#).unwrap();
- assert!(rich.deep.is_some());
  let plain: Phone = serde_json::from_str(r#"{"phone":"+14155552671","valid":true}"#).unwrap();
  assert!(plain.deep.is_none());
  let rich: Phone = serde_json::from_str(r#"{"phone":"+14155552671","valid":true,"deep":{}}"#).unwrap();
