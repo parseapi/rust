@@ -13,7 +13,6 @@ async fn frozen_consumer_calls(client: &Client) -> Result<()> {
 
 
 	let _: Asn = client.asn("AS13335").await?;
-	let _: Mac = client.mac("00:1B:63:84:45:E6").await?;
 	let _: Card = client.card("001234").await?;
 	let _: Country = client.country("example").await?;
 	let _: CountryStates = client.country_states("example").await?;
@@ -109,16 +108,8 @@ async fn frozen_consumer_calls(client: &Client) -> Result<()> {
 		.await?;
 
 
-	let _: Currency = client.currency("example").await?;
 	let _: Language = client.language("example").await?;
 	let _: Name = client.name("example").await?;
-	let _: CurrencyRate = client
-		.currency_rate(
-			"example",
-			"example",
-			CurrencyRateOptions::default().date("example").amount(0.0),
-		)
-		.await?;
 	let _: Timezone = client
 		.timezone(
 			"example",

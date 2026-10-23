@@ -98,56 +98,6 @@ impl std::error::Error for Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Options for measurement conversion.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct MeasureOptions {
-	pub to: Option<String>,
-	pub locale: Option<String>,
-	pub system: Option<String>,
-}
-
-impl MeasureOptions {
-	pub fn to(mut self, value: impl Into<String>) -> Self {
-		self.to = Some(value.into());
-		self
-	}
-	pub fn locale(mut self, value: impl Into<String>) -> Self {
-		self.locale = Some(value.into());
-		self
-	}
-	pub fn system(mut self, value: impl Into<String>) -> Self {
-		self.system = Some(value.into());
-		self
-	}
-}
-
-/// Options for reviewed unit discovery.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct MeasureUnitsOptions {
-	pub query: Option<String>,
-	pub r#type: Option<String>,
-	pub unit: Option<String>,
-	/// Display language for this request.
-	pub lang: Option<String>,
-}
-
-impl MeasureUnitsOptions {
-	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
-	pub fn query(mut self, value: impl Into<String>) -> Self {
-		self.query = Some(value.into());
-		self
-	}
-	pub fn r#type(mut self, value: impl Into<String>) -> Self {
-		self.r#type = Some(value.into());
-		self
-	}
-	pub fn unit(mut self, value: impl Into<String>) -> Self {
-		self.unit = Some(value.into());
-		self
-	}
-}
 
 /// Optional recorded issuer details for Card.
 #[derive(Debug, Clone, Default)]
@@ -743,26 +693,7 @@ impl UseragentOptions {
 
 
 
-/// Configures `currency_rate`. Omitted fields use API defaults.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct CurrencyRateOptions {
-	pub date: Option<String>,
-	pub amount: Option<f64>,
-}
 
-impl CurrencyRateOptions {
-	/// Sets the `date` query option.
-	pub fn date(mut self, value: impl Into<String>) -> Self {
-		self.date = Some(value.into());
-		self
-	}
-	/// Sets the `amount` query option.
-	pub fn amount(mut self, value: f64) -> Self {
-		self.amount = Some(value);
-		self
-	}
-}
 
 /// Configures `time`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
@@ -1308,17 +1239,6 @@ impl CityNearestOptions {
 #[non_exhaustive]
 pub struct NaicsOptions { pub deep: bool }
 impl NaicsOptions { pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
-
-
-/// Options for `currency`. Deep reveals the same question in more detail.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct CurrencyOptions { pub deep: bool,
-	/// Display language for this request.
-	pub lang: Option<String>,
-}
-impl CurrencyOptions {
-	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
 
 
 /// Options for `language`. Deep reveals the same question in more detail.
@@ -2073,12 +1993,6 @@ impl Client {
 	}
 
 
-	/// Calls `/mac/{mac}`.
-	pub async fn mac(&self, mac: &str) -> Result<Mac> {
-		self.get(&format!("/mac/{}", seg(mac)), Query::new(), None)
-			.await
-	}
-
 	/// Look up a 2-11 digit card prefix. Preserve leading zeros in the string.
 	pub async fn card(&self, bin: &str) -> Result<Card> {
 		self.card_with_options(bin, CardOptions::default()).await
@@ -2098,28 +2012,6 @@ impl Client {
 		self.get(&format!("/card/{}", seg(bin)), query, None).await
 	}
 
-
-	/// Parse or convert a measurement. Amount is a decimal string. Without to, use the
-	/// type's canonical unit. Locale and system (us or imperial) resolve explicit ambiguity.
-	pub async fn measure(&self, measure: &str, opts: impl Into<Option<MeasureOptions>>) -> Result<Measure> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "to", opts.to);
-		push(&mut query, "locale", opts.locale);
-		push(&mut query, "system", opts.system);
-		self.get(&format!("/measure/{}", seg(measure)), query, None).await
-	}
-
-	/// Discover reviewed units. unit filters compatible conversion targets.
-	pub async fn measure_units(&self, opts: impl Into<Option<MeasureUnitsOptions>>) -> Result<MeasureUnits> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "lang", opts.lang);
-		push(&mut query, "q", opts.query);
-		push(&mut query, "type", opts.r#type);
-		push(&mut query, "unit", opts.unit);
-		self.get("/measure/units", query, None).await
-	}
 
 	/// Published DNS records with TTLs. Values retain DNS presentation syntax.
 	/// Pooled on every plan. Omit type to check all ten supported record types.
@@ -2186,26 +2078,6 @@ impl Client {
 	}
 
 
-
-
-
-
-
-	/// Calls `/currency/{code}`.
-	pub async fn currency(&self, code: &str) -> Result<Currency> {
-		self.currency_with_options(code, None).await
-	}
-
-	/// Calls the same operation with optional detail.
-	pub async fn currency_with_options(&self, code: &str, opts: impl Into<Option<CurrencyOptions>>) -> Result<Currency> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "lang", opts.lang);
-		push_deep(&mut query, opts.deep);
-		self.get(&format!("/currency/{}", seg(code)), query, None)
-			.await
-	}
-
 	/// Calls `/language/{code}`.
 	pub async fn language(&self, code: &str) -> Result<Language> {
 		self.language_with_options(code, None).await
@@ -2236,28 +2108,6 @@ impl Client {
 		self.get(&format!("/name/{}", seg(name)), query, None).await
 	}
 
-	/// Calls `/currency/{base}/{quote}`.
-	pub async fn currency_rate(
-		&self,
-		base: &str,
-		quote: &str,
-		opts: impl Into<Option<CurrencyRateOptions>>,
-	) -> Result<CurrencyRate> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "date", opts.date);
-		push(
-			&mut query,
-			"amount",
-			opts.amount.map(|value| value.to_string()),
-		);
-		self.get(
-			&format!("/currency/{}/{}", seg(base), seg(quote)),
-			query,
-			None,
-		)
-		.await
-	}
 
 	/// Calls `/time/{timezone}`.
 	pub async fn time(

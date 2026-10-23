@@ -274,24 +274,6 @@ async fn main() {
 			.then_some(None)
 			.unwrap_or(Some("wrong ASN".into()))
 	});
-	s.ok("mac", parse.mac("00:1B:63:84:45:E6").await, |r| {
-		(r.valid
-			&& r.mac == "00:1B:63:84:45:E6"
-			&& r.local == Some(false)
-			&& r.multicast == Some(false))
-		.then_some(None)
-		.unwrap_or(Some("wrong MAC".into()))
-	});
-	s.ok("measure", parse.measure("5 ft 11 in", parseapi::MeasureOptions::default().to("cm")).await, |r| {
-		(r.valid && r.amount.as_deref() == Some("180.34") && r.unit.as_deref() == Some("cm"))
-			.then_some(None)
-			.unwrap_or(Some("wrong conversion".into()))
-	});
-	s.ok("measure_units", parse.measure_units(parseapi::MeasureUnitsOptions::default().unit("m")).await, |r| {
-		(r.units.iter().any(|unit| unit.unit == "m"))
-			.then_some(None)
-			.unwrap_or(Some("missing metre".into()))
-	});
 	s.ok("dns", parse.dns("example.com", parseapi::DnsOptions::default().r#type("A")).await, |r| {
 		r.records.iter().any(|record| record.r#type == "A").then_some(None).unwrap_or(Some("no A records".into()))
 	});
@@ -307,20 +289,6 @@ async fn main() {
 	});
 
 
-	s.ok("currency", parse.currency("USD").await, |r| {
-		(r.symbol.as_deref() == Some("$"))
-			.then_some(None)
-			.unwrap_or(Some("wrong symbol".into()))
-	});
-	s.ok(
-		"currency_rate",
-		parse.currency_rate("USD", "EUR", None).await,
-		|r| {
-			(r.rate > 0.0 && r.rate < 10.0)
-				.then_some(None)
-				.unwrap_or(Some("bad rate".into()))
-		},
-	);
 	s.ok("language", parse.language("en").await, |r| {
 		(r.language == "en" && r.name == "English")
 			.then_some(None)

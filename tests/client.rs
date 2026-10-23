@@ -239,24 +239,10 @@ url_test!(
 url_test!(url_hlr, c => c.hlr("+447712345678", None), "/hlr/%2B447712345678");
 url_test!(url_domain, c => c.domain("example.com", None), "/domain/example.com");
 url_test!(url_asn, c => c.asn("AS13335"), "/asn/AS13335");
-url_test!(url_mac, c => c.mac("00:1B:63:84:45:E6"), "/mac/00%3A1B%3A63%3A84%3A45%3AE6");
 url_test!(url_mx, c => c.mx("example.com"), "/mx/example.com");
 url_test!(url_useragent, c => c.useragent("TestUA/1.0", None), "/useragent");
 
 
-
-
-url_test!(url_currency, c => c.currency("USD"), "/currency/USD");
-url_test!(
-	url_currency_rate,
-	c => c.currency_rate("USD", "EUR", None),
-	"/currency/USD/EUR"
-);
-url_test!(
-	url_currency_rate_date_amount,
-	c => c.currency_rate("USD", "JPY", parseapi::CurrencyRateOptions::default().date("2026-08-28").amount(100.0)),
-	"/currency/USD/JPY?date=2026-08-28&amount=100"
-);
 url_test!(url_language, c => c.language("en"), "/language/en");
 url_test!(url_name_encodes_spaces, c => c.name("Smith, John"), "/name/Smith%2C%20John");
 url_test!(
@@ -734,58 +720,13 @@ async fn network_records_preserve_nulls_and_tolerate_future_fields() {
 			200,
 			r#"{"asn":4294967295,"name":null,"country":null,"country_name":null,"future":true}"#,
 		),
-		(
-			200,
-			r#"{"mac":"junk","valid":false,"vendor":null,"local":null,"multicast":null,"future":true}"#,
-		),
-		(
-			200,
-			r#"{"mac":"02:00:00:00:00:01","valid":true,"vendor":null,"local":true,"multicast":false}"#,
-		),
 	]);
 	let client = server.client();
 	let asn = client.asn("4294967295").await.unwrap();
 	assert_eq!(asn.asn, u32::MAX);
 	assert!(asn.name.is_none() && asn.country.is_none() && asn.country_name.is_none());
-	let mac = client.mac("junk").await.unwrap();
-	assert_eq!(mac.mac, "junk");
-	assert!(!mac.valid);
-	assert!(mac.vendor.is_none() && mac.local.is_none() && mac.multicast.is_none());
-	let local = client.mac("02:00:00:00:00:01").await.unwrap();
-	assert!(local.valid);
-	assert_eq!(local.local, Some(true));
-	assert_eq!(local.multicast, Some(false));
 }
 
-
-url_test!(url_measure, c => c.measure("5 ft 11 in", MeasureOptions::default().to("cm").locale("en-US").system("us")), "/measure/5%20ft%2011%20in?to=cm&locale=en-US&system=us");
-url_test!(url_measure_compound, c => c.measure("1 kg/m^3", MeasureOptions::default().to("g/L")), "/measure/1%20kg%2Fm%5E3?to=g%2FL");
-url_test!(url_measure_units, c => c.measure_units(MeasureUnitsOptions::default().query("US gallon").r#type("volume").unit("L")), "/measure/units?q=US+gallon&type=volume&unit=L");
-url_test!(url_measure_units_all, c => c.measure_units(None), "/measure/units");
-
-#[tokio::test]
-async fn measure_precision_ambiguity_and_catalog() {
- let server = TestServer::start(vec![
-  (200, r#"{"measure":"0 m","valid":true,"type":"future-type","amount":"0.00000000000000000001","unit":"m","reason":null,"choices":[],"future":null}"#),
-  (200, r#"{"measure":"1 gallon","valid":false,"type":null,"amount":null,"unit":null,"reason":"ambiguous_unit","choices":[{"unit":"us_gal","name":"US liquid gallon"}]}"#),
-  (200, r#"{"units":[{"unit":"m","name":"metre","type":"length","aliases":["meter"],"future":null}]}"#),
-  (400, r#"{"code":"bad_request","message":"Incompatible units","request_id":"req_measure"}"#),
- ]);
- let c = server.client();
- let good = c.measure("0 m", None).await.unwrap();
- assert_eq!(good.amount.as_deref(), Some("0.00000000000000000001"));
- assert_eq!(good.r#type.as_deref(), Some("future-type"));
- let unknown = c.measure("1 gallon", None).await.unwrap();
- assert!(!unknown.valid);
- assert_eq!(unknown.amount, None);
- assert_eq!(unknown.reason.as_deref(), Some("ambiguous_unit"));
- assert_eq!(unknown.choices[0].unit, "us_gal");
- let units = c.measure_units(None).await.unwrap();
- assert_eq!(units.units[0].aliases, ["meter"]);
- let err = c.measure("1 m", MeasureOptions::default().to("kg")).await.unwrap_err();
- assert_eq!(err.status(), Some(400));
- assert_eq!(err.code(), Some("bad_request"));
-}
 
 #[tokio::test]
 async fn naics_hierarchy_and_keyword_search() {
@@ -1047,14 +988,6 @@ async fn adp_industry_search_option() {
  assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
 }
 #[tokio::test]
-async fn adp_currency_with_options_option() {
- let server=TestServer::start(vec![(200,"{}")]);
- let client=server.client();
- let _=client.currency_with_options("USD", CurrencyOptions::default().deep(true)).await;
- assert_eq!(server.requests().len(),1);
- assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
-}
-#[tokio::test]
 async fn adp_language_with_options_option() {
  let server=TestServer::start(vec![(200,"{}")]);
  let client=server.client();
@@ -1183,7 +1116,6 @@ language_request_test!(language_postal_distance, c => c.postal_distance("28202",
 language_request_test!(language_company, c => c.company("732829320", CompanyOptions::default().country("FR").deep(true).lang("fr-CA")), c.company("732829320", CompanyOptions::default().country("FR").deep(true)), "/company/732829320", "country=FR&deep=true");
 
 language_request_test!(language_asn, c => c.asn_with_options("AS13335", AsnOptions::default().lang("fr-CA")), c.asn("AS13335"), "/asn/AS13335", "");
-language_request_test!(language_currency, c => c.currency_with_options("USD", CurrencyOptions::default().deep(true).lang("fr-CA")), c.currency_with_options("USD", CurrencyOptions::default().deep(true)), "/currency/USD", "deep=true");
 language_request_test!(language_language, c => c.language_with_options("ja", LanguageOptions::default().lang("fr-CA")), c.language_with_options("ja", LanguageOptions::default()), "/language/ja", "");
 language_request_test!(language_time, c => c.time("America/New_York", TimeOptions::default().at("2026-01-01T12:00").to("UTC").deep(true).lang("fr-CA")), c.time("America/New_York", TimeOptions::default().at("2026-01-01T12:00").to("UTC").deep(true)), "/time/America%2FNew_York", "at=2026-01-01T12%3A00&deep=true&to=UTC");
 language_request_test!(language_time_at, c => c.time_at(0.0, 0.0, TimeAtOptions::default().at("2026-01-01T12:00Z").lang("fr-CA")), c.time_at(0.0, 0.0, TimeAtOptions::default().at("2026-01-01T12:00Z")), "/time", "at=2026-01-01T12%3A00Z&lat=0&lon=0");
@@ -1194,10 +1126,9 @@ language_request_test!(language_date_today, c => c.date_today(DateTodayOptions::
 language_request_test!(language_point, c => c.point(0.0, 0.0, PointOptions::default().deep(true).lang("fr-CA")), c.point(0.0, 0.0, PointOptions::default().deep(true)), "/point", "deep=true&lat=0&lon=0");
 language_request_test!(language_emoji, c => c.emoji_with_options("😀", EmojiOptions::default().deep(true).lang("fr-CA")), c.emoji_with_options("😀", EmojiOptions::default().deep(true)), "/emoji/%F0%9F%98%80", "deep=true");
 language_request_test!(language_emoji_search, c => c.emoji_search("visage", EmojiSearchOptions::default().limit(2).lang("fr-CA")), c.emoji_search("visage", EmojiSearchOptions::default().limit(2)), "/emoji", "limit=2&q=visage");
-language_request_test!(language_measure_units, c => c.measure_units(MeasureUnitsOptions::default().query("meter").unit("m").lang("fr-CA")), c.measure_units(MeasureUnitsOptions::default().query("meter").unit("m")), "/measure/units", "q=meter&unit=m");
 
 #[tokio::test]
-async fn language_preserves_native_null_and_measure_input() {
+async fn language_preserves_native_null_and_date_input() {
  let server = TestServer::start(vec![
   (200, r#"{"country":"DE","name":"Allemagne","name_local":"Deutschland","currency_name":null,"future":true}"#),
   (200, "{}"),
@@ -1210,12 +1141,10 @@ async fn language_preserves_native_null_and_measure_input() {
  assert_eq!(country.name_local.as_deref(), Some("Deutschland"));
  assert!(country.currency_name.is_none() && country.deep.is_none());
  client.date("03/04/2026", DateOptions::default().format("dmy").lang("en-US")).await.unwrap();
- client.measure("1,5 m", MeasureOptions::default().locale("de-DE").to("cm")).await.unwrap();
  let calls=server.requests();
  let date=reqwest::Url::parse(&format!("http://fixture{}",calls[1].target)).unwrap();
  assert_eq!(date.path(), "/date/03%2F04%2F2026");
  assert_eq!(date.query_pairs().collect::<HashMap<_,_>>().get("format").unwrap(), "dmy");
- assert_eq!(calls[2].target, "/measure/1%2C5%20m?to=cm&locale=de-DE");
 }
 
 #[tokio::test]

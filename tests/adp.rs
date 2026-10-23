@@ -62,12 +62,6 @@ fn adp_models_decode_absent_locked_and_populated_depth() {
  assert!(rich.deep.is_some());
  let rich: Company = serde_json::from_str(r#"{"company":"01234567","valid":true,"name":"Example","deep":{"activity":"6201","gst":false,"vat":null}}"#).unwrap();
  assert!(rich.deep.is_some());
- let plain: Currency = serde_json::from_str(r#"{"currency":"USD","name":"US Dollar"}"#).unwrap();
- assert!(plain.deep.is_none());
- let rich: Currency = serde_json::from_str(r#"{"currency":"USD","name":"US Dollar","deep":{}}"#).unwrap();
- assert!(rich.deep.is_some());
- let rich: Currency = serde_json::from_str(r#"{"currency":"USD","name":"US Dollar","deep":{"numeric":840,"countries":[]}}"#).unwrap();
- assert!(rich.deep.is_some());
  let plain: Language = serde_json::from_str(r#"{"language":"en","name":"English","direction":"ltr"}"#).unwrap();
  assert!(plain.deep.is_none());
  let rich: Language = serde_json::from_str(r#"{"language":"en","name":"English","direction":"ltr","deep":{}}"#).unwrap();

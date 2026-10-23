@@ -558,16 +558,6 @@ pub struct Asn {
 	pub country_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct Mac {
-	pub mac: String,
-	pub valid: bool,
-	pub vendor: Option<String>,
-	pub local: Option<bool>,
-	pub multicast: Option<bool>,
-}
 
 /// Network identity. None means unknown or ambiguous.
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -697,17 +687,6 @@ pub struct Useragent {
 	pub deep: Option<UseragentDeep>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct Currency {
-	pub currency: String,
-	pub name: String,
-	pub symbol: Option<String>,
-	pub symbol_native: Option<String>,
-	pub digits: Option<i32>,
-	pub deep: Option<CurrencyDeep>,
-}
 
 /// One language by BCP 47 shortest code or ISO 639-3. Codes are lowercase.
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -738,18 +717,6 @@ pub struct Name {
 	pub deep: Option<NameDeep>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct CurrencyRate {
-	pub base: String,
-	pub quote: String,
-	pub rate: f64,
-	pub date: String,
-	pub amount: Option<f64>,
-	pub converted: Option<f64>,
-	pub source: Option<String>,
-}
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
@@ -1192,49 +1159,6 @@ pub struct Company {
 	pub deep: Option<CompanyDeep>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct MeasureChoice {
-	pub unit: String,
-	pub name: String,
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct Measure {
-	pub measure: String,
-	pub valid: bool,
-	pub r#type: Option<String>,
-	/// Decimal string preserving the API's precision.
-	pub amount: Option<String>,
-	pub unit: Option<String>,
-	/// Failure reason. None when omitted by a successful response.
-	pub reason: Option<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	/// Unit alternatives. Empty when omitted by the response.
-	pub choices: Vec<MeasureChoice>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct MeasureUnit {
-	pub unit: String,
-	pub name: String,
-	pub r#type: String,
-	#[serde(default, deserialize_with = "null_default")]
-	pub aliases: Vec<String>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct MeasureUnits {
-	#[serde(default, deserialize_with = "null_default")]
-	pub units: Vec<MeasureUnit>,
-}
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
@@ -1525,17 +1449,6 @@ pub struct NaicsDeep {
 	pub children: Option<Vec<NaicsChild>>,
 	/// Classification exclusions. None for omitted/null older responses.
 	pub exclusions: Option<Vec<NaicsExclusion>>,
-}
-
-
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct CurrencyDeep {
-	pub numeric: Option<i32>,
-	pub name_plural: Option<String>,
-
-	pub countries: Option<Vec<String>>,
 }
 
 

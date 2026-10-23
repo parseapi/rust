@@ -66,8 +66,7 @@ println!("{}", country.name); // Allemagne
 `lang` applies to this request. The next call uses its usual default unless it
 also supplies a language. Codes, native names, numeric facts and response
 structure stay unchanged. Missing translations keep the API's documented
-fallback. Existing `deep` rules still apply; Date `format` and Measure input
-`locale` retain their parsing meanings.
+fallback. Existing `deep` rules still apply; Date `format` retains its parsing meaning.
 
 ## Calls
 
@@ -89,7 +88,6 @@ parse.ip("8.8.8.8", IpOptions::default().deep(true)).await?;
 parse.email("hello@example.com", EmailOptions::default().deep(true)).await?;
 parse.card("424242").await?;
 parse.asn("AS13335").await?;
-parse.mac("00:1B:63:84:45:E6").await?;
 parse.name("Andrea").await?;
 parse.name_with_options("Andrea", NameOptions::default().country("IT")).await?;
 parse.name_with_options("Robert James Smith", NameOptions::default().deep(true).name_locale("en")).await?;
@@ -195,19 +193,6 @@ Timezone discovery accepts country, IANA area, exact signed offset, abbreviation
 
 Source deep adds `standard_offset`, `standard_offset_seconds`, signed `dst_offset_seconds` and `season`. Seasonal adjustments can be negative. `season` describes the current DST-flag interval, or the next within 400 days, with actual before/after transition facts and signed `change_seconds`. Unknown boundaries remain null. These fields are optional and nullable, and destination deep stays compact.
 
-## Measurements
-
-```rust
-let result = parse.measure("5 ft 11 in", parseapi::MeasureOptions::default().to("cm")).await?;
-let units = parse.measure_units(parseapi::MeasureUnitsOptions::default().unit("m")).await?;
-```
-
-`amount` is a decimal string, such as `"180.34"`. Without `to`, the API returns the canonical unit for the measurement type. Pass `locale` for number formatting and `system` (`us` or `imperial`) when a customary unit needs context. Ambiguous input returns `valid: false`, a `reason`, and available `choices`. Invalid or incompatible target units use the normal API error.
-
-Successful HTTP JSON contains `measure`, `valid`, `type`, `amount`, and `unit`. Invalid input adds `reason`. `choices` appears only when unit alternatives are available. Typed results use `null` or the language-native empty value for an omitted reason and an empty list for omitted choices.
-
-Unit discovery accepts optional `query`, `type`, and `unit` filters. `unit` selects compatible targets. Omit the filters for the reviewed catalog. Both operations use pooled requests.
-
 ## Place statistics and optional detail
 
 Australian postal lookups include core `localities` with suburb choices (`city`, `state`, `state_name`) on every plan. Null or an omitted field means unknown, while `[]` means the reviewed reference has no eligible choices. `city` stays null when the source is ambiguous, even if there is only one eligible choice. Let the user select their suburb and keep manual entry available. These are geographic choices, not mailing-address verification. [G-NAF source, adaptations and licence](https://parseapi.com/legal/attribution#postal-au).
@@ -247,7 +232,7 @@ The default call returns the common answer. Request more detail with `parse.coun
 | Industry, Company (national number) | Paid technical or registration profiles. Industry hierarchy stays core. |
 | Name, Weather | Paid name context or weather detail; parsing and current conditions stay core. |
 | Phone | Numbering-plan or bank structure detail in the same pooled request on every plan. |
-| Time, Date, Currency, Language, Emoji, Point | Optional reference detail in the same pooled request on every plan. |
+| Time, Date, Language, Emoji, Point | Optional reference detail in the same pooled request on every plan. |
 | Carrier, HLR | Available place or network detail from the same metered core unit, including Free included units. |
 
 Email deep includes mailbox status and the reason for the result, plus a suggested first name, no-reply flag, plus-address tag and mail service. The suggested name is not a verified identity. Unavailable details are null.
