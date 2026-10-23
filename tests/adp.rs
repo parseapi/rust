@@ -32,12 +32,6 @@ fn adp_models_decode_absent_locked_and_populated_depth() {
  assert!(rich.deep.is_some());
  let rich: Postal = serde_json::from_str(r#"{"postal":"28202","country":"US","deep":{"metros":[],"water_area":0.25,"tax_rate":0}}"#).unwrap();
  assert!(rich.deep.is_some());
- let plain: Bank = serde_json::from_str(r#"{"iban":"DE89370400440532013000","valid":true}"#).unwrap();
- assert!(plain.deep.is_none());
- let rich: Bank = serde_json::from_str(r#"{"iban":"DE89370400440532013000","valid":true,"deep":{}}"#).unwrap();
- assert!(rich.deep.is_some());
- let rich: Bank = serde_json::from_str(r#"{"iban":"DE89370400440532013000","valid":true,"deep":{"checksum":"89","branch":null,"account":"0532013000"}}"#).unwrap();
- assert!(rich.deep.is_some());
  let plain: Phone = serde_json::from_str(r#"{"phone":"+14155552671","valid":true}"#).unwrap();
  assert!(plain.deep.is_none());
  let rich: Phone = serde_json::from_str(r#"{"phone":"+14155552671","valid":true,"deep":{}}"#).unwrap();

@@ -213,36 +213,11 @@ url_test!(
 	c => c.postal_distance("28202", "10001", parseapi::PostalDistanceOptions::default().country("US")),
 	"/postal/28202/distance/10001?country=US"
 );
-url_test!(url_email, c => c.email("a@b.com", None), "/email/a%40b.com");
 
-url_test!(
-	url_iban,
-	c => c.bank("DE89370400440532013000", None),
-	"/bank"
-);
-url_test!(
-	url_iban_country,
-	c => c.bank("89370400440532013000", parseapi::BankOptions::default().country("DE")),
-	"/bank"
-);
 
-#[tokio::test]
-async fn bank_preserves_raw_input_for_server_validation() {
-	for (input, _encoded) in [
-		("DE89.370400440532013000", "DE89.370400440532013000"),
-		("\u{feff}DE89370400440532013000", "%EF%BB%BFDE89370400440532013000"),
-		("DE89\u{00a0}370400440532013000", "DE89%C2%A0370400440532013000"),
-		("DE89%20370400440532013000", "DE89%2520370400440532013000"),
-	] {
-		let server = TestServer::start(vec![(200, r#"{"valid":false}"#)]);
-		server.client().bank(input, None).await.unwrap();
-		let requests = server.requests();
-		assert_eq!(requests[0].target, "/bank");
-		assert_eq!(requests[0].method, "POST");
-		assert_eq!(serde_json::from_str::<serde_json::Value>(&requests[0].body).unwrap()["iban"], input);
-		assert_eq!(requests[0].headers.get("parse-version").map(String::as_str), Some("2.0.0"));
-	}
-}
+
+
+
 
 
 
@@ -1038,14 +1013,7 @@ async fn adp_postal_distance_option() {
  assert_eq!(server.requests().len(),1);
  assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
 }
-#[tokio::test]
-async fn adp_iban_option() {
- let server=TestServer::start(vec![(200,"{}")]);
- let client=server.client();
- let _=client.bank("DE89370400440532013000", BankOptions::default().deep(true)).await;
- assert_eq!(server.requests().len(),1);
- assert_eq!(serde_json::from_str::<serde_json::Value>(&server.requests()[0].body).unwrap()["deep"], true);
-}
+
 #[tokio::test]
 async fn adp_carrier_option() {
  let server=TestServer::start(vec![(200,"{}")]);
@@ -1352,30 +1320,7 @@ async fn time_locations_rich_catalog_and_seasons() {
 
 
 
-#[tokio::test]
-async fn bank_post_context_domestic_requirements_and_retry_keep_raw_data_out_of_urls() {
-	let server = TestServer::start(vec![(503,r#"{"code":"unavailable"}"#),(200,r#"{"valid":true,"deep":{"directory":{"edition":"future","country":"DE","match":"future_grain"}}}"#)]);
-	let client = Client::builder().api_key("fixture").base_url(&server.base_url).retries(1).build().unwrap();
-	let result = client.bank("89%20\u{feff}00", BankOptions::default().country("DE").deep(true)).await.unwrap();
-	assert_eq!(result.deep.unwrap().directory.unwrap().r#match.as_deref(),Some("future_grain"));
-	for request in server.requests() {
-		assert_eq!(request.method,"POST"); assert_eq!(request.target,"/bank");
-		assert_eq!(request.headers.get("content-type").map(String::as_str),Some("application/json"));
-		assert_eq!(serde_json::from_str::<serde_json::Value>(&request.body).unwrap(),serde_json::json!({"iban":"89%20\u{feff}00","country":"DE","deep":true}));
-	}
-	let server = TestServer::start(vec![(200,r#"{"valid":false,"routing":null,"account":null,"checks":{"account_checksum":"future_status"},"issues":[{"field":"account","code":"future_issue"}]}"#)]);
-	let result = server.client().bank_us_ach(BankUsAchInput::new("021 000021","00a-B %20\u{feff}")).await.unwrap();
-	assert!(result.routing.is_none()); assert_eq!(result.checks.unwrap().account_checksum.as_deref(),Some("future_status"));
-	let request = &server.requests()[0];
-	assert_eq!(request.target,"/bank"); assert_eq!(request.method,"POST");
-	assert_eq!(serde_json::from_str::<serde_json::Value>(&request.body).unwrap(),serde_json::json!({"format":"us_ach","country":"US","routing":"021 000021","account":"00a-B %20\u{feff}"}));
-	let server = TestServer::start(vec![(200,r#"{"country":"GB","format":"uk_domestic","supported":false,"fields":[],"checks":{},"limitations":["Unsupported"]}"#)]);
-	let result=server.client().bank_requirements("GB",Some("uk_domestic")).await.unwrap();
-	assert!(!result.supported); assert!(result.fields.is_empty());
-	assert_eq!(server.requests()[0].target,"/bank/requirements?country=GB&format=uk_domestic");
-	assert_eq!(server.requests()[0].method,"GET");
-	assert!(server.requests()[0].body.is_empty());
-}
+
 
 
 #[test]

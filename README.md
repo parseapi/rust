@@ -87,7 +87,6 @@ use parseapi::*;
 
 parse.ip("8.8.8.8", IpOptions::default().deep(true)).await?;
 parse.email("hello@example.com", EmailOptions::default().deep(true)).await?;
-parse.bank("DE89370400440532013000", None).await?;
 parse.card("424242").await?;
 parse.asn("AS13335").await?;
 parse.mac("00:1B:63:84:45:E6").await?;
@@ -247,7 +246,7 @@ The default call returns the common answer. Request more detail with `parse.coun
 | Country, State, City, District, Postal | Reference profiles included with a paid plan; place identity and coordinates stay core. |
 | Industry, Company (national number) | Paid technical or registration profiles. Industry hierarchy stays core. |
 | Name, Weather | Paid name context or weather detail; parsing and current conditions stay core. |
-| Phone, Bank | Numbering-plan or bank structure detail in the same pooled request on every plan. |
+| Phone | Numbering-plan or bank structure detail in the same pooled request on every plan. |
 | Time, Date, Currency, Language, Emoji, Point | Optional reference detail in the same pooled request on every plan. |
 | Carrier, HLR | Available place or network detail from the same metered core unit, including Free included units. |
 
@@ -258,20 +257,6 @@ Reasons include `accepted`, `invalid_format`, `invalid_domain`, `no_mail_server`
 Carrier, caller, and HLR are separate metered operations. Choose them explicitly when you need their answers. Ordinary lookups retry twice by default. Metered checks use one attempt by default. Setting retries explicitly can repeat paid usage.
 
 Without `deep`, the response omits that key. When requested, it is an empty object if access is locked or the operation has no deep fields. Otherwise it contains the available fields. A missing or null field means unknown.
-
-## Bank validation
-
-Bank results include optional `checks` and `issues` (`BankChecks` and `BankIssue`). Check statuses and issue codes are open strings; handle unknown future values. `not_supported` means the national check did not run, not that it passed. `issues: []` means no applicable check failed; a missing/null value supports older responses. These findings do not establish account existence or ownership. `deep.account` remains a string so leading zeros are preserved.
-
-
-Bank lookups send raw input in a JSON body (`POST /bank`), preserving leading zeros, separators and forbidden characters for server validation. `bank` keeps its existing call signature and IBAN result. Optional `deep.directory` identifies the directory edition, country and open-string match grain; absent data remains unknown.
-
-```rust
-let requirements = parse.bank_requirements("US", Some("us_ach")).await?;
-let result = parse.bank_us_ach(parseapi::BankUsAchInput::new("021000021", "000123456789")).await?;
-```
-
-US ACH checks the routing checksum and supported account format, not account existence, ownership or ACH eligibility. Account checksum status stays `not_supported`; bank names are nullable partial-directory references. Account text is preserved, including letter case, spaces and hyphens. Requirements describe this validation workflow; they are not every field needed to initiate a payment. Unsupported country/format combinations return `supported: false`. Pass `None` as the format for IBAN requirements. The sample is synthetic, not an account to pay.
 
 ## Errors
 

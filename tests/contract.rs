@@ -85,10 +85,6 @@ async fn frozen_consumer_calls(client: &Client) -> Result<()> {
 		.email("example", EmailOptions::default().deep(true))
 		.await?;
 
-	let _: Bank = client
-		.bank("example", BankOptions::default().country("example"))
-		.await?;
-
 	let _: Phone = client
 		.phone(
 			"example",

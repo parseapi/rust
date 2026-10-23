@@ -561,36 +561,12 @@ impl EmailOptions {
 
 
 
-/// Configures `bank`. Omitted fields use API defaults.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct BankOptions {
-	pub country: Option<String>,
-	pub deep: bool,
-}
 
-impl BankOptions {
-	/// Sets the `country` body option.
-	pub fn country(mut self, value: impl Into<String>) -> Self {
-		self.country = Some(value.into());
-		self
-	}
-	/// Requests optional detail from the same lookup.
-	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
-}
 
-/// US ACH collection input. Preserve account text and leading zeros.
-#[derive(Clone)]
-#[non_exhaustive]
-pub struct BankUsAchInput {
-	pub routing: String,
-	pub account: String,
-}
-impl BankUsAchInput {
-	pub fn new(routing: impl Into<String>, account: impl Into<String>) -> Self {
-		Self { routing: routing.into(), account: account.into() }
-	}
-}
+
+
+
+
 
 /// Configures `name_with_options`. Country is an ISO2 gender context.
 #[derive(Debug, Clone, Default)]
@@ -1977,14 +1953,7 @@ impl Client {
 	}
 
 
-	/// Validate an IBAN using a JSON body; raw input is preserved.
-	pub async fn iban(&self, iban: &str, opts: impl Into<Option<IbanOptions>>) -> Result<Iban> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "country", opts.country);
-		push_deep(&mut query, opts.deep);
-		self.get(&format!("/iban/{}", seg(iban)), query, None).await
-	}
+
 
 
 
@@ -2000,26 +1969,11 @@ impl Client {
 
 
 
-	pub async fn bank(&self, iban: &str, opts: impl Into<Option<BankOptions>>) -> Result<Bank> {
-		let opts = opts.into().unwrap_or_default();
-		let mut body = serde_json::json!({"iban": iban});
-		if let Some(country) = opts.country { body["country"] = country.into(); }
-		if opts.deep { body["deep"] = true.into(); }
-		self.post("/bank", body).await
-	}
 
-	/// Check the supported US ACH format, not account existence or ACH eligibility.
-	pub async fn bank_us_ach(&self, input: BankUsAchInput) -> Result<BankUsAch> {
-		self.post("/bank", serde_json::json!({"format":"us_ach", "country":"US", "routing":input.routing, "account":input.account})).await
-	}
 
-	/// Describe required fields for a country/format; omitted format selects IBAN.
-	pub async fn bank_requirements(&self, country: &str, format: Option<&str>) -> Result<BankRequirements> {
-		let mut query = Query::new();
-		query.push(("country", country.to_owned()));
-		if let Some(format) = format { query.push(("format", format.to_owned())); }
-		self.get("/bank/requirements", query, None).await
-	}
+
+
+
 
 
 
@@ -2729,13 +2683,7 @@ pub struct BinOptions {
 }
 
 
-/// Configures `iban`. Omitted fields use API defaults.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct IbanOptions {
-	pub country: Option<String>,
-	pub deep: bool,
-}
+
 
 
 
@@ -2749,15 +2697,7 @@ impl BinOptions {
 }
 
 
-impl IbanOptions {
-	/// Sets the `country` query option.
-	pub fn country(mut self, value: impl Into<String>) -> Self {
-		self.country = Some(value.into());
-		self
-	}
-	/// Requests optional detail from the same lookup.
-	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
-}
+
 
 
 
