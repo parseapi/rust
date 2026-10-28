@@ -1232,6 +1232,16 @@ pub struct NaicsSearch {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CountryDeep {
+	/// Latest available GDP in current US dollars.
+	pub gdp: Option<f64>,
+	/// Latest available GDP per person in current US dollars.
+	pub gdp_per_capita: Option<f64>,
+	/// Annual percent change; negative values indicate decline.
+	pub population_growth: Option<f64>,
+	/// Share of population, from 0 to 100.
+	pub urban_population: Option<f64>,
+	/// Share of population using the internet, from 0 to 100.
+	pub internet_users: Option<f64>,
 	pub iso3: Option<String>,
 	pub numeric: Option<i32>,
 	pub full_name: Option<String>,

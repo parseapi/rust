@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.5 — 2026-10-27
+
+- Add optional Country Deep fields: gdp, gdp_per_capita, population_growth, urban_population and internet_users. GDP uses US dollars; growth and population shares use percent. Missing values remain null.
+
 ## 2.3.0 — 2026-10-15
 
 - Add compatible City resource/list, spelling-search, geographic-filter, pagination, hierarchy, relationship and distance support.

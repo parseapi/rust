@@ -2,8 +2,13 @@ use parseapi::Country;
 
 #[test]
 fn country_geography_preserves_decimals_zero_and_negative_elevations() {
-	let country: Country = serde_json::from_str(r#"{"country":"XX","deep":{"land_area":10010.5,"water_area":0,"coastline":0,"elevation":0,"lowest_point":{"name":null,"elevation":-430.5},"highest_point":{"name":"Summit","elevation":8848.86}}}"#).unwrap();
+	let country: Country = serde_json::from_str(r#"{"country":"XX","deep":{"gdp":30769700000000,"gdp_per_capita":90026.5163,"population_growth":-0.25,"urban_population":0,"internet_users":95.5,"land_area":10010.5,"water_area":0,"coastline":0,"elevation":0,"lowest_point":{"name":null,"elevation":-430.5},"highest_point":{"name":"Summit","elevation":8848.86}}}"#).unwrap();
 	let c = country.deep.unwrap();
+	assert_eq!(c.gdp, Some(30769700000000.0));
+	assert_eq!(c.gdp_per_capita, Some(90026.5163));
+	assert_eq!(c.population_growth, Some(-0.25));
+	assert_eq!(c.urban_population, Some(0.0));
+	assert_eq!(c.internet_users, Some(95.5));
 	assert_eq!(c.land_area, Some(10010.5));
 	assert_eq!(c.water_area, Some(0.0));
 	assert_eq!(c.coastline, Some(0.0));
