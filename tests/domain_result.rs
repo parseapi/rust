@@ -50,11 +50,13 @@ async fn domain_result_preserves_unknown_partial_and_one_request() {
 }
 
 #[test]
-fn existing_domain_boolean_fields_still_compile() {
+fn existing_domain_call_uses_nullable_boolean_fields() {
 	let old: Domain = serde_json::from_str(r#"{"domain":"example.com","available":true}"#).unwrap();
-	let available: bool = old.available;
+	let available: Option<bool> = old.available;
 	let registration: DomainRegistration = serde_json::from_str(r#"{"registered":true,"dnssec":false,"status":[]}"#).unwrap();
-	let dnssec: bool = registration.dnssec;
+	let dnssec: Option<bool> = registration.dnssec;
 	let status: Vec<String> = registration.status;
-	assert!(available && !dnssec && status.is_empty());
+	assert_eq!(available, Some(true));
+	assert_eq!(dnssec, Some(false));
+	assert!(status.is_empty());
 }

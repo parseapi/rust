@@ -23,5 +23,6 @@ fn current_and_frozen_network_contracts_decode() {
         else { assert!(result.cms.is_some() && result.frameworks.is_some()); }
     }
     let domain: Domain = from_value(fixtures["domain_unregistered"].clone()).unwrap();
-    assert!(domain.available && !domain.deep.unwrap().registration.unwrap().registered);
+    assert_eq!(domain.available, Some(true));
+    assert!(!domain.deep.unwrap().registration.unwrap().registered);
 }
