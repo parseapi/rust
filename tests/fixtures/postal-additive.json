@@ -1,0 +1,155 @@
+{
+  "current": {
+    "postal": "10001",
+    "city": null,
+    "city_local": null,
+    "district": null,
+    "district_name": null,
+    "district_name_local": null,
+    "state": null,
+    "state_name": null,
+    "state_name_local": null,
+    "country": "US",
+    "country_name": "United States",
+    "latitude": null,
+    "longitude": null,
+    "timezone": null,
+    "type": "standard",
+    "deep": {
+      "metros": [
+        {
+          "code": "35620",
+          "name": "New York",
+          "type": "metropolitan",
+          "share": 0.125,
+          "residential_share": 0.1,
+          "business_share": null,
+          "other_share": 0.0,
+          "share_percent": 12.5
+        }
+      ]
+    }
+  },
+  "zero": {
+    "postal": "10001",
+    "city": null,
+    "city_local": null,
+    "district": null,
+    "district_name": null,
+    "district_name_local": null,
+    "state": null,
+    "state_name": null,
+    "state_name_local": null,
+    "country": "US",
+    "country_name": "United States",
+    "latitude": null,
+    "longitude": null,
+    "timezone": null,
+    "type": "po_box",
+    "deep": {
+      "metros": [
+        {
+          "code": "35620",
+          "name": "New York",
+          "type": "metropolitan",
+          "share": 0.125,
+          "residential_share": 0.1,
+          "business_share": null,
+          "other_share": 0.0,
+          "share_percent": 0
+        }
+      ]
+    }
+  },
+  "future": {
+    "postal": "10001",
+    "city": null,
+    "city_local": null,
+    "district": null,
+    "district_name": null,
+    "district_name_local": null,
+    "state": null,
+    "state_name": null,
+    "state_name_local": null,
+    "country": "US",
+    "country_name": "United States",
+    "latitude": null,
+    "longitude": null,
+    "timezone": null,
+    "type": "future_custom",
+    "deep": {
+      "metros": [
+        {
+          "code": "35620",
+          "name": "New York",
+          "type": "metropolitan",
+          "share": 0.125,
+          "residential_share": 0.1,
+          "business_share": null,
+          "other_share": 0.0,
+          "share_percent": 100
+        }
+      ]
+    }
+  },
+  "null": {
+    "postal": "10001",
+    "city": null,
+    "city_local": null,
+    "district": null,
+    "district_name": null,
+    "district_name_local": null,
+    "state": null,
+    "state_name": null,
+    "state_name_local": null,
+    "country": "US",
+    "country_name": "United States",
+    "latitude": null,
+    "longitude": null,
+    "timezone": null,
+    "type": null,
+    "deep": {
+      "metros": [
+        {
+          "code": "35620",
+          "name": "New York",
+          "type": "metropolitan",
+          "share": 0.125,
+          "residential_share": 0.1,
+          "business_share": null,
+          "other_share": 0.0,
+          "share_percent": null
+        }
+      ]
+    }
+  },
+  "missing": {
+    "postal": "10001",
+    "city": null,
+    "city_local": null,
+    "district": null,
+    "district_name": null,
+    "district_name_local": null,
+    "state": null,
+    "state_name": null,
+    "state_name_local": null,
+    "country": "US",
+    "country_name": "United States",
+    "latitude": null,
+    "longitude": null,
+    "timezone": null,
+    "deep": {
+      "metros": [
+        {
+          "code": "35620",
+          "name": "New York",
+          "type": "metropolitan",
+          "share": 0.125,
+          "residential_share": 0.1,
+          "business_share": null,
+          "other_share": 0.0
+        }
+      ]
+    }
+  }
+}

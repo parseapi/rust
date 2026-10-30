@@ -256,6 +256,8 @@ pub struct PostalMetro {
 	pub residential_share: Option<f64>,
 	pub business_share: Option<f64>,
 	pub other_share: Option<f64>,
+	/// Percentage of ZIP addresses (0-100). None is unknown or absent.
+	pub share_percent: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -288,6 +290,8 @@ pub struct Postal {
 	pub longitude: Option<f64>,
 	pub timezone: Option<String>,
 	pub deep: Option<PostalDeep>,
+	/// Open ZIP type, including future values. None is unknown or absent.
+	pub r#type: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
