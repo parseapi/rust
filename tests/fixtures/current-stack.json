@@ -1,0 +1,19 @@
+{
+  "domain": "stripe.com",
+  "url": "https://stripe.com/",
+  "checked_at": "2026-10-30T16:12:34.673Z",
+  "cms": [],
+  "servers": [
+    {
+      "technology": "nginx",
+      "name": "nginx",
+      "version": null
+    }
+  ],
+  "frameworks": [],
+  "ecommerce": [],
+  "analytics": [],
+  "chat": [],
+  "payments": [],
+  "hosting": []
+}

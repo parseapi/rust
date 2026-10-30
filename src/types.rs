@@ -257,7 +257,6 @@ pub struct State {
 	pub country_name: Option<String>,
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
-	pub timezone: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub timezones: Vec<String>,
 	pub iso_3166_2: Option<String>,
@@ -301,7 +300,6 @@ pub struct District {
 	pub country_name: Option<String>,
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
-	pub timezone: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub timezones: Vec<String>,
 	pub deep: Option<DistrictDeep>,
@@ -636,9 +634,6 @@ pub struct Stack {
 	pub domain: String,
 	pub url: String,
 	pub checked_at: Option<String>,
-	pub scope: String,
-	pub pages: i64,
-	pub partial: Option<bool>,
 	pub cms: Option<Vec<StackTechnology>>,
 	pub servers: Option<Vec<StackTechnology>>,
 	pub frameworks: Option<Vec<StackTechnology>>,

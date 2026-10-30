@@ -1,4 +1,4 @@
-use parseapi::{Domain, Ip, Stack};
+use parseapi::{District, Domain, Ip, Stack, State};
 use serde_json::{from_value, Value};
 
 #[test]
@@ -16,11 +16,18 @@ fn current_and_frozen_network_contracts_decode() {
     }
     for name in ["stack_success", "stack_unavailable", "stack_empty"] {
         let result: Stack = from_value(fixtures[name].clone()).unwrap();
-        let scope: String = result.scope;
-        let pages: i64 = result.pages;
-        assert!(scope.is_empty() && pages == 0 && result.partial.is_none());
         if name == "stack_unavailable" { assert!(result.cms.is_none() && result.checked_at.is_none()); }
         else { assert!(result.cms.is_some() && result.frameworks.is_some()); }
+    }
+    let state: State = from_value(fixtures["state_current"].clone()).unwrap();
+    assert_eq!(state.timezones, ["America/Los_Angeles"]);
+    let district: District = from_value(fixtures["district_current"].clone()).unwrap();
+    assert_eq!(district.timezones, ["America/New_York"]);
+    for field in [Value::Null, serde_json::json!([])] {
+        let mut body = fixtures["state_current"].clone();
+        body["timezones"] = field;
+        let result: State = from_value(body).unwrap();
+        assert!(result.timezones.is_empty());
     }
     let domain: Domain = from_value(fixtures["domain_unregistered"].clone()).unwrap();
     assert!(domain.available && !domain.deep.unwrap().registration.unwrap().registered);
