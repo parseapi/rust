@@ -414,3 +414,10 @@ Coverage by country and available fields is described at https://parseapi.com/ci
 
 
 Conditional `If-None-Match` reads and GeoJSON currently use HTTP directly. A matching City ETag returns 304 without a body; ordinary billing and rate limits apply. These JSON client methods do not supply conditional-cache handling.
+
+
+## Country response
+
+Country Core contains the everyday reference: `name`, `name_full`, `name_local`, demonym and country codes, continent, region and subregion, currency, calling code, `flag`, language and timezone codes, borders, bloc memberships and `capital` as `{ name, lat, lon }`. Paid Deep adds specialist detail, including population, total area and national statistics. `gdp_usd` and `gdp_per_capita_usd` are current US dollars; `population_growth_percent`, `urban_population_percent` and `internet_users_percent` use a 0–100 percent scale (growth can be negative or exceed 100). GDP per person and these three percentages round once to two decimals in the API response. `elevation_average` is average terrain elevation in meters; `lowest_point.elevation` and `highest_point.elevation` keep their point-specific meaning. Unknown stays null and a known zero stays zero. Country tax is the simple `deep.tax` summary `{ name, rate }`; rate is a national reference percentage.
+
+Read the canonical native member as `name_full`; `full_name` remains a source adapter. Both current and earlier name spellings decode without another request. Historical Deep fields remain readable in earlier responses; they are not added to the current wire result. Capital and tax use `CountryCapital` and `CountryTax` objects. Earlier flat responses remain readable. Read the current capital name at `capital.name` and current tax label at `deep.tax.name`. Legacy flag/name and coordinate/rate members remain adapters, not duplicate current JSON keys.

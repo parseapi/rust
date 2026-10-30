@@ -58,14 +58,25 @@ pub struct Continent {
 	pub emoji: String,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
+#[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct ContinentCountryItem {
-	pub country: String,
-	pub name: String,
-	pub emoji: Option<String>,
-	pub calling_code: Option<String>,
+ pub country: String,
+ pub name: String,
+ pub flag: Option<String>,
+ /// Legacy source adapter for the flag emoji.
+ pub emoji: Option<String>,
+ pub calling_code: Option<String>,
+}
+impl<'de> Deserialize<'de> for ContinentCountryItem {
+ fn deserialize<D: serde::Deserializer<'de>>(decoder: D) -> Result<Self,D::Error> {
+  #[derive(Default,Deserialize)] #[serde(default)]
+  struct Wire { country:String, name:String, flag:Option<String>, calling_code:Option<String> }
+  let mut value=serde_json::Value::deserialize(decoder)?;
+  country_shape_alias(&mut value,"flag","emoji");
+  let wire:Wire=serde_json::from_value(value).map_err(serde::de::Error::custom)?;
+  Ok(Self{country:wire.country,name:wire.name,emoji:wire.flag.clone(),flag:wire.flag,calling_code:wire.calling_code})
+ }
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -86,20 +97,132 @@ pub struct ContinentCountries {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
+pub struct CountryCapital { pub name:Option<String>, pub lat:Option<f64>, pub lon:Option<f64> }
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CountryTax {
+ pub name:Option<String>,
+ /// Standard national reference percentage, not calculated tax due.
+ pub rate:Option<f64>,
+}
+
+fn country_shape_alias(value:&mut serde_json::Value,current:&str,legacy:&str) {
+ if let Some(row)=value.as_object_mut() {
+  if !row.contains_key(current) { if let Some(old)=row.get(legacy).cloned(){row.insert(current.to_owned(),old);} }
+ }
+}
+fn country_capital_shape(value:&mut serde_json::Value) {
+ if let Some(row)=value.as_object_mut() {
+  if row.get("capital").is_some_and(serde_json::Value::is_object){return;}
+  if row.get("capital").is_some_and(serde_json::Value::is_string)||row.contains_key("capital_lat")||row.contains_key("capital_lon") {
+   let name=row.get("capital").cloned().unwrap_or(serde_json::Value::Null);
+   let lat=row.get("capital_lat").cloned().unwrap_or(serde_json::Value::Null);
+   let lon=row.get("capital_lon").cloned().unwrap_or(serde_json::Value::Null);
+   row.insert("capital".into(),serde_json::json!({"name":name,"lat":lat,"lon":lon}));
+  }
+ }
+}
+fn country_tax_shape(value:&mut serde_json::Value) {
+ if let Some(row)=value.as_object_mut() {
+  if row.get("tax").is_some_and(serde_json::Value::is_object){return;}
+  if row.get("tax").is_some_and(serde_json::Value::is_string)||["tax_rate","tax_id_format","tax_id_regex"].iter().any(|key|row.contains_key(*key)) {
+   let name=row.get("tax").cloned().unwrap_or(serde_json::Value::Null);
+   let rate=row.get("tax_rate").cloned().unwrap_or(serde_json::Value::Null);
+   row.insert("tax".into(),serde_json::json!({"name":name,"rate":rate}));
+  }
+ }
+}
+
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
 pub struct Country {
-	pub country: String,
-	pub name: String,
-	pub name_local: Option<String>,
-	pub continent: String,
-	pub currency: Option<String>,
-	pub currency_name: Option<String>,
-	pub currency_symbol: Option<String>,
-	pub calling_code: Option<String>,
-	pub emoji: Option<String>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub languages: Vec<String>,
-	pub deep: Option<CountryDeep>,
-	pub timezones: Option<Vec<String>>,
+ pub country: String,
+ pub name: String,
+ pub name_local: Option<String>,
+ pub continent: String,
+ pub currency: Option<String>,
+ pub currency_name: Option<String>,
+ pub currency_symbol: Option<String>,
+ pub flag: Option<String>,
+ pub calling_code: Option<String>,
+ pub languages: Vec<String>,
+ pub deep: Option<CountryDeep>,
+ pub timezones: Option<Vec<String>>,
+ pub iso3: Option<String>,
+ pub numeric: Option<i32>,
+ pub name_full: Option<String>,
+ pub demonym: Option<String>,
+ pub region: Option<String>,
+ pub subregion: Option<String>,
+ pub capital: Option<CountryCapital>,
+ pub borders: Option<Vec<String>>,
+ pub blocs: Option<Vec<String>>,
+ /// Legacy source adapters; canonical properties are flag, name_full and capital.
+ pub emoji:Option<String>, pub full_name:Option<String>,
+ pub capital_lat:Option<f64>, pub capital_lon:Option<f64>,
+}
+#[derive(Default,Deserialize)]
+#[serde(default)]
+struct CountryWire {
+ country: String,
+ name: String,
+ name_local: Option<String>,
+ continent: String,
+ currency: Option<String>,
+ currency_name: Option<String>,
+ currency_symbol: Option<String>,
+ flag: Option<String>,
+ calling_code: Option<String>,
+ #[serde(default, deserialize_with = "null_default")]
+ languages: Vec<String>,
+ deep: Option<CountryDeep>,
+ timezones: Option<Vec<String>>,
+ iso3: Option<String>,
+ numeric: Option<i32>,
+ name_full: Option<String>,
+ demonym: Option<String>,
+ region: Option<String>,
+ subregion: Option<String>,
+ capital: Option<CountryCapital>,
+ borders: Option<Vec<String>>,
+ blocs: Option<Vec<String>>,
+}
+impl<'de> Deserialize<'de> for Country {
+ fn deserialize<D:serde::Deserializer<'de>>(decoder:D)->Result<Self,D::Error>{
+  let mut value=serde_json::Value::deserialize(decoder)?;
+  country_shape_alias(&mut value,"name_full","full_name");
+  country_shape_alias(&mut value,"flag","emoji");
+  country_capital_shape(&mut value);
+  let wire:CountryWire=serde_json::from_value(value).map_err(serde::de::Error::custom)?;
+  let emoji=wire.flag.clone();let full_name=wire.name_full.clone();
+  let capital_lat=wire.capital.as_ref().and_then(|c|c.lat);let capital_lon=wire.capital.as_ref().and_then(|c|c.lon);
+  Ok(Self{
+   country: wire.country,
+   name: wire.name,
+   name_local: wire.name_local,
+   continent: wire.continent,
+   currency: wire.currency,
+   currency_name: wire.currency_name,
+   currency_symbol: wire.currency_symbol,
+   flag: wire.flag,
+   calling_code: wire.calling_code,
+   languages: wire.languages,
+   deep: wire.deep,
+   timezones: wire.timezones,
+   iso3: wire.iso3,
+   numeric: wire.numeric,
+   name_full: wire.name_full,
+   demonym: wire.demonym,
+   region: wire.region,
+   subregion: wire.subregion,
+   capital: wire.capital,
+   borders: wire.borders,
+   blocs: wire.blocs,
+   emoji,full_name,capital_lat,capital_lon,
+  })
+ }
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1237,8 +1360,7 @@ pub struct NaicsSearch {
 }
 
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
+#[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct CountryDeep {
 	/// Latest available GDP in current US dollars.
@@ -1263,7 +1385,6 @@ pub struct CountryDeep {
 	pub population: Option<i64>,
 	/// Retained for source compatibility. No longer returned or decoded.
 	#[deprecated(note = "Population observation periods are no longer returned")]
-	#[serde(skip)]
 	pub population_period: Option<String>,
 	pub area: Option<f64>,
 	/// Land area in km2.
@@ -1279,8 +1400,8 @@ pub struct CountryDeep {
 	pub tld: Option<String>,
 	pub borders: Option<Vec<String>>,
 	pub blocs: Option<Vec<String>>,
-	/// Levy name, such as VAT, GST or sales tax. Null when unknown or not applicable.
-	pub tax: Option<String>,
+	/// Country tax reference; individual unknown facts remain null.
+	pub tax: Option<CountryTax>,
 	/// Standard country reference rate in percent (19 means 19%). Null is unknown, zero is known zero.
 	pub tax_rate: Option<f64>,
 	/// Tax registration number mask (9 is a digit, A is a letter). Describes format only.
@@ -1299,6 +1420,127 @@ pub struct CountryDeep {
 	pub ioc: Option<String>,
 	pub fifa: Option<String>,
 	pub plate: Option<String>,
+	pub gdp_usd: Option<f64>,
+	pub gdp_per_capita_usd: Option<f64>,
+	pub population_growth_percent: Option<f64>,
+	pub urban_population_percent: Option<f64>,
+	pub internet_users_percent: Option<f64>,
+	/// Average terrain elevation in meters above sea level.
+	pub elevation_average: Option<f64>,
+}
+
+#[derive(Default,Deserialize)]
+#[serde(default)]
+struct CountryDeepWire {
+ gdp: Option<f64>,
+ gdp_per_capita: Option<f64>,
+ population_growth: Option<f64>,
+ urban_population: Option<f64>,
+ internet_users: Option<f64>,
+ iso3: Option<String>,
+ numeric: Option<i32>,
+ full_name: Option<String>,
+ demonym: Option<String>,
+ capital: Option<String>,
+ capital_lat: Option<f64>,
+ capital_lon: Option<f64>,
+ region: Option<String>,
+ subregion: Option<String>,
+ population: Option<i64>,
+ area: Option<f64>,
+ land_area: Option<f64>,
+ water_area: Option<f64>,
+ coastline: Option<f64>,
+ elevation: Option<f64>,
+ lowest_point: Option<CountryElevationPoint>,
+ highest_point: Option<CountryElevationPoint>,
+ tld: Option<String>,
+ borders: Option<Vec<String>>,
+ blocs: Option<Vec<String>>,
+ tax: Option<CountryTax>,
+ tax_id_format: Option<String>,
+ tax_id_regex: Option<String>,
+ week_start: Option<String>,
+ units: Option<String>,
+ driving_side: Option<String>,
+ plugs: Option<Vec<String>>,
+ voltage: Option<i32>,
+ frequency: Option<i32>,
+ emergency: Option<CountryEmergency>,
+ postal_format: Option<String>,
+ postal_regex: Option<String>,
+ ioc: Option<String>,
+ fifa: Option<String>,
+ plate: Option<String>,
+ gdp_usd: Option<f64>,
+ gdp_per_capita_usd: Option<f64>,
+ population_growth_percent: Option<f64>,
+ urban_population_percent: Option<f64>,
+ internet_users_percent: Option<f64>,
+ elevation_average: Option<f64>,
+}
+impl<'de> Deserialize<'de> for CountryDeep {
+ fn deserialize<D:serde::Deserializer<'de>>(decoder:D)->Result<Self,D::Error>{
+  let mut value=serde_json::Value::deserialize(decoder)?;
+  let legacy_tax = !value.get("tax").is_some_and(serde_json::Value::is_object);
+  if !legacy_tax {if let Some(row)=value.as_object_mut(){row.remove("tax_id_format");row.remove("tax_id_regex");}}
+  country_tax_shape(&mut value);
+  let wire:CountryDeepWire=serde_json::from_value(value).map_err(serde::de::Error::custom)?;
+  let tax_rate=wire.tax.as_ref().and_then(|t|t.rate);
+  let tax_id_format=if legacy_tax {wire.tax_id_format.clone()} else {None};
+  let tax_id_regex=if legacy_tax {wire.tax_id_regex.clone()} else {None};
+  #[allow(deprecated)]
+  Ok(Self{
+   gdp: wire.gdp,
+   gdp_per_capita: wire.gdp_per_capita,
+   population_growth: wire.population_growth,
+   urban_population: wire.urban_population,
+   internet_users: wire.internet_users,
+   iso3: wire.iso3,
+   numeric: wire.numeric,
+   full_name: wire.full_name,
+   demonym: wire.demonym,
+   capital: wire.capital,
+   capital_lat: wire.capital_lat,
+   capital_lon: wire.capital_lon,
+   region: wire.region,
+   subregion: wire.subregion,
+   population: wire.population,
+   population_period: None,
+   area: wire.area,
+   land_area: wire.land_area,
+   water_area: wire.water_area,
+   coastline: wire.coastline,
+   elevation: wire.elevation,
+   lowest_point: wire.lowest_point,
+   highest_point: wire.highest_point,
+   tld: wire.tld,
+   borders: wire.borders,
+   blocs: wire.blocs,
+   tax: wire.tax,
+   tax_rate: tax_rate,
+   tax_id_format: tax_id_format,
+   tax_id_regex: tax_id_regex,
+   week_start: wire.week_start,
+   units: wire.units,
+   driving_side: wire.driving_side,
+   plugs: wire.plugs,
+   voltage: wire.voltage,
+   frequency: wire.frequency,
+   emergency: wire.emergency,
+   postal_format: wire.postal_format,
+   postal_regex: wire.postal_regex,
+   ioc: wire.ioc,
+   fifa: wire.fifa,
+   plate: wire.plate,
+   gdp_usd: wire.gdp_usd,
+   gdp_per_capita_usd: wire.gdp_per_capita_usd,
+   population_growth_percent: wire.population_growth_percent,
+   urban_population_percent: wire.urban_population_percent,
+   internet_users_percent: wire.internet_users_percent,
+   elevation_average: wire.elevation_average,
+  })
+ }
 }
 
 #[derive(Debug, Clone, Deserialize)]
