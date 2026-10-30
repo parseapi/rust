@@ -1,0 +1,103 @@
+{
+  "available": {
+    "domain": "example.com",
+    "available": true
+  },
+  "registered": {
+    "domain": "example.com",
+    "available": false
+  },
+  "unknown": {
+    "domain": "example.com",
+    "available": null
+  },
+  "locked": {
+    "domain": "example.com",
+    "available": false,
+    "deep": {}
+  },
+  "unregistered_partial": {
+    "domain": "example.com",
+    "available": true,
+    "deep": {
+      "registration": {
+        "registered": false
+      }
+    }
+  },
+  "registered_unknown_detail": {
+    "domain": "example.com",
+    "available": false,
+    "deep": {
+      "registration": {
+        "registered": true,
+        "created": null,
+        "updated": null,
+        "expires": null,
+        "registrar": null,
+        "status": null,
+        "dnssec": null
+      }
+    }
+  },
+  "registered_false_empty": {
+    "domain": "example.com",
+    "available": false,
+    "deep": {
+      "registration": {
+        "registered": true,
+        "created": null,
+        "updated": null,
+        "expires": null,
+        "registrar": null,
+        "status": [],
+        "dnssec": false
+      }
+    }
+  },
+  "registered_true_status": {
+    "domain": "example.com",
+    "available": false,
+    "deep": {
+      "registration": {
+        "registered": true,
+        "created": "2020-01-02T03:04:05Z",
+        "updated": null,
+        "expires": null,
+        "registrar": "Example registrar",
+        "status": [
+          "client transfer prohibited"
+        ],
+        "dnssec": true
+      }
+    }
+  },
+  "unknown_deep": {
+    "domain": "example.com",
+    "available": null,
+    "deep": {}
+  },
+  "null_registration": {
+    "domain": "example.com",
+    "available": false,
+    "deep": {
+      "registration": null
+    }
+  },
+  "missing_registered": {
+    "domain": "example.com",
+    "available": false,
+    "deep": {
+      "registration": {}
+    }
+  },
+  "null_registered": {
+    "domain": "example.com",
+    "available": false,
+    "deep": {
+      "registration": {
+        "registered": null
+      }
+    }
+  }
+}

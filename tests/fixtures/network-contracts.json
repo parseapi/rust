@@ -1,0 +1,126 @@
+{
+  "stack_success": {
+    "domain": "example.com",
+    "url": "https://example.com/",
+    "checked_at": "2026-10-29T12:00:00Z",
+    "cms": [
+      {
+        "technology": "wordpress",
+        "name": "WordPress",
+        "version": null
+      }
+    ],
+    "servers": [],
+    "frameworks": [],
+    "ecommerce": [],
+    "analytics": [],
+    "chat": [],
+    "payments": [],
+    "hosting": []
+  },
+  "stack_unavailable": {
+    "domain": "example.com",
+    "url": "https://example.com/",
+    "checked_at": null,
+    "cms": null,
+    "servers": null,
+    "frameworks": null,
+    "ecommerce": null,
+    "analytics": null,
+    "chat": null,
+    "payments": null,
+    "hosting": null
+  },
+  "stack_empty": {
+    "domain": "example.com",
+    "url": "https://example.com/",
+    "checked_at": "2026-10-29T12:00:00Z",
+    "cms": [],
+    "servers": [],
+    "frameworks": [],
+    "ecommerce": [],
+    "analytics": [],
+    "chat": [],
+    "payments": [],
+    "hosting": [],
+    "deep": {}
+  },
+  "ip_current": {
+    "ip": "198.51.100.1",
+    "country": "US",
+    "country_name": "United States",
+    "continent": "NA",
+    "asn": "AS64500",
+    "asn_name": "Example network",
+    "deep": {
+      "state": "MN",
+      "city": "Minneapolis",
+      "district": "27053",
+      "district_name": "Hennepin County",
+      "census_division": "West North Central",
+      "census_region": "Midwest",
+      "registry": "arin",
+      "datacenter": false,
+      "relay": false,
+      "tor": false,
+      "vpn": false,
+      "provider": null
+    }
+  },
+  "ip_frozen": {
+    "ip": "198.51.100.1",
+    "country": "US",
+    "country_name": "United States",
+    "continent": "NA",
+    "asn": "AS64500",
+    "asn_name": "Example network",
+    "deep": {
+      "state": "MN",
+      "city": "Minneapolis",
+      "registry": "arin",
+      "datacenter": false,
+      "relay": false,
+      "tor": false,
+      "vpn": false,
+      "provider": null
+    }
+  },
+  "ip_locked": {
+    "ip": "198.51.100.1",
+    "country": "US",
+    "country_name": "United States",
+    "continent": "NA",
+    "asn": "AS64500",
+    "asn_name": "Example network",
+    "deep": {}
+  },
+  "domain_registered": {
+    "domain": "example.com",
+    "available": false,
+    "deep": {
+      "registration": {
+        "registered": true,
+        "created": null,
+        "updated": null,
+        "expires": null,
+        "registrar": null,
+        "status": [],
+        "dnssec": false
+      }
+    }
+  },
+  "domain_unregistered": {
+    "domain": "example.com",
+    "available": true,
+    "deep": {
+      "registration": {
+        "registered": false
+      }
+    }
+  },
+  "domain_unknown": {
+    "domain": "example.com",
+    "available": null,
+    "deep": {}
+  }
+}

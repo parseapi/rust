@@ -25,6 +25,11 @@ pub struct IpDeep {
 	pub tor: Option<bool>,
 	pub vpn: Option<bool>,
 	pub provider: Option<String>,
+	/// Present only when supported. District is qualified by the response country.
+	pub district: Option<String>,
+	pub district_name: Option<String>,
+	pub census_division: Option<String>,
+	pub census_region: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

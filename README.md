@@ -301,6 +301,23 @@ Leading zeros are preserved. Only ASCII spaces, tabs, CR, LF and hyphens are
 removed; raw input is limited to 64 characters. Invalid prefixes are rejected
 before dispatch, accepted input is forwarded unchanged. Never send a full card number.
 
+## Domain results with unknown availability
+
+Use `domain_result` when deciding whether a domain is registered.
+
+```rust
+let result = parse.domain_result("example.com", DomainOptions::default().deep(true)).await?;
+match result.available {
+    Some(true) => println!("Unregistered"),
+    Some(false) => println!("Registered"),
+    None => println!("Registration could not be determined"),
+}
+```
+
+This makes one ordinary Domain lookup with the same options, authentication and retry policy. Missing or null registration detail stays `None`. `Some(false)` for DNSSEC is a known negative, and `Some(vec![])` for status is a known empty list.
+
+The existing `domain` method and `Domain` model keep their published interface. That older model has a boolean `available` and cannot decode a null availability result. Use `domain_result` for its nullable model.
+
 ## Stack
 
 ```rust

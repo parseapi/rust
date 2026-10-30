@@ -11,8 +11,10 @@
 //! <https://parseapi.com>
 
 mod types;
+mod domain_result;
 
 pub use types::*;
+pub use domain_result::{DomainResult, DomainResultDeep, DomainRegistrationResult};
 
 use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
 use serde::de::DeserializeOwned;

@@ -1,0 +1,14 @@
+{
+  "timezone": "America/Havana",
+  "name": null,
+  "abbreviation": "CDT",
+  "offset": "-04:00",
+  "offset_minutes": -240,
+  "dst": true,
+  "next_dst": {
+    "at": "2027-11-07T05:00:00.000Z",
+    "dst": false,
+    "offset": "-05:00",
+    "abbreviation": "Cuba Time"
+  }
+}
