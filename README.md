@@ -303,10 +303,10 @@ before dispatch, accepted input is forwarded unchanged. Never send a full card n
 
 ## Domain results with unknown availability
 
-Use `domain_result` when deciding whether a domain is registered.
+Use `domain` when deciding whether a domain is registered.
 
 ```rust
-let result = parse.domain_result("example.com", DomainOptions::default().deep(true)).await?;
+let result = parse.domain("example.com", DomainOptions::default().deep(true)).await?;
 match result.available {
     Some(true) => println!("Unregistered"),
     Some(false) => println!("Registered"),
@@ -314,9 +314,9 @@ match result.available {
 }
 ```
 
-This makes one ordinary Domain lookup with the same options, authentication and retry policy. Missing or null registration detail stays `None`. `Some(false)` for DNSSEC is a known negative, and `Some(vec![])` for status is a known empty list.
+This makes one ordinary Domain lookup with the same options, authentication and retry policy. Missing or null DNSSEC stays `None`. `Some(false)` is a known unsigned observation. Registration status retains the SDK's existing list decoding.
 
-The existing `domain` method and `Domain` model keep their published interface. That older model has a boolean `available` and cannot decode a null availability result. Use `domain_result` for its nullable model.
+The ordinary `Domain` model uses `Option<bool>` for availability and DNSSEC. The existing `domain_result` method and model remain available.
 
 ## Stack
 

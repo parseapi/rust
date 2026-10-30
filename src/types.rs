@@ -656,7 +656,8 @@ pub struct DomainRegistration {
 	pub registrar: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub status: Vec<String>,
-	pub dnssec: bool,
+	/// None means signing evidence is unknown.
+	pub dnssec: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -671,7 +672,8 @@ pub struct DomainDeep {
 #[non_exhaustive]
 pub struct Domain {
 	pub domain: String,
-	pub available: bool,
+	/// Some(true) means unregistered, Some(false) registered, None unknown.
+	pub available: Option<bool>,
 	pub deep: Option<DomainDeep>,
 }
 

@@ -265,9 +265,9 @@ async fn main() {
 			.unwrap_or(Some("expected invalid".into()))
 	});
 	s.ok("domain", parse.domain("gmail.com", None).await, |r| {
-		(!r.available)
+		(r.available == Some(false))
 			.then_some(None)
-			.unwrap_or(Some("gmail available?".into()))
+			.unwrap_or(Some("gmail registration is unknown or unregistered".into()))
 	});
 	s.ok("asn", parse.asn("AS13335").await, |r| {
 		(r.asn == 13335)

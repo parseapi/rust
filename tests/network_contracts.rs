@@ -30,5 +30,6 @@ fn current_and_frozen_network_contracts_decode() {
         assert!(result.timezones.is_empty());
     }
     let domain: Domain = from_value(fixtures["domain_unregistered"].clone()).unwrap();
-    assert!(domain.available && !domain.deep.unwrap().registration.unwrap().registered);
+    assert_eq!(domain.available, Some(true));
+    assert!(!domain.deep.unwrap().registration.unwrap().registered);
 }
