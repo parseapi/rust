@@ -32,8 +32,8 @@
   "blocs": [],
   "capital": {
     "name": null,
-    "lat": null,
-    "lon": null
+    "latitude": null,
+    "longitude": null
   },
   "deep": {
     "population": 0,

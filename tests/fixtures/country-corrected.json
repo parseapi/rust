@@ -59,8 +59,8 @@
   ],
   "capital": {
     "name": "Washington, D.C.",
-    "lat": 38.89,
-    "lon": -77.05
+    "latitude": 38.89,
+    "longitude": -77.05
   },
   "deep": {
     "population": 340110988,

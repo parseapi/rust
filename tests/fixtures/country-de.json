@@ -44,8 +44,8 @@
   ],
   "capital": {
     "name": "Berlin",
-    "lat": 52.52,
-    "lon": 13.4
+    "latitude": 52.52,
+    "longitude": 13.4
   },
   "deep": {
     "population": 83516593,

@@ -97,7 +97,7 @@ pub struct ContinentCountries {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct CountryCapital { pub name:Option<String>, pub lat:Option<f64>, pub lon:Option<f64> }
+pub struct CountryCapital { pub name:Option<String>, pub latitude:Option<f64>, pub longitude:Option<f64> }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
@@ -115,12 +115,14 @@ fn country_shape_alias(value:&mut serde_json::Value,current:&str,legacy:&str) {
 }
 fn country_capital_shape(value:&mut serde_json::Value) {
  if let Some(row)=value.as_object_mut() {
-  if row.get("capital").is_some_and(serde_json::Value::is_object){return;}
+  if let Some(capital)=row.get_mut("capital") {
+   if capital.is_object() { country_shape_alias(capital,"latitude","lat"); country_shape_alias(capital,"longitude","lon"); return; }
+  }
   if row.get("capital").is_some_and(serde_json::Value::is_string)||row.contains_key("capital_lat")||row.contains_key("capital_lon") {
    let name=row.get("capital").cloned().unwrap_or(serde_json::Value::Null);
    let lat=row.get("capital_lat").cloned().unwrap_or(serde_json::Value::Null);
    let lon=row.get("capital_lon").cloned().unwrap_or(serde_json::Value::Null);
-   row.insert("capital".into(),serde_json::json!({"name":name,"lat":lat,"lon":lon}));
+   row.insert("capital".into(),serde_json::json!({"name":name,"latitude":lat,"longitude":lon}));
   }
  }
 }
@@ -201,7 +203,7 @@ impl<'de> Deserialize<'de> for Country {
   country_capital_shape(&mut value);
   let wire:CountryWire=serde_json::from_value(value).map_err(serde::de::Error::custom)?;
   let emoji=wire.flag.clone();let full_name=wire.name_full.clone();
-  let capital_lat=wire.capital.as_ref().and_then(|c|c.lat);let capital_lon=wire.capital.as_ref().and_then(|c|c.lon);
+  let capital_lat=wire.capital.as_ref().and_then(|c|c.latitude);let capital_lon=wire.capital.as_ref().and_then(|c|c.longitude);
   Ok(Self{
    country: wire.country,
    name: wire.name,
@@ -253,8 +255,8 @@ pub struct CountryStates {
 #[non_exhaustive]
 pub struct StateCapital {
 	pub name: Option<String>,
-	pub lat: Option<f64>,
-	pub lon: Option<f64>,
+	pub latitude: Option<f64>,
+	pub longitude: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -302,6 +304,7 @@ impl<'de> Deserialize<'de> for State {
   let mut value = serde_json::Value::deserialize(decoder)?;
   country_shape_alias(&mut value, "iso_subdivision", "iso");
   country_shape_alias(&mut value, "iso_subdivision", "iso_3166_2");
+  if let Some(capital)=value.get_mut("capital") { country_shape_alias(capital,"latitude","lat"); country_shape_alias(capital,"longitude","lon"); }
   let wire: Wire = serde_json::from_value(value).map_err(serde::de::Error::custom)?;
   Ok(Self { state: wire.state, name: wire.name, name_local: wire.name_local, kind: wire.kind, country: wire.country, country_name: wire.country_name, latitude: wire.latitude, longitude: wire.longitude, timezones: wire.timezones, iso_3166_2:wire.iso.clone(),iso: wire.iso, fips: wire.fips, area_codes: wire.area_codes, capital: wire.capital, deep: wire.deep })
  }

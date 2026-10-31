@@ -430,3 +430,9 @@ compatibility through these wire mappings:
 
 Response decoders accept the current and earlier wire spellings. An explicit
 current null keeps its meaning when an earlier spelling also appears.
+
+## Capital coordinate migration
+
+Country and State capital coordinates use `latitude` and `longitude`. Update
+`capital.lat` and `capital.lon` reads to `capital.latitude` and
+`capital.longitude` when adopting this release.
