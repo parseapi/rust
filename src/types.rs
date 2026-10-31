@@ -2817,3 +2817,35 @@ pub struct CompanyPhoneReference {
 pub struct CompanyEmailReference {
 	pub address: String,
 }
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct Currency {
+	pub currency: String,
+	pub iso_numeric: Option<i32>,
+	pub name: String,
+	pub name_plural: Option<String>,
+	pub symbol: Option<String>,
+	pub symbol_native: Option<String>,
+	pub digits: Option<i32>,
+	pub countries: Option<Vec<String>>,
+	pub deep: Option<CurrencyDeep>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CurrencyRate {
+	pub base: String,
+	pub quote: String,
+	pub rate: f64,
+	pub date: String,
+	pub amount: Option<f64>,
+	pub converted: Option<f64>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct CurrencyDeep {}

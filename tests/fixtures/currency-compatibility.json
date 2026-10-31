@@ -1,0 +1,66 @@
+{
+  "profile": {
+    "currency": "JPY",
+    "name": "Japanese Yen",
+    "symbol": null,
+    "symbol_native": null,
+    "digits": 0,
+    "deep": {},
+    "iso_numeric": 392,
+    "name_plural": null,
+    "countries": [
+      "JP"
+    ]
+  },
+  "locked": {
+    "currency": "USD",
+    "name": "US Dollar",
+    "symbol": "$",
+    "symbol_native": "$",
+    "digits": 2,
+    "deep": {},
+    "iso_numeric": null,
+    "name_plural": null,
+    "countries": null
+  },
+  "nulls": {
+    "currency": "USD",
+    "name": "US Dollar",
+    "symbol": null,
+    "symbol_native": null,
+    "digits": null,
+    "deep": {},
+    "iso_numeric": null,
+    "name_plural": null,
+    "countries": null
+  },
+  "rate": {
+    "base": "USD",
+    "quote": "JPY",
+    "rate": 158.33550065,
+    "date": "2026-10-01",
+    "amount": 1.005,
+    "converted": 1,
+    "source": "fixture"
+  },
+  "zero": {
+    "base": "USD",
+    "quote": "USD",
+    "rate": 0,
+    "date": "2026-10-01",
+    "amount": 0,
+    "converted": 0
+  },
+  "core": {
+    "currency": "JPY",
+    "name": "Japanese Yen",
+    "symbol": null,
+    "symbol_native": null,
+    "digits": 0,
+    "iso_numeric": 392,
+    "name_plural": null,
+    "countries": [
+      "JP"
+    ]
+  }
+}

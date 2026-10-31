@@ -2955,3 +2955,76 @@ pub async fn city_ancestors(&self,id:&str,opts:impl Into<Option<CityAncestorsOpt
 /// Great-circle km/miles between stored centers. Unknown coordinates remain None.
     pub async fn city_distance(&self,from:&str,to:&str)->Result<CityDistance> { self.get(&format!("/city/id/{}/distance/{}",seg(from),seg(to)),Query::new(),None).await }
 }
+
+
+/// Configures `currency_rate`. Omitted fields use API defaults.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CurrencyRateOptions {
+	pub date: Option<String>,
+	pub amount: Option<f64>,
+}
+
+/// Options for `currency`. Deep reveals the same question in more detail.
+#[derive(Debug, Clone, Default)]
+#[non_exhaustive]
+pub struct CurrencyOptions { pub deep: bool,
+	/// Display language for this request.
+	pub lang: Option<String>,
+}
+
+impl CurrencyRateOptions {
+	/// Sets the `date` query option.
+	pub fn date(mut self, value: impl Into<String>) -> Self {
+		self.date = Some(value.into());
+		self
+	}
+	/// Sets the `amount` query option.
+	pub fn amount(mut self, value: f64) -> Self {
+		self.amount = Some(value);
+		self
+	}
+}
+
+impl CurrencyOptions {
+	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self } pub fn deep(mut self, value: bool) -> Self { self.deep = value; self } }
+
+impl Client {
+	/// Calls `/currency/{code}`.
+	pub async fn currency(&self, code: &str) -> Result<Currency> {
+		self.currency_with_options(code, None).await
+	}
+
+	/// Calls the same operation with optional detail.
+	pub async fn currency_with_options(&self, code: &str, opts: impl Into<Option<CurrencyOptions>>) -> Result<Currency> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "lang", opts.lang);
+		push_deep(&mut query, opts.deep);
+		self.get(&format!("/currency/{}", seg(code)), query, None)
+			.await
+	}
+
+	/// Calls `/currency/{base}/{quote}`.
+	pub async fn currency_rate(
+		&self,
+		base: &str,
+		quote: &str,
+		opts: impl Into<Option<CurrencyRateOptions>>,
+	) -> Result<CurrencyRate> {
+		let opts = opts.into().unwrap_or_default();
+		let mut query = Query::new();
+		push(&mut query, "date", opts.date);
+		push(
+			&mut query,
+			"amount",
+			opts.amount.map(|value| value.to_string()),
+		);
+		self.get(
+			&format!("/currency/{}/{}", seg(base), seg(quote)),
+			query,
+			None,
+		)
+		.await
+	}
+}
