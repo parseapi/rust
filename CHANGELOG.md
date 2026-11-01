@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.4 — 2026-11-01
+
+- Correct documentation to match existing Deep access, complete Core reference data and retired national Company behavior.
+- Preserve all business response fields, models, methods, dependencies and access.
+
 ## 2.4.3 — 2026-11-01
 
 - Read existing Point electoral detail without losing leading-zero district codes or nullable metadata.
