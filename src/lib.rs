@@ -923,7 +923,7 @@ impl HolidayOptions {
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct PointOptions {
-	/// Add terrain and compact nearest-city context on every plan. The timezone ID stays in core.
+	/// Add terrain and compact nearest-city context on paid plans or with retained Deep access. The timezone ID stays in core.
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
@@ -931,7 +931,7 @@ pub struct PointOptions {
 
 impl PointOptions {
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
-	/// Add terrain and compact nearest-city context on every plan. The timezone ID stays in core.
+	/// Add terrain and compact nearest-city context on paid plans or with retained Deep access. The timezone ID stays in core.
 	pub fn deep(mut self, value: bool) -> Self {
 		self.deep = value;
 		self
@@ -2271,7 +2271,7 @@ impl Client {
 	}
 
 	/// Resolve the country, state, district and timezone at coordinates. Deep adds terrain and compact
-	/// nearest-city context on every plan. The timezone ID stays in core. The nearest city is null
+	/// nearest-city context on paid plans or with retained Deep access. The timezone ID stays in core. The nearest city is null
 	/// when none is within 200 km.
 	pub async fn point(
 		&self,

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.3 — 2026-11-01
+
+- Read existing Point electoral detail without losing leading-zero district codes or nullable metadata.
+- Read existing metric Point elevation, including known zero and negative values.
+- Preserve every released method/model member, Card behavior, Postal and Weather compatibility readers, and API contract selection.
+- This compatible public addition uses Billy's finite third-digit release exception; feature classification is retained.
+
 ## 2.4.2 — 2026-10-31
 
 - Read compact Postal property-tax estimates without requiring District metadata; retain optional earlier currency and period values.

@@ -1018,11 +1018,24 @@ pub struct Elevation {
 	pub resolution: Option<f64>,
 }
 
+/// The supported electoral district at the requested point.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[non_exhaustive]
+pub struct PointElectoral {
+	/// District code string; preserves leading zeros.
+	pub code: String,
+	pub name: Option<String>,
+	pub congress: Option<i32>,
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
 pub struct PointDeep {
 	pub city: Option<PointCity>,
+	pub elevation: Option<f64>,
+	/// None for unsupported points and older responses.
+	pub electoral: Option<PointElectoral>,
 	pub elevation_ft: Option<f64>,
 	pub resolution: Option<f64>,
 }
