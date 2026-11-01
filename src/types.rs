@@ -1096,15 +1096,42 @@ pub struct WeatherHour {
 	pub wind_gust_mph: Option<f64>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
+#[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct WeatherMinute {
 	pub at: Option<String>,
-	pub precipitation: Option<f64>,
-	pub precipitation_in: Option<f64>,
-	#[serde(rename = "type")]
+	pub precipitation_rate: Option<f64>,
+	pub precipitation_rate_in: Option<f64>,
 	pub precipitation_type: Option<String>,
+}
+
+impl<'de> Deserialize<'de> for WeatherMinute {
+	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+		// Missing canonical keys can read older payloads; explicit null stays unknown.
+		fn present_rate<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Option<Option<f64>>, D::Error> {
+			Option::<f64>::deserialize(deserializer).map(Some)
+		}
+		#[derive(Default, Deserialize)]
+		#[serde(default)]
+		struct Wire {
+			at: Option<String>,
+			#[serde(deserialize_with = "present_rate")]
+			precipitation_rate: Option<Option<f64>>,
+			#[serde(deserialize_with = "present_rate")]
+			precipitation_rate_in: Option<Option<f64>>,
+			precipitation: Option<f64>,
+			precipitation_in: Option<f64>,
+			#[serde(rename = "type")]
+			precipitation_type: Option<String>,
+		}
+		let wire = Wire::deserialize(deserializer)?;
+		Ok(Self {
+			at: wire.at,
+			precipitation_rate: wire.precipitation_rate.unwrap_or(wire.precipitation),
+			precipitation_rate_in: wire.precipitation_rate_in.unwrap_or(wire.precipitation_in),
+			precipitation_type: wire.precipitation_type,
+		})
+	}
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1131,16 +1158,16 @@ pub struct WeatherDay {
 #[serde(default)]
 #[non_exhaustive]
 pub struct WeatherDeep {
-	#[serde(default, deserialize_with = "null_default")]
-	pub forecast: Vec<WeatherForecastPeriod>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub alerts: Vec<WeatherAlert>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub minutes: Vec<WeatherMinute>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub hours: Vec<WeatherHour>,
-	#[serde(default, deserialize_with = "null_default")]
-	pub days: Vec<WeatherDay>,
+	/// None means unavailable or absent; Some(empty) is a known empty result.
+	pub forecast: Option<Vec<WeatherForecastPeriod>>,
+	/// None means unavailable or absent; Some(empty) is a known empty result.
+	pub alerts: Option<Vec<WeatherAlert>>,
+	/// None means unavailable or absent; Some(empty) is a known empty result.
+	pub minutes: Option<Vec<WeatherMinute>>,
+	/// None means unavailable or absent; Some(empty) is a known empty result.
+	pub hours: Option<Vec<WeatherHour>>,
+	/// None means unavailable or absent; Some(empty) is a known empty result.
+	pub days: Option<Vec<WeatherDay>>,
 	pub air: Option<WeatherAir>,
 	pub history: Option<WeatherHistory>,
 	pub current: Option<WeatherCurrentDeep>,
@@ -1742,7 +1769,7 @@ pub struct PostalDeep {
 	/// Special component of the ZIP reference rate, in percent. Null when unknown.
 	pub tax_rate_special: Option<f64>,
 	/// Median annual property tax payable on owner-occupied homes in this statistical area. Null when unsupported, missing or censored.
-	pub property_tax: Option<PropertyTax>,
+	pub property_tax: Option<PostalPropertyTax>,
 }
 
 
@@ -1978,6 +2005,20 @@ pub struct NaicsSearchResult {
 	/// Search evidence, absent on direct lookup and older responses.
 	pub r#match: Option<NaicsMatch>,
 	pub deep: Option<NaicsDeep>,
+}
+
+/// Compact Postal property-tax estimate; currency is supplied by Postal Deep.
+#[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
+#[non_exhaustive]
+pub struct PostalPropertyTax {
+	/// Median annual tax payable, not a rate or an individual property bill.
+	pub annual_median: f64,
+	/// Legacy richer responses only; absent in the current compact record.
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub currency: Option<String>,
+	/// Legacy reporting period; missing values remain unknown.
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub period: Option<String>,
 }
 
 /// Property-tax estimate for an area, not a specific property.

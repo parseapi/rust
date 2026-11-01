@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.4.2 — 2026-10-31
+
+- Read compact Postal property-tax estimates without requiring District metadata; retain optional earlier currency and period values.
+- Use Weather minute precipitation_rate / precipitation_rate_in names for rates, leaving accumulated History precipitation unchanged.
+- Accept earlier Weather minute wire names only when the canonical key is absent; canonical null remains unknown.
+- Preserve unavailable Weather collections as None and known empty collections as Some(empty).
+- The Postal property-tax type and Weather minute member changes can require source changes in existing typed consumers. Weather collection members now use Option<Vec<_>>.
+
 ## 2.3.5 — 2026-10-27
 
 - Add optional Country Deep fields: gdp, gdp_per_capita, population_growth, urban_population and internet_users. GDP uses US dollars; growth and population shares use percent. Missing values remain null.

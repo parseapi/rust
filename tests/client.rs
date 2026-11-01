@@ -696,7 +696,7 @@ fn complete_response_fields_preserve_unknown_values() {
 	assert!(company.deep.is_some());
 	let weather:Weather=serde_json::from_str(r#"{"deep":{"hours":[{"feels_like":22,"wind_gust":4}],"days":[{"sunrise":"06:00"}],"air":{"aqi":10},"history":{"date":"2026-09-01","high":24}}}"#).unwrap();
 	let deep = weather.deep.unwrap();
-	assert_eq!(deep.hours[0].feels_like, Some(22.0));
+	assert_eq!(deep.hours.as_ref().unwrap()[0].feels_like, Some(22.0));
 	assert_eq!(deep.air.unwrap().aqi, Some(10.0));
 	assert_eq!(deep.history.unwrap().high, Some(24.0));
 	let zone:Timezone=serde_json::from_str(r#"{"timezone":"America/New_York","to":{"timezone":"Asia/Tokyo","at":"2026-09-06T04:00:00+09:00"}}"#).unwrap();

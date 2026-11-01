@@ -12,8 +12,8 @@ fn location_statistics_preserve_unknown_and_zero() {
  assert_eq!(place.population_period.as_deref(), None);
  let tax = place.property_tax.unwrap();
  assert_eq!(tax.annual_median, 0.0);
- assert_eq!(tax.currency, "USD");
- assert_eq!(tax.period, "2020-2024");
+ assert_eq!(tax.currency.as_deref(), Some("USD"));
+ assert_eq!(tax.period.as_deref(), Some("2020-2024"));
  let district: DistrictDeep = serde_json::from_str(body).unwrap();
  assert_eq!(district.property_tax.unwrap().period, "2020-2024");
  for body in [r#"{"q":"a","addresses":[]}"#, r#"{"q":"a","addresses":[],"reason":null}"#] {
