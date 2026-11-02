@@ -3,7 +3,6 @@ use parseapi::*;
 const CORE: &str = r#"{"id":"co_222222222222","name":"Example","country":"US","website":null,"listings":[{"exchange":"Future Exchange","symbol":"A/B"}],"address":null}"#;
 const PROFILE: &str = r#"{"id":"co_222222222222","name":"Example","country":"US","website":null,"listings":[{"exchange":"Future Exchange","symbol":"A/B"}],"address":null,"deep":{"legal_name":"Example Inc.","aliases":[],"jurisdiction":{"country":"US","state":null},"status":"future-status","websites":[{"domain":"example.com","url":null}],"identifiers":[{"type":"registration","authority":"future:registry","value":"0000123"}],"incorporated":null,"addresses":[{"type":"future-role","street":null,"city":"Example City","state":null,"postal":null,"country":"US"}],"industries":[{"type":"future-scheme","code":"001","name":null}],"parent":null,"description":null,"logo":null,"socials":[],"founded":{"value":"2006","precision":"year"},"sources":[{"type":"website","url":"https://example.com/","fields":["founded"],"observed_at":"2026-09-23T17:35:06.956Z","updated_at":null,"future":true}],"future":true},"future":true}"#;
 const SEARCH: &str = r#"{"companies":[{"id":"co_222222222222","name":"Example","country":"US","website":null,"listings":[{"exchange":"Future Exchange","symbol":"A/B"}],"address":null,"deep":{"legal_name":"Example Inc.","aliases":[],"jurisdiction":{"country":"US","state":null},"status":"future-status","websites":[{"domain":"example.com","url":null}],"identifiers":[{"type":"registration","authority":"future:registry","value":"0000123"}],"incorporated":null,"addresses":[{"type":"future-role","street":null,"city":"Example City","state":null,"postal":null,"country":"US"}],"industries":[{"type":"future-scheme","code":"001","name":null}],"parent":null,"description":null,"logo":null,"socials":[],"founded":{"value":"2006","precision":"year"},"sources":[{"type":"website","url":"https://example.com/","fields":["founded"],"observed_at":"2026-09-23T17:35:06.956Z","updated_at":null,"future":true}],"future":true},"future":true,"match":{"field":"future-field","value":"0000123","type":"future-scheme","authority":null,"exchange":null,"future":true}}],"next":"opaque+/="}"#;
-const COVERAGE: &str = r#"{"scope":"sample","label":"Company directory","description":"Edition profiles","snapshot_at":"2026-09-23T17:35:06.956Z","companies":0,"countries":[],"with_website":0,"with_listings":0,"with_address":0,"future":true}"#;
 
 #[test]
 fn directory_fields_and_open_codes() {
@@ -30,9 +29,6 @@ fn directory_fields_and_open_codes() {
 			.as_deref(),
 		Some("Example Inc.")
 	);
-	let coverage: CompanyCoverage = serde_json::from_str(COVERAGE).unwrap();
-	assert_eq!(coverage.companies, 0);
-	assert!(coverage.countries.is_empty());
 }
 
 #[test]

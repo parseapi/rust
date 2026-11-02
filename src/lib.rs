@@ -2458,11 +2458,6 @@ impl Client {
 		self.get("/company", query, None).await
 	}
 
-	/// Edition counts, not complete country or worldwide coverage.
-	pub async fn company_coverage(&self) -> Result<CompanyCoverage> {
-		self.get("/company/directory/coverage", Query::new(), None)
-			.await
-	}
 }
 
 #[cfg(test)]

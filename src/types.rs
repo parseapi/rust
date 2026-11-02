@@ -2224,6 +2224,8 @@ pub struct CompanySocialProfile {
 pub struct CompanyPhoneNumber {
  pub number: String,
  pub r#type: Option<String>,
+ pub country: Option<String>,
+ pub e164: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -2321,22 +2323,6 @@ pub struct CompanySearch {
 	pub next: Option<String>,
 }
 
-/// Counts for this directory edition, not complete country or worldwide coverage.
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct CompanyCoverage {
-	pub scope: String,
-	pub label: String,
-	pub description: String,
-	pub snapshot_at: String,
-	pub companies: u64,
-	#[serde(default, deserialize_with = "null_default")]
-	pub countries: Vec<String>,
-	pub with_website: u64,
-	pub with_listings: u64,
-	pub with_address: u64,
-}
 
 /// Source wall-time resolution. Missing observations remain unknown.
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -2851,29 +2837,6 @@ pub struct CityDistance {
 #[non_exhaustive]
 pub struct CityMatch { pub r#type:String, pub source:String, pub value:String, pub language:Option<String>, pub edit_distance:Option<u8> }
 
-
-/// Minimal related records returned in Company Core.
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct CompanyIndustryReference {
-	pub r#type: String,
-	pub code: String,
-}
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct CompanyPhoneReference {
-	pub number: String,
-	pub country: Option<String>,
-	pub e164: Option<String>,
-}
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct CompanyEmailReference {
-	pub address: String,
-}
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]

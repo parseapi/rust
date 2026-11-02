@@ -31,11 +31,10 @@ fn actual_handler_representations_keep_published_getters() {
   let time:Time=serde_json::from_str(&read("time")).unwrap();
   let metadata:EmojiMetadata=serde_json::from_str(&read("emoji-metadata")).unwrap();
   let _:EmojiCatalog=serde_json::from_str(&read("emoji-catalog")).unwrap();
-  let coverage:CompanyCoverage=serde_json::from_str(&read("company-coverage")).unwrap();
   let company:CompanyProfile=serde_json::from_str(&read("company-profile")).unwrap();
   let employees=company.deep.unwrap().employees.unwrap();
-  let getters:Vec<String>=vec![zones.timezone_database_version,time.location.unwrap().source,metadata.source_version,coverage.snapshot_at,employees.method.clone()];
-  assert_eq!(getters.len(),5);assert_eq!(employees.method,if profile=="standard" {"reported"} else {""});assert_eq!(employees.count,12);assert!(!employees.approximate);
+  let getters:Vec<String>=vec![zones.timezone_database_version,time.location.unwrap().source,metadata.source_version,employees.method.clone()];
+  assert_eq!(getters.len(),4);assert_eq!(employees.method,if profile=="standard" {"reported"} else {""});assert_eq!(employees.count,12);assert!(!employees.approximate);
   assert!(!metadata.artwork_sources.is_empty());
  }
 }
