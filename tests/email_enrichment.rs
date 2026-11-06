@@ -2,8 +2,8 @@ use parseapi::Email;
 
 #[test]
 fn email_enrichment_preserves_false_null_and_open_codes() {
-    let value: Email = serde_json::from_str(r#"{"email":"jane.doe+news@example.com","valid":true,"free":true,"domain_type":"academic","deep": {"first_name":"Jane","no_reply":false,"tag":"news","mail_provider":"future-provider","deliverable":true,"catchall":false,"status":"future-status","reason":"future_reason"},"future":true}"#).unwrap();
-    let deep = value.deep.as_ref().unwrap();
+    let value: Email = serde_json::from_str(r#"{"email":"jane.doe+news@example.com","valid":true,"free":true,"domain_type":"academic","future":true,"first_name":"Jane","no_reply":false,"tag":"news","mail_provider":"future-provider","deliverable":true,"catchall":false,"status":"future-status","reason":"future_reason"}"#).unwrap();
+    let deep = value.clone();
     assert_eq!(deep.first_name.as_deref(), Some("Jane"));
     assert_eq!(deep.no_reply, Some(false));
     assert_eq!(deep.tag.as_deref(), Some("news"));
@@ -16,9 +16,9 @@ fn email_enrichment_preserves_false_null_and_open_codes() {
 
 #[test]
 fn older_and_locked_email_results_stay_decodable() {
-    for body in [r#"{"email":"a@example.com"}"#, r#"{"email":"a@example.com","deep":{}}"#, r#"{"email":"a@example.com","deep": {"first_name":null,"no_reply":null,"tag":null,"mail_provider":null,"status":null,"reason":null}}"#, r#"{"email":"a@example.com","deep":{"deliverable":false,"catchall":true}}"#] {
+    for body in [r#"{"email":"a@example.com"}"#, r#"{"email":"a@example.com"}"#, r#"{"email":"a@example.com","first_name":null,"no_reply":null,"tag":null,"mail_provider":null,"status":null,"reason":null}"#, r#"{"email":"a@example.com","deliverable":false,"catchall":true}"#] {
         let value: Email = serde_json::from_str(body).unwrap();
-        if let Some(deep) = value.deep {
+        { let deep = value;
             assert!(deep.first_name.is_none() && deep.no_reply.is_none() && deep.tag.is_none() && deep.mail_provider.is_none());
             assert!(deep.status.is_none() && deep.reason.is_none());
         }

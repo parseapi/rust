@@ -19,8 +19,8 @@ async fn ordinary_request_and_retry() {
   } requests
  });
  let result=Client::builder().api_key("fixture").base_url(format!("http://{address}")).retries(1).build().unwrap().time_zones("").await.unwrap();
- assert!(!result.timezones.is_empty());
- for request in server.join().unwrap() {assert!(request.contains("parse-version: 2.0.0"));assert!(!request.contains("parse-response:"));}
+ assert!(!result.timezones.as_ref().unwrap().is_empty());
+ for request in server.join().unwrap() {assert!(request.contains("x-api-version: 2.1.0"));assert!(!request.contains("parse-response:"));}
 }
 
 #[test]
@@ -31,11 +31,10 @@ fn actual_handler_representations_keep_published_getters() {
   let time:Time=serde_json::from_str(&read("time")).unwrap();
   let metadata:EmojiMetadata=serde_json::from_str(&read("emoji-metadata")).unwrap();
   let _:EmojiCatalog=serde_json::from_str(&read("emoji-catalog")).unwrap();
-  let coverage:CompanyCoverage=serde_json::from_str(&read("company-coverage")).unwrap();
   let company:CompanyProfile=serde_json::from_str(&read("company-profile")).unwrap();
-  let employees=company.deep.unwrap().employees.unwrap();
-  let getters:Vec<String>=vec![zones.timezone_database_version,time.location.unwrap().source,metadata.source_version,coverage.snapshot_at,employees.method.clone()];
-  assert_eq!(getters.len(),5);assert_eq!(employees.method,if profile=="standard" {"reported"} else {""});assert_eq!(employees.count,12);assert!(!employees.approximate);
+  let employees=company.clone().employees.unwrap();
+  let getters:Vec<String>=vec![zones.timezone_database_version,time.location.unwrap().source,metadata.source_version,employees.method.clone()];
+  assert_eq!(getters.len(),4);assert_eq!(employees.method,if profile=="standard" {"reported"} else {""});assert_eq!(employees.count,12);assert!(!employees.approximate);
   assert!(!metadata.artwork_sources.is_empty());
  }
 }

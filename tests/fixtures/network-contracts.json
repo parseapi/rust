@@ -42,8 +42,7 @@
     "analytics": [],
     "chat": [],
     "payments": [],
-    "hosting": [],
-    "deep": {}
+    "hosting": []
   },
   "ip_current": {
     "ip": "198.51.100.1",
@@ -52,20 +51,18 @@
     "continent": "NA",
     "asn": "AS64500",
     "asn_name": "Example network",
-    "deep": {
-      "state": "MN",
-      "city": "Minneapolis",
-      "district": "27053",
-      "district_name": "Hennepin County",
-      "census_division": "West North Central",
-      "census_region": "Midwest",
-      "registry": "arin",
-      "datacenter": false,
-      "relay": false,
-      "tor": false,
-      "vpn": false,
-      "provider": null
-    }
+    "state": "MN",
+    "city": "Minneapolis",
+    "district": "27053",
+    "district_name": "Hennepin County",
+    "census_division": "West North Central",
+    "census_region": "Midwest",
+    "registry": "arin",
+    "datacenter": false,
+    "relay": false,
+    "tor": false,
+    "vpn": false,
+    "provider": null
   },
   "ip_frozen": {
     "ip": "198.51.100.1",
@@ -74,16 +71,14 @@
     "continent": "NA",
     "asn": "AS64500",
     "asn_name": "Example network",
-    "deep": {
-      "state": "MN",
-      "city": "Minneapolis",
-      "registry": "arin",
-      "datacenter": false,
-      "relay": false,
-      "tor": false,
-      "vpn": false,
-      "provider": null
-    }
+    "state": "MN",
+    "city": "Minneapolis",
+    "registry": "arin",
+    "datacenter": false,
+    "relay": false,
+    "tor": false,
+    "vpn": false,
+    "provider": null
   },
   "ip_locked": {
     "ip": "198.51.100.1",
@@ -91,37 +86,31 @@
     "country_name": "United States",
     "continent": "NA",
     "asn": "AS64500",
-    "asn_name": "Example network",
-    "deep": {}
+    "asn_name": "Example network"
   },
   "domain_registered": {
     "domain": "example.com",
     "available": false,
-    "deep": {
-      "registration": {
-        "registered": true,
-        "created": null,
-        "updated": null,
-        "expires": null,
-        "registrar": null,
-        "status": [],
-        "dnssec": false
-      }
+    "registration": {
+      "registered": true,
+      "created": null,
+      "updated": null,
+      "expires": null,
+      "registrar": null,
+      "status": [],
+      "dnssec": false
     }
   },
   "domain_unregistered": {
     "domain": "example.com",
     "available": true,
-    "deep": {
-      "registration": {
-        "registered": false
-      }
+    "registration": {
+      "registered": false
     }
   },
   "domain_unknown": {
     "domain": "example.com",
-    "available": null,
-    "deep": {}
+    "available": null
   },
   "district_current": {
     "district": "36061",

@@ -1,6 +1,5 @@
 //! Response types for the ParseAPI public API. Nullable fields are `Option`.
-//! Deep objects follow the triad: `None` when not requested, empty when
-//! requested but locked, populated when unlocked.
+// Optional 2.1 detail belongs to its owning resource. Missing and null remain unknown.
 
 use serde::Deserialize;
 
@@ -17,6 +16,15 @@ where
 #[serde(default)]
 #[non_exhaustive]
 pub struct IpDeep {
+	/// Approximate range location; ASN type is the origin network category.
+	pub state_name: Option<String>,
+	pub postal: Option<String>,
+	pub latitude: Option<f64>,
+	pub longitude: Option<f64>,
+	pub timezone: Option<String>,
+	pub network: Option<String>,
+	pub asn_type: Option<String>,
+	pub proxy: Option<bool>,
 	pub state: Option<String>,
 	pub city: Option<String>,
 	pub registry: Option<String>,
@@ -36,13 +44,32 @@ pub struct IpDeep {
 #[serde(default)]
 #[non_exhaustive]
 pub struct Ip {
+	pub state_name: Option<String>,
+	pub postal: Option<String>,
+	pub latitude: Option<f64>,
+	pub longitude: Option<f64>,
+	pub timezone: Option<String>,
+	pub network: Option<String>,
+	pub asn_type: Option<String>,
+	pub proxy: Option<bool>,
 	pub ip: String,
 	pub country: Option<String>,
 	pub country_name: Option<String>,
 	pub continent: Option<String>,
 	pub asn: Option<String>,
 	pub asn_name: Option<String>,
-	pub deep: Option<IpDeep>,
+	pub state: Option<String>,
+	pub city: Option<String>,
+	pub registry: Option<String>,
+	pub datacenter: Option<bool>,
+	pub relay: Option<bool>,
+	pub tor: Option<bool>,
+	pub vpn: Option<bool>,
+	pub provider: Option<String>,
+	pub district: Option<String>,
+	pub district_name: Option<String>,
+	pub census_division: Option<String>,
+	pub census_region: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -113,19 +140,7 @@ fn country_shape_alias(value:&mut serde_json::Value,current:&str,legacy:&str) {
   if !row.contains_key(current) { if let Some(old)=row.get(legacy).cloned(){row.insert(current.to_owned(),old);} }
  }
 }
-fn country_capital_shape(value:&mut serde_json::Value) {
- if let Some(row)=value.as_object_mut() {
-  if let Some(capital)=row.get_mut("capital") {
-   if capital.is_object() { country_shape_alias(capital,"latitude","lat"); country_shape_alias(capital,"longitude","lon"); return; }
-  }
-  if row.get("capital").is_some_and(serde_json::Value::is_string)||row.contains_key("capital_lat")||row.contains_key("capital_lon") {
-   let name=row.get("capital").cloned().unwrap_or(serde_json::Value::Null);
-   let lat=row.get("capital_lat").cloned().unwrap_or(serde_json::Value::Null);
-   let lon=row.get("capital_lon").cloned().unwrap_or(serde_json::Value::Null);
-   row.insert("capital".into(),serde_json::json!({"name":name,"latitude":lat,"longitude":lon}));
-  }
- }
-}
+
 fn country_tax_shape(value:&mut serde_json::Value) {
  if let Some(row)=value.as_object_mut() {
   if row.get("tax").is_some_and(serde_json::Value::is_object){return;}
@@ -149,11 +164,14 @@ pub struct Country {
  pub currency_symbol: Option<String>,
  pub flag: Option<String>,
  pub calling_code: Option<String>,
+
  pub languages: Vec<String>,
- pub deep: Option<CountryDeep>,
+
  pub timezones: Option<Vec<String>>,
- pub iso3: Option<String>,
- pub numeric: Option<i32>,
+
+pub iso3: Option<String>,
+
+pub numeric: Option<i32>,
  pub name_full: Option<String>,
  pub demonym: Option<String>,
  pub region: Option<String>,
@@ -164,10 +182,49 @@ pub struct Country {
  /// Legacy source adapters; canonical properties are flag, name_full and capital.
  pub emoji:Option<String>, pub full_name:Option<String>,
  pub capital_lat:Option<f64>, pub capital_lon:Option<f64>,
+	pub gdp: Option<f64>,
+	pub gdp_per_capita: Option<f64>,
+	pub population_growth: Option<f64>,
+	pub urban_population: Option<f64>,
+	pub internet_users: Option<f64>,
+	pub population: Option<i64>,
+	pub population_period: Option<String>,
+	pub area: Option<f64>,
+	pub land_area: Option<f64>,
+	pub water_area: Option<f64>,
+	pub coastline: Option<f64>,
+	pub elevation: Option<f64>,
+	pub lowest_point: Option<CountryElevationPoint>,
+	pub highest_point: Option<CountryElevationPoint>,
+	pub tld: Option<String>,
+	pub tax: Option<CountryTax>,
+	pub tax_rate: Option<f64>,
+	pub tax_id_format: Option<String>,
+	pub tax_id_regex: Option<String>,
+	pub week_start: Option<String>,
+	pub units: Option<String>,
+	pub driving_side: Option<String>,
+	pub plugs: Option<Vec<String>>,
+	pub voltage: Option<i32>,
+	pub frequency: Option<i32>,
+	pub emergency: Option<CountryEmergency>,
+	pub postal_format: Option<String>,
+	pub postal_regex: Option<String>,
+	pub ioc: Option<String>,
+	pub fifa: Option<String>,
+	pub plate: Option<String>,
+	pub gdp_usd: Option<f64>,
+	pub gdp_per_capita_usd: Option<f64>,
+	pub population_growth_percent: Option<f64>,
+	pub urban_population_percent: Option<f64>,
+	pub internet_users_percent: Option<f64>,
+	pub elevation_average: Option<f64>,
 }
-#[derive(Default,Deserialize)]
-#[serde(default)]
-struct CountryWire {
+impl<'de> Deserialize<'de> for Country {
+ fn deserialize<D: serde::Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
+  #[derive(Default, Deserialize)]
+  #[serde(default)]
+  struct Wire {
  country: String,
  name: String,
  name_local: Option<String>,
@@ -179,12 +236,12 @@ struct CountryWire {
  calling_code: Option<String>,
  #[serde(default, deserialize_with = "null_default")]
  languages: Vec<String>,
- deep: Option<CountryDeep>,
+
  timezones: Option<Vec<String>>,
  #[serde(rename = "iso_alpha3")]
- iso3: Option<String>,
+iso3: Option<String>,
  #[serde(rename = "iso_numeric")]
- numeric: Option<i32>,
+numeric: Option<i32>,
  name_full: Option<String>,
  demonym: Option<String>,
  region: Option<String>,
@@ -192,42 +249,52 @@ struct CountryWire {
  capital: Option<CountryCapital>,
  borders: Option<Vec<String>>,
  blocs: Option<Vec<String>>,
-}
-impl<'de> Deserialize<'de> for Country {
- fn deserialize<D:serde::Deserializer<'de>>(decoder:D)->Result<Self,D::Error>{
-  let mut value=serde_json::Value::deserialize(decoder)?;
+ /// Legacy source adapters; canonical properties are flag, name_full and capital.
+ emoji:Option<String>, full_name:Option<String>,
+ capital_lat:Option<f64>, capital_lon:Option<f64>,
+	gdp: Option<f64>,
+	gdp_per_capita: Option<f64>,
+	population_growth: Option<f64>,
+	urban_population: Option<f64>,
+	internet_users: Option<f64>,
+	population: Option<i64>,
+	population_period: Option<String>,
+	area: Option<f64>,
+	land_area: Option<f64>,
+	water_area: Option<f64>,
+	coastline: Option<f64>,
+	elevation: Option<f64>,
+	lowest_point: Option<CountryElevationPoint>,
+	highest_point: Option<CountryElevationPoint>,
+	tld: Option<String>,
+	tax: Option<CountryTax>,
+	tax_rate: Option<f64>,
+	tax_id_format: Option<String>,
+	tax_id_regex: Option<String>,
+	week_start: Option<String>,
+	units: Option<String>,
+	driving_side: Option<String>,
+	plugs: Option<Vec<String>>,
+	voltage: Option<i32>,
+	frequency: Option<i32>,
+	emergency: Option<CountryEmergency>,
+	postal_format: Option<String>,
+	postal_regex: Option<String>,
+	ioc: Option<String>,
+	fifa: Option<String>,
+	plate: Option<String>,
+	gdp_usd: Option<f64>,
+	gdp_per_capita_usd: Option<f64>,
+	population_growth_percent: Option<f64>,
+	urban_population_percent: Option<f64>,
+	internet_users_percent: Option<f64>,
+	elevation_average: Option<f64>,
+  }
+  let mut value = serde_json::Value::deserialize(decoder)?;
   country_shape_alias(&mut value,"iso_alpha3","iso3");
   country_shape_alias(&mut value,"iso_numeric","numeric");
-  country_shape_alias(&mut value,"name_full","full_name");
-  country_shape_alias(&mut value,"flag","emoji");
-  country_capital_shape(&mut value);
-  let wire:CountryWire=serde_json::from_value(value).map_err(serde::de::Error::custom)?;
-  let emoji=wire.flag.clone();let full_name=wire.name_full.clone();
-  let capital_lat=wire.capital.as_ref().and_then(|c|c.latitude);let capital_lon=wire.capital.as_ref().and_then(|c|c.longitude);
-  Ok(Self{
-   country: wire.country,
-   name: wire.name,
-   name_local: wire.name_local,
-   continent: wire.continent,
-   currency: wire.currency,
-   currency_name: wire.currency_name,
-   currency_symbol: wire.currency_symbol,
-   flag: wire.flag,
-   calling_code: wire.calling_code,
-   languages: wire.languages,
-   deep: wire.deep,
-   timezones: wire.timezones,
-   iso3: wire.iso3,
-   numeric: wire.numeric,
-   name_full: wire.name_full,
-   demonym: wire.demonym,
-   region: wire.region,
-   subregion: wire.subregion,
-   capital: wire.capital,
-   borders: wire.borders,
-   blocs: wire.blocs,
-   emoji,full_name,capital_lat,capital_lon,
-  })
+  let wire: Wire = serde_json::from_value(value).map_err(serde::de::Error::custom)?;
+  Ok(Self {country: wire.country, name: wire.name, name_local: wire.name_local, continent: wire.continent, currency: wire.currency, currency_name: wire.currency_name, currency_symbol: wire.currency_symbol, flag: wire.flag, calling_code: wire.calling_code, languages: wire.languages, timezones: wire.timezones, iso3: wire.iso3, numeric: wire.numeric, name_full: wire.name_full, demonym: wire.demonym, region: wire.region, subregion: wire.subregion, capital: wire.capital, borders: wire.borders, blocs: wire.blocs, emoji: wire.emoji, full_name: wire.full_name, capital_lat: wire.capital_lat, capital_lon: wire.capital_lon, gdp: wire.gdp, gdp_per_capita: wire.gdp_per_capita, population_growth: wire.population_growth, urban_population: wire.urban_population, internet_users: wire.internet_users, population: wire.population, population_period: wire.population_period, area: wire.area, land_area: wire.land_area, water_area: wire.water_area, coastline: wire.coastline, elevation: wire.elevation, lowest_point: wire.lowest_point, highest_point: wire.highest_point, tld: wire.tld, tax: wire.tax, tax_rate: wire.tax_rate, tax_id_format: wire.tax_id_format, tax_id_regex: wire.tax_id_regex, week_start: wire.week_start, units: wire.units, driving_side: wire.driving_side, plugs: wire.plugs, voltage: wire.voltage, frequency: wire.frequency, emergency: wire.emergency, postal_format: wire.postal_format, postal_regex: wire.postal_regex, ioc: wire.ioc, fifa: wire.fifa, plate: wire.plate, gdp_usd: wire.gdp_usd, gdp_per_capita_usd: wire.gdp_per_capita_usd, population_growth_percent: wire.population_growth_percent, urban_population_percent: wire.urban_population_percent, internet_users_percent: wire.internet_users_percent, elevation_average: wire.elevation_average})
  }
 }
 
@@ -270,13 +337,19 @@ pub struct State {
 	pub country_name: Option<String>,
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
-	pub timezones: Vec<String>,
-	pub iso: Option<String>,
+
+ pub timezones: Vec<String>,
+
+pub iso: Option<String>,
  pub iso_3166_2:Option<String>,
 	pub fips: Option<String>,
 	pub area_codes: Option<Vec<String>>,
 	pub capital: Option<StateCapital>,
-	pub deep: Option<StateDeep>,
+	pub population:Option<i64>,
+	pub population_period:Option<String>,
+	pub area:Option<f64>,
+	pub tax:Option<StateTax>,
+	pub tax_rate:Option<f64>,
 }
 impl<'de> Deserialize<'de> for State {
  fn deserialize<D: serde::Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
@@ -286,29 +359,34 @@ impl<'de> Deserialize<'de> for State {
 	state: String,
 	name: String,
 	name_local: Option<String>,
-	#[serde(rename = "type")]
 	kind: Option<String>,
 	country: String,
 	country_name: Option<String>,
 	latitude: Option<f64>,
 	longitude: Option<f64>,
 	#[serde(default, deserialize_with = "null_default")]
-	timezones: Vec<String>,
+ timezones: Vec<String>,
 	#[serde(rename = "iso_subdivision")]
-	iso: Option<String>,
+iso: Option<String>,
+ iso_3166_2:Option<String>,
 	fips: Option<String>,
 	area_codes: Option<Vec<String>>,
 	capital: Option<StateCapital>,
-	deep: Option<StateDeep>,
+	population:Option<i64>,
+	population_period:Option<String>,
+	area:Option<f64>,
+	tax:Option<StateTax>,
+	tax_rate:Option<f64>,
   }
   let mut value = serde_json::Value::deserialize(decoder)?;
-  country_shape_alias(&mut value, "iso_subdivision", "iso");
-  country_shape_alias(&mut value, "iso_subdivision", "iso_3166_2");
-  if let Some(capital)=value.get_mut("capital") { country_shape_alias(capital,"latitude","lat"); country_shape_alias(capital,"longitude","lon"); }
+  country_shape_alias(&mut value,"iso_subdivision","iso");
+  country_shape_alias(&mut value,"iso_subdivision","iso_3166_2");
   let wire: Wire = serde_json::from_value(value).map_err(serde::de::Error::custom)?;
-  Ok(Self { state: wire.state, name: wire.name, name_local: wire.name_local, kind: wire.kind, country: wire.country, country_name: wire.country_name, latitude: wire.latitude, longitude: wire.longitude, timezones: wire.timezones, iso_3166_2:wire.iso.clone(),iso: wire.iso, fips: wire.fips, area_codes: wire.area_codes, capital: wire.capital, deep: wire.deep })
+  Ok(Self {state: wire.state, name: wire.name, name_local: wire.name_local, kind: wire.kind, country: wire.country, country_name: wire.country_name, latitude: wire.latitude, longitude: wire.longitude, timezones: wire.timezones, iso: wire.iso, iso_3166_2: wire.iso_3166_2, fips: wire.fips, area_codes: wire.area_codes, capital: wire.capital, population: wire.population, population_period: wire.population_period, area: wire.area, tax: wire.tax, tax_rate: wire.tax_rate})
  }
 }
+
+
 
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -319,7 +397,9 @@ pub struct StateDistrictItem {
 	pub name: String,
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
-	pub deep: Option<StateDistrictItemDeep>,
+	pub population: Option<i64>,
+	#[serde(skip)]
+	pub population_period: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -350,7 +430,14 @@ pub struct District {
 	pub longitude: Option<f64>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub timezones: Vec<String>,
-	pub deep: Option<DistrictDeep>,
+	pub population: Option<i64>,
+	#[serde(skip)]
+	pub population_period: Option<String>,
+	pub area: Option<f64>,
+	pub land_area: Option<f64>,
+	pub water_area: Option<f64>,
+	pub seat: Option<String>,
+	pub property_tax: Option<PropertyTax>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -375,10 +462,21 @@ pub struct City {
 	pub timezone: Option<String>,
 	/// Minted parse id (`city_` + 12 chars). Stable pin via `/city/id/{id}`.
 	pub id: String,
-	pub deep: Option<CityDeep>,
+
 	/// Present when hierarchy is requested; missing and null remain unknown.
 	pub grain: Option<String>,
 	pub parent: Option<CityParent>,
+	pub capital_of: Option<String>,
+	pub elevation: Option<f64>,
+	pub elevation_ft: Option<f64>,
+	pub population: Option<i64>,
+	#[serde(skip)]
+	pub population_period: Option<String>,
+	pub population_observed_on: Option<String>,
+	pub population_basis: Option<String>,
+	pub area: Option<f64>,
+	pub land_area: Option<f64>,
+	pub water_area: Option<f64>,
 }
 
 /// A [`City`] plus the distance from the query point.
@@ -430,7 +528,6 @@ pub struct PostalMetro {
 	pub residential_share: Option<f64>,
 	pub business_share: Option<f64>,
 	pub other_share: Option<f64>,
-	/// Percentage of ZIP addresses (0-100). None is unknown or absent.
 	pub share_percent: Option<f64>,
 }
 
@@ -463,9 +560,22 @@ pub struct Postal {
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
 	pub timezone: Option<String>,
-	pub deep: Option<PostalDeep>,
+
 	/// Open ZIP type, including future values. None is unknown or absent.
 	pub r#type: Option<String>,
+	pub elevation: Option<f64>,
+	pub elevation_ft: Option<f64>,
+	pub population: Option<i64>,
+	#[serde(skip)]
+	pub population_period: Option<String>,
+	pub area: Option<f64>,
+	pub land_area: Option<f64>,
+	pub water_area: Option<f64>,
+	pub currency: Option<String>,
+	pub neighbors: Option<Vec<String>>,
+	pub metros: Option<Vec<PostalMetro>>,
+	pub property_tax: Option<PostalPropertyTax>,
+	pub tax: Option<PostalTax>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -478,7 +588,7 @@ pub struct PostalNearbyItem {
 	pub country: String,
 	pub distance: f64,
 	pub distance_mi: f64,
-	pub deep: Option<PostalMetroDeep>,
+	pub metros: Option<Vec<PostalMetro>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -491,7 +601,7 @@ pub struct PostalNearby {
 	pub unit: String,
 	#[serde(default, deserialize_with = "null_default")]
 	pub nearby: Vec<PostalNearbyItem>,
-	pub deep: Option<PostalMetroDeep>,
+	pub metros: Option<Vec<PostalMetro>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -500,7 +610,7 @@ pub struct PostalNearby {
 pub struct PostalDistanceEnd {
 	pub postal: String,
 	pub city: Option<String>,
-	pub deep: Option<PostalMetroDeep>,
+	pub metros: Option<Vec<PostalMetro>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -543,8 +653,16 @@ pub struct Email {
 	pub domain_valid: Option<bool>,
 	pub role: bool,
 	pub disposable: bool,
-	pub deep: Option<EmailDeep>,
+
 	pub didyoumean: Option<String>,
+	pub first_name: Option<String>,
+	pub no_reply: Option<bool>,
+	pub tag: Option<String>,
+	pub mail_provider: Option<String>,
+	pub deliverable: Option<bool>,
+	pub catchall: Option<bool>,
+	pub status: Option<String>,
+	pub reason: Option<String>,
 }
 
 
@@ -613,7 +731,9 @@ pub struct Phone {
 	pub kind: Option<String>,
 	pub national: Option<String>,
 	pub international: Option<String>,
-	pub deep: Option<PhoneDeep>,
+	pub state: Option<String>,
+	pub state_name: Option<String>,
+	pub timezone: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -630,7 +750,9 @@ pub struct Carrier {
 	pub carrier: Option<String>,
 	/// Carrier is a known burner number app. None when carrier is unknown.
 	pub burner: Option<bool>,
-	pub deep: Option<CarrierDeep>,
+	pub city: Option<String>,
+	pub state: Option<String>,
+	pub state_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -655,7 +777,13 @@ pub struct Hlr {
 	pub live: Option<bool>,
 	/// Handset reachable at the last check. None means unconfirmed, never no.
 	pub connected: Option<bool>,
-	pub deep: Option<HlrDeep>,
+	pub roaming: Option<bool>,
+	pub roaming_network: Option<String>,
+	pub roaming_country: Option<String>,
+	pub network: Option<String>,
+	pub original_network: Option<String>,
+	pub mcc: Option<String>,
+	pub mnc: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -690,14 +818,12 @@ pub struct Stack {
 	pub chat: Option<Vec<StackTechnology>>,
 	pub payments: Option<Vec<StackTechnology>>,
 	pub hosting: Option<Vec<StackTechnology>>,
-	pub deep: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
 pub struct DomainRegistration {
-	pub registered: bool,
 	pub created: Option<String>,
 	pub updated: Option<String>,
 	pub expires: Option<String>,
@@ -722,7 +848,7 @@ pub struct Domain {
 	pub domain: String,
 	/// Some(true) means unregistered, Some(false) registered, None unknown.
 	pub available: Option<bool>,
-	pub deep: Option<DomainDeep>,
+	pub registration: Option<DomainRegistration>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -745,7 +871,10 @@ pub struct Card {
 	pub brand: Option<String>,
 	pub brand_name: Option<String>,
 	pub logo: String,
-	pub deep: Option<CardDeep>,
+	pub prefix: Option<String>,
+	pub issuer: Option<String>,
+	pub country: Option<String>,
+	pub prepaid: Option<bool>,
 }
 
 /// Optional recorded issuer data. None fields mean unknown.
@@ -856,12 +985,15 @@ pub struct UseragentDeep {
 #[non_exhaustive]
 pub struct Useragent {
 	pub useragent: String,
-	pub device: Option<String>,
-	pub os: Option<String>,
-	pub browser: Option<String>,
+	pub device: Option<UseragentDeviceDeep>,
+	pub os: Option<UseragentOsDeep>,
+	pub browser: Option<UseragentBrowserDeep>,
 	pub bot: bool,
 	pub mobile: bool,
-	pub deep: Option<UseragentDeep>,
+	pub engine: Option<UseragentEngineDeep>,
+	pub headless: Option<bool>,
+	pub ai: Option<bool>,
+	pub bot_details: Option<serde_json::Value>,
 }
 
 
@@ -874,9 +1006,10 @@ pub struct Language {
 	pub name_local: Option<String>,
 	pub script: Option<String>,
 	pub direction: String,
-	pub deep: Option<LanguageDeep>,
-	pub iso3: Option<String>,
+
+pub iso3: Option<String>,
 	pub countries: Option<Vec<String>>,
+	
 }
 impl<'de> Deserialize<'de> for Language {
  fn deserialize<D: serde::Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
@@ -888,17 +1021,20 @@ impl<'de> Deserialize<'de> for Language {
 	name_local: Option<String>,
 	script: Option<String>,
 	direction: String,
-	deep: Option<LanguageDeep>,
+
 	#[serde(rename = "iso_alpha3")]
-	iso3: Option<String>,
+iso3: Option<String>,
 	countries: Option<Vec<String>>,
+	
   }
   let mut value = serde_json::Value::deserialize(decoder)?;
-  country_shape_alias(&mut value, "iso_alpha3", "iso3");
+  country_shape_alias(&mut value,"iso_alpha3","iso3");
   let wire: Wire = serde_json::from_value(value).map_err(serde::de::Error::custom)?;
-  Ok(Self { language: wire.language, name: wire.name, name_local: wire.name_local, script: wire.script, direction: wire.direction, deep: wire.deep, iso3: wire.iso3, countries: wire.countries })
+  Ok(Self {language: wire.language, name: wire.name, name_local: wire.name_local, script: wire.script, direction: wire.direction, iso3: wire.iso3, countries: wire.countries})
  }
 }
+
+
 
 
 /// A parsed person name. Junk input returns valid false, never an error.
@@ -914,7 +1050,11 @@ pub struct Name {
 	pub middle: Option<String>,
 	pub last: Option<String>,
 	pub suffix: Option<String>,
-	pub deep: Option<NameDeep>,
+	pub gender: Option<String>,
+	pub salutation: Option<String>,
+	pub short: Option<String>,
+	pub directory: Option<String>,
+	pub initials: Option<String>,
 }
 
 
@@ -937,7 +1077,7 @@ pub type Time = Timezone;
 #[non_exhaustive]
 pub struct TimeZones {
 	pub timezone_database_version: String,
-	pub timezones: Vec<String>,
+	pub timezones: Option<Vec<String>>,
 	pub at: Option<String>,
 	pub zones: Option<Vec<TimeZoneEntry>>,
 }
@@ -957,7 +1097,16 @@ pub struct Timezone {
 	pub unix: Option<i64>,
 	pub to: Option<TimezoneConversionTarget>,
 	pub targets: Option<Vec<TimezoneConversionTarget>>,
-	pub deep: Option<TimezoneDeep>,
+	pub standard_offset: Option<String>,
+	pub standard_offset_seconds: Option<i32>,
+	pub dst_offset_seconds: Option<i32>,
+	pub season: Option<TimeSeason>,
+	pub timezone_database_version: Option<String>,
+	pub resolution: Option<TimeResolution>,
+	pub name: Option<String>,
+	pub offset_seconds: Option<i32>,
+	pub offset_minutes: Option<i32>,
+	pub next_dst: Option<TimezoneNextDst>,
 }
 
 /// Calendar facts for a date. Calendar fields are None when valid is false.
@@ -970,7 +1119,18 @@ pub struct DateInfo {
 	pub unix: Option<i64>,
 	pub to: Option<String>,
 	pub days: Option<i32>,
-	pub deep: Option<DateInfoDeep>,
+	pub year: Option<i32>,
+	pub month: Option<i32>,
+	pub month_name: Option<String>,
+	pub day: Option<i32>,
+	pub weekday: Option<i32>,
+	pub weekday_name: Option<String>,
+	pub week: Option<i32>,
+	pub week_year: Option<i32>,
+	pub day_of_year: Option<i32>,
+	pub quarter: Option<i32>,
+	pub leap: Option<bool>,
+	pub days_in_month: Option<i32>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1052,8 +1212,13 @@ pub struct Point {
 	pub state_name: Option<String>,
 	pub district: Option<String>,
 	pub district_name: Option<String>,
-	pub deep: Option<PointDeep>,
+
 	pub timezone: Option<String>,
+	pub city: Option<PointCity>,
+	pub elevation: Option<f64>,
+	pub electoral: Option<PointElectoral>,
+	pub elevation_ft: Option<f64>,
+	pub resolution: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1202,6 +1367,14 @@ pub struct WeatherCurrent {
 	pub condition_name: Option<String>,
 	pub condition_emoji: Option<String>,
 	pub observed_at: Option<String>,
+	pub dewpoint: Option<f64>,
+	pub dewpoint_f: Option<f64>,
+	pub wind_gust: Option<f64>,
+	pub wind_gust_mph: Option<f64>,
+	pub pressure: Option<f64>,
+	pub pressure_inhg: Option<f64>,
+	pub visibility: Option<f64>,
+	pub visibility_mi: Option<f64>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1222,7 +1395,13 @@ pub struct Weather {
 	pub longitude: f64,
 	pub current: WeatherCurrent,
 	pub station: Option<WeatherStation>,
-	pub deep: Option<WeatherDeep>,
+	pub forecast: Option<Vec<WeatherForecastPeriod>>,
+	pub alerts: Option<Vec<WeatherAlert>>,
+	pub minutes: Option<Vec<WeatherMinute>>,
+	pub hours: Option<Vec<WeatherHour>>,
+	pub days: Option<Vec<WeatherDay>>,
+	pub air: Option<WeatherAir>,
+	pub history: Option<WeatherHistory>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1244,7 +1423,16 @@ pub struct Emoji {
 	#[serde(default, deserialize_with = "null_default")]
 	pub shortcodes: Vec<String>,
 	pub category: Option<String>,
-	pub deep: Option<EmojiDeep>,
+	pub artwork: Option<std::collections::HashMap<String, EmojiArtwork>>,
+	pub subcategory: Option<String>,
+	pub base: Option<String>,
+	pub variants: Option<Vec<EmojiVariant>>,
+	pub codepoints: Option<Vec<String>>,
+	pub hex: Option<String>,
+	pub status: Option<String>,
+	pub version: Option<String>,
+	pub keywords: Option<Vec<String>>,
+	pub skins: Option<Vec<EmojiSkin>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1268,7 +1456,9 @@ pub struct TimezoneConversionTarget {
 	pub dst: bool,
 	pub at: String,
 	pub unix: Option<i64>,
-	pub deep: Option<TimezoneConversionTargetDeep>,
+	pub name: Option<String>,
+	pub offset_seconds: Option<i32>,
+	pub offset_minutes: Option<i32>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1321,7 +1511,6 @@ pub struct Address {
 	pub country_name: Option<String>,
 	pub latitude: Option<f64>,
 	pub longitude: Option<f64>,
-	pub deep: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1396,7 +1585,16 @@ pub struct Company {
 	pub city: Option<String>,
 	pub state: Option<String>,
 	pub postal: Option<String>,
-	pub deep: Option<CompanyDeep>,
+	pub activity: Option<String>,
+	pub state_name: Option<String>,
+	pub country_name: Option<String>,
+	pub vat: Option<String>,
+	pub gst: Option<bool>,
+	pub acn: Option<String>,
+	pub siren: Option<String>,
+	pub siege: Option<bool>,
+	pub kind: Option<String>,
+	pub invoice: Option<String>,
 }
 
 
@@ -1453,7 +1651,9 @@ pub struct Naics {
 	pub r#match: Option<NaicsMatch>,
 	pub year: u32,
 	pub country: String,
-	pub deep: Option<NaicsDeep>,
+	pub description: Option<String>,
+	pub children: Option<Vec<NaicsChild>>,
+	pub exclusions: Option<Vec<NaicsExclusion>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -1673,7 +1873,18 @@ pub struct StateTax {
 	pub rate: Option<f64>,
 }
 
-
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+#[non_exhaustive]
+pub struct PostalTax {
+	pub name: Option<String>,
+	/// Combined ZIP rate and its components, in percent.
+	pub rate: Option<f64>,
+	pub rate_state: Option<f64>,
+	pub rate_county: Option<f64>,
+	pub rate_city: Option<f64>,
+	pub rate_special: Option<f64>,
+}
 
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
@@ -1765,22 +1976,11 @@ pub struct PostalDeep {
 	/// Water area in km2, where the source has it.
 	pub water_area: Option<f64>,
 	pub currency: Option<String>,
-
+	/// Same-country postal codes, preserving leading zeros and source order.
 	pub neighbors: Option<Vec<String>>,
 	/// None is unknown; Some(empty) is observed outside all covered areas.
 	pub metros: Option<Vec<PostalMetro>>,
-	/// Levy name, such as VAT, GST or sales tax. Null when unknown or not applicable.
-	pub tax: Option<String>,
-	/// Combined US ZIP reference rate in percent (7.9 means 7.9%). An exact address can differ. Null is unknown, zero is known zero.
-	pub tax_rate: Option<f64>,
-	/// State component of the ZIP reference rate, in percent. Null when unknown.
-	pub tax_rate_state: Option<f64>,
-	/// County component of the ZIP reference rate, in percent. Null when unknown.
-	pub tax_rate_county: Option<f64>,
-	/// City component of the ZIP reference rate, in percent. Null when unknown.
-	pub tax_rate_city: Option<f64>,
-	/// Special component of the ZIP reference rate, in percent. Null when unknown.
-	pub tax_rate_special: Option<f64>,
+	pub tax: Option<PostalTax>,
 	/// Median annual property tax payable on owner-occupied homes in this statistical area. Null when unsupported, missing or censored.
 	pub property_tax: Option<PostalPropertyTax>,
 }
@@ -1866,7 +2066,6 @@ impl<'de> Deserialize<'de> for LanguageDeep {
 #[non_exhaustive]
 pub struct NameDeep {
 	pub gender: Option<String>,
-	pub salutation: Option<String>,
 	pub short: Option<String>,
 	pub directory: Option<String>,
 	pub initials: Option<String>,
@@ -2017,10 +2216,12 @@ pub struct NaicsSearchResult {
 	pub parent_name: Option<String>,
 	/// Search evidence, absent on direct lookup and older responses.
 	pub r#match: Option<NaicsMatch>,
-	pub deep: Option<NaicsDeep>,
+	pub description: Option<String>,
+	pub children: Option<Vec<NaicsChild>>,
+	pub exclusions: Option<Vec<NaicsExclusion>>,
 }
 
-/// Compact Postal property-tax estimate; currency is supplied by Postal Deep.
+/// Compact Postal property-tax estimate. Currency is supplied by PostalDeep.currency.
 #[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
 #[non_exhaustive]
 pub struct PostalPropertyTax {
@@ -2224,6 +2425,8 @@ pub struct CompanySocialProfile {
 pub struct CompanyPhoneNumber {
  pub number: String,
  pub r#type: Option<String>,
+ pub country: Option<String>,
+ pub e164: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -2292,7 +2495,29 @@ pub struct CompanyProfile {
 	#[serde(default, deserialize_with = "null_default")]
 	pub listings: Vec<CompanyProfileListing>,
 	pub address: Option<CompanyProfileAddress>,
-	pub deep: Option<CompanyProfileDeep>,
+	pub domains: Option<Vec<CompanyProfileDomain>>,
+	pub social_profiles: Option<Vec<CompanySocialProfile>>,
+	pub phone_numbers: Option<Vec<CompanyPhoneNumber>>,
+	pub email_addresses: Option<Vec<CompanyEmailAddress>>,
+	pub legal_name: Option<String>,
+	pub aliases: Option<Vec<String>>,
+	pub jurisdiction: Option<CompanyProfileJurisdiction>,
+	pub status: Option<String>,
+	pub websites: Option<Vec<CompanyProfileWebsite>>,
+	pub identifiers: Option<Vec<CompanyProfileIdentifier>>,
+	pub incorporated: Option<String>,
+	pub addresses: Option<Vec<CompanyProfileAddress>>,
+	pub industries: Option<Vec<CompanyProfileIndustry>>,
+	pub parent: Option<String>,
+	pub description: Option<String>,
+	pub logo: Option<String>,
+	pub socials: Option<Vec<String>>,
+	pub phones: Option<Vec<CompanyProfilePhone>>,
+	pub emails: Option<Vec<CompanyProfileEmail>>,
+	pub founded: Option<CompanyProfileFounding>,
+	pub employees: Option<CompanyProfileEmployees>,
+	pub registrations: Option<Vec<CompanyProfileRegistration>>,
+	pub sources: Option<Vec<CompanyProfileSource>>,
 }
 
 /// A directory search profile with match evidence; a match is not proof of legal identity.
@@ -2307,8 +2532,31 @@ pub struct CompanyCandidate {
 	#[serde(default, deserialize_with = "null_default")]
 	pub listings: Vec<CompanyProfileListing>,
 	pub address: Option<CompanyProfileAddress>,
-	pub deep: Option<CompanyProfileDeep>,
+
 	pub r#match: CompanyMatch,
+	pub domains: Option<Vec<CompanyProfileDomain>>,
+	pub social_profiles: Option<Vec<CompanySocialProfile>>,
+	pub phone_numbers: Option<Vec<CompanyPhoneNumber>>,
+	pub email_addresses: Option<Vec<CompanyEmailAddress>>,
+	pub legal_name: Option<String>,
+	pub aliases: Option<Vec<String>>,
+	pub jurisdiction: Option<CompanyProfileJurisdiction>,
+	pub status: Option<String>,
+	pub websites: Option<Vec<CompanyProfileWebsite>>,
+	pub identifiers: Option<Vec<CompanyProfileIdentifier>>,
+	pub incorporated: Option<String>,
+	pub addresses: Option<Vec<CompanyProfileAddress>>,
+	pub industries: Option<Vec<CompanyProfileIndustry>>,
+	pub parent: Option<String>,
+	pub description: Option<String>,
+	pub logo: Option<String>,
+	pub socials: Option<Vec<String>>,
+	pub phones: Option<Vec<CompanyProfilePhone>>,
+	pub emails: Option<Vec<CompanyProfileEmail>>,
+	pub founded: Option<CompanyProfileFounding>,
+	pub employees: Option<CompanyProfileEmployees>,
+	pub registrations: Option<Vec<CompanyProfileRegistration>>,
+	pub sources: Option<Vec<CompanyProfileSource>>,
 }
 
 /// One page of company candidates. Reuse next with the same selector, filters and limit.
@@ -2321,22 +2569,6 @@ pub struct CompanySearch {
 	pub next: Option<String>,
 }
 
-/// Counts for this directory edition, not complete country or worldwide coverage.
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct CompanyCoverage {
-	pub scope: String,
-	pub label: String,
-	pub description: String,
-	pub snapshot_at: String,
-	pub companies: u64,
-	#[serde(default, deserialize_with = "null_default")]
-	pub countries: Vec<String>,
-	pub with_website: u64,
-	pub with_listings: u64,
-	pub with_address: u64,
-}
 
 /// Source wall-time resolution. Missing observations remain unknown.
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -2422,6 +2654,12 @@ pub struct TimeLocationCandidate {
 #[serde(default)]
 #[non_exhaustive]
 pub struct TimeLocation {
+	pub id: Option<String>,
+	pub name: Option<String>,
+	pub country: Option<String>,
+	pub state: Option<String>,
+	pub latitude: Option<f64>,
+	pub longitude: Option<f64>,
 	pub input: TimeLocationInput,
 	pub status: String,
 	#[serde(deserialize_with = "null_default")]
@@ -2453,22 +2691,6 @@ pub type IndustrySearchResult = NaicsSearchResult;
 
 
 
-/// Card-prefix reference data. None means unknown.
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct Bin {
-	pub bin: String,
-	/// Actual longest matched prefix, which may be shorter than the input.
-	pub prefix: Option<String>,
-	pub country: Option<String>,
-	pub issuer: Option<String>,
-	pub brand: Option<String>,
-	pub brand_name: Option<String>,
-	pub r#type: Option<String>,
-	pub prepaid: Option<bool>,
-	pub deep: Option<serde_json::Value>,
-}
 
 
 
@@ -2523,11 +2745,21 @@ pub struct EmojiParseItem {
 	pub emoji: String,
 	pub name: String,
 	pub category: Option<String>,
-	pub deep: Option<EmojiDeep>,
+
 	#[serde(default, deserialize_with = "null_default")]
 	pub shortcodes: Vec<String>,
 	#[serde(default, deserialize_with = "null_default")]
 	pub positions: Vec<EmojiPosition>,
+	pub artwork: Option<std::collections::HashMap<String, EmojiArtwork>>,
+	pub subcategory: Option<String>,
+	pub base: Option<String>,
+	pub variants: Option<Vec<EmojiVariant>>,
+	pub codepoints: Option<Vec<String>>,
+	pub hex: Option<String>,
+	pub status: Option<String>,
+	pub version: Option<String>,
+	pub keywords: Option<Vec<String>>,
+	pub skins: Option<Vec<EmojiSkin>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -2554,8 +2786,7 @@ pub struct EmojiArtwork {
 #[serde(default)]
 #[non_exhaustive]
 pub struct EmojiCompleteness {
-	pub missing_count: u32,
-	pub unexpected_count: u32,
+ pub complete: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -2617,7 +2848,6 @@ pub struct EmojiArtworkSource {
 #[serde(default)]
 #[non_exhaustive]
 pub struct EmojiMetadata {
- pub shortcode_sources: Option<std::collections::HashMap<String,EmojiShortcodeSourceMetadata>>,
 	pub edition: String,
 	pub max_version: Option<String>,
 	pub source_version: String,
@@ -2636,7 +2866,6 @@ pub struct EmojiMetadata {
 #[non_exhaustive]
 pub struct EmojiCatalog {
  pub localization: Option<EmojiCatalogLocalization>,
-	pub profile: Option<String>,
 	pub scope: Option<EmojiCatalogScope>,
 	pub search: Option<EmojiCatalogSearchFacts>,
 	pub metadata: EmojiMetadata,
@@ -2784,9 +3013,9 @@ pub struct CityParent {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CityList {
-	pub object: String,
-	pub has_more:Option<bool>,
-	pub url:Option<String>,
+
+
+
 	pub q: Option<String>,
 	pub country: Option<String>,
 	pub state: Option<String>,
@@ -2794,7 +3023,7 @@ pub struct CityList {
 	pub kind: Option<String>,
 	pub grain: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
-	pub data: Vec<CityResource>,
+	pub cities: Vec<City>,
 	pub next_cursor: Option<String>,
 }
 
@@ -2803,15 +3032,15 @@ pub struct CityList {
 #[serde(default)]
 #[non_exhaustive]
 pub struct CityNearbyCoords {
-	pub object: String,
-	pub has_more:Option<bool>,
-	pub url:Option<String>,
+
+
+
 	pub latitude: f64,
 	pub longitude: f64,
 	pub radius: f64,
 	pub unit: String,
 	#[serde(default, deserialize_with = "null_default")]
-	pub data: Vec<CityResource>,
+	pub nearby: Vec<CityNearest>,
 	pub next_cursor: Option<String>,
 }
 
@@ -2824,7 +3053,19 @@ pub struct CityResource {
  pub r#match: Option<CityMatch>,
  pub id:String, pub object:String, pub name:Option<String>, pub name_local:Option<String>, pub country:Option<String>, pub country_name:Option<String>, pub state:Option<String>, pub state_name:Option<String>, pub district:Option<String>, pub district_name:Option<String>,
  #[serde(rename="type")] pub kind:Option<String>,
- pub grain:Option<String>, pub latitude:Option<f64>, pub longitude:Option<f64>, pub timezone:Option<String>, pub distance:Option<f64>, pub distance_mi:Option<f64>, pub parent:Option<CityParent>, pub deep:Option<CityDeep>,
+ pub grain:Option<String>, pub latitude:Option<f64>, pub longitude:Option<f64>, pub timezone:Option<String>, pub distance:Option<f64>, pub distance_mi:Option<f64>, pub parent:Option<CityParent>, 
+pub capital_of: Option<String>,
+pub elevation: Option<f64>,
+pub elevation_ft: Option<f64>,
+pub population: Option<i64>,
+#[serde(skip)]
+	pub population_period: Option<String>,
+pub population_observed_on: Option<String>,
+pub population_basis: Option<String>,
+pub area: Option<f64>,
+pub land_area: Option<f64>,
+pub water_area: Option<f64>,
+
 }
 
 /// Bounded safe identities on HTTP409 ambiguous_city. No Deep fields.
@@ -2849,34 +3090,10 @@ pub struct CityDistance {
 
 #[derive(Debug,Clone,Deserialize)]
 #[non_exhaustive]
-pub struct CityMatch { pub r#type:String, pub source:String, pub value:String, pub language:Option<String>, pub edit_distance:Option<u8> }
+pub struct CityMatch { pub r#type:String, #[serde(default)] pub source:String, pub value:String, pub language:Option<String>, pub edit_distance:Option<u8> }
 
 
-/// Minimal related records returned in Company Core.
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct CompanyIndustryReference {
-	pub r#type: String,
-	pub code: String,
-}
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct CompanyPhoneReference {
-	pub number: String,
-	pub country: Option<String>,
-	pub e164: Option<String>,
-}
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
-#[non_exhaustive]
-pub struct CompanyEmailReference {
-	pub address: String,
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(default)]
+#[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct Currency {
 	pub currency: String,
@@ -2887,8 +3104,31 @@ pub struct Currency {
 	pub symbol_native: Option<String>,
 	pub digits: Option<i32>,
 	pub countries: Option<Vec<String>>,
-	pub deep: Option<CurrencyDeep>,
+	
 }
+impl<'de> Deserialize<'de> for Currency {
+ fn deserialize<D: serde::Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
+  #[derive(Default, Deserialize)]
+  #[serde(default)]
+  struct Wire {
+	currency: String,
+	iso_numeric: Option<i32>,
+	name: String,
+	name_plural: Option<String>,
+	symbol: Option<String>,
+	symbol_native: Option<String>,
+	digits: Option<i32>,
+	countries: Option<Vec<String>>,
+	
+  }
+  let mut value = serde_json::Value::deserialize(decoder)?;
+  country_shape_alias(&mut value,"iso_numeric","numeric");
+  let wire: Wire = serde_json::from_value(value).map_err(serde::de::Error::custom)?;
+  Ok(Self {currency: wire.currency, iso_numeric: wire.iso_numeric, name: wire.name, name_plural: wire.name_plural, symbol: wire.symbol, symbol_native: wire.symbol_native, digits: wire.digits, countries: wire.countries})
+ }
+}
+
+
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
@@ -2900,9 +3140,12 @@ pub struct CurrencyRate {
 	pub date: String,
 	pub amount: Option<f64>,
 	pub converted: Option<f64>,
+	pub source: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
 pub struct CurrencyDeep {}
+
+

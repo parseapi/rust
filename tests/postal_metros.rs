@@ -8,15 +8,14 @@ fn metro_observation_states_survive_every_postal_decoder() {
 		"share": 0.75, "residential_share": 0, "business_share": 1, "other_share": null, "future": true
 	}]))] {
 		let mut member = json!({"postal":"12345", "country":"US", "city":null, "future":true});
-		if let Some(value) = &observation { member["deep"]["metros"] = value.clone(); }
-		member.as_object_mut().unwrap().entry("deep").or_insert_with(|| json!({}));
+		if let Some(value) = &observation { member["metros"] = value.clone(); }
 		let postal: Postal = serde_json::from_value(member.clone()).unwrap();
 		let mut nearby_json = member.clone();
 		nearby_json["nearby"] = json!([member.clone()]);
 		let nearby: PostalNearby = serde_json::from_value(nearby_json).unwrap();
 		let distance: PostalDistance = serde_json::from_value(json!({"country":"US", "from":member.clone(), "to":member})).unwrap();
 		let expected = observation.as_ref().and_then(Value::as_array);
-		for value in [&postal.deep.as_ref().unwrap().metros, &nearby.deep.as_ref().unwrap().metros, &nearby.nearby[0].deep.as_ref().unwrap().metros, &distance.from.deep.as_ref().unwrap().metros, &distance.to.deep.as_ref().unwrap().metros] {
+		for value in [&postal.clone().metros, &nearby.clone().metros, &nearby.nearby[0].metros, &distance.from.clone().metros, &distance.to.clone().metros] {
 			assert_eq!(value.as_ref().map(Vec::len), expected.map(Vec::len));
 			if let Some(metro) = value.as_ref().and_then(|items| items.first()) {
 				assert_eq!(metro.code, "12345");

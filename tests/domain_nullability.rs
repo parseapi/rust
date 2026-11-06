@@ -23,7 +23,7 @@ async fn ordinary_domain_preserves_unknown_and_known_states() {
             } else {
                 json!({"registration":registration})
             };
-            let body = json!({"domain":"example.com","available":available,"deep":deep});
+            let mut body = json!({"domain":"example.com","available":available}); body.as_object_mut().unwrap().extend(deep.as_object().unwrap().clone());
             let response = serde_json::to_vec(&body).unwrap();
             let listener = TcpListener::bind("127.0.0.1:0").unwrap();
             let origin = format!("http://{}", listener.local_addr().unwrap());
@@ -57,13 +57,13 @@ async fn ordinary_domain_preserves_unknown_and_known_states() {
             assert!(request.starts_with("GET /domain/b%C3%BCcher.example?deep=true HTTP/1.1\r\n"));
             let headers = request.to_lowercase();
             assert!(
-                headers.contains("parse-version: 2.0.0\r\n")
+                headers.contains("x-api-version: 2.1.0\r\n")
                     && headers.contains("x-api-key: fixture\r\n")
             );
             assert_eq!(result.available, available.as_bool());
             if available == false {
                 assert_eq!(
-                    result.deep.unwrap().registration.unwrap().dnssec,
+                    result.clone().registration.unwrap().dnssec,
                     dnssec.and_then(|value| value.as_bool())
                 );
             }
@@ -76,5 +76,5 @@ fn malformed_boolean_types_remain_native_decode_errors() {
     assert!(
         serde_json::from_str::<Domain>(r#"{"domain":"example.com","available":"false"}"#).is_err()
     );
-    assert!(serde_json::from_str::<Domain>(r#"{"domain":"example.com","available":false,"deep":{"registration":{"registered":true,"dnssec":"false"}}}"#).is_err());
+    assert!(serde_json::from_str::<Domain>(r#"{"domain":"example.com","available":false,"registration":{"registered":true,"dnssec":"false"}}"#).is_err());
 }

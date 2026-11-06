@@ -15,20 +15,18 @@
     "longitude": null,
     "timezone": null,
     "type": "standard",
-    "deep": {
-      "metros": [
-        {
-          "code": "35620",
-          "name": "New York",
-          "type": "metropolitan",
-          "share": 0.125,
-          "residential_share": 0.1,
-          "business_share": null,
-          "other_share": 0.0,
-          "share_percent": 12.5
-        }
-      ]
-    }
+    "metros": [
+      {
+        "code": "35620",
+        "name": "New York",
+        "type": "metropolitan",
+        "share": 0.125,
+        "residential_share": 0.1,
+        "business_share": null,
+        "other_share": 0,
+        "share_percent": 12.5
+      }
+    ]
   },
   "zero": {
     "postal": "10001",
@@ -46,20 +44,18 @@
     "longitude": null,
     "timezone": null,
     "type": "po_box",
-    "deep": {
-      "metros": [
-        {
-          "code": "35620",
-          "name": "New York",
-          "type": "metropolitan",
-          "share": 0.125,
-          "residential_share": 0.1,
-          "business_share": null,
-          "other_share": 0.0,
-          "share_percent": 0
-        }
-      ]
-    }
+    "metros": [
+      {
+        "code": "35620",
+        "name": "New York",
+        "type": "metropolitan",
+        "share": 0.125,
+        "residential_share": 0.1,
+        "business_share": null,
+        "other_share": 0,
+        "share_percent": 0
+      }
+    ]
   },
   "future": {
     "postal": "10001",
@@ -77,20 +73,18 @@
     "longitude": null,
     "timezone": null,
     "type": "future_custom",
-    "deep": {
-      "metros": [
-        {
-          "code": "35620",
-          "name": "New York",
-          "type": "metropolitan",
-          "share": 0.125,
-          "residential_share": 0.1,
-          "business_share": null,
-          "other_share": 0.0,
-          "share_percent": 100
-        }
-      ]
-    }
+    "metros": [
+      {
+        "code": "35620",
+        "name": "New York",
+        "type": "metropolitan",
+        "share": 0.125,
+        "residential_share": 0.1,
+        "business_share": null,
+        "other_share": 0,
+        "share_percent": 100
+      }
+    ]
   },
   "null": {
     "postal": "10001",
@@ -108,20 +102,18 @@
     "longitude": null,
     "timezone": null,
     "type": null,
-    "deep": {
-      "metros": [
-        {
-          "code": "35620",
-          "name": "New York",
-          "type": "metropolitan",
-          "share": 0.125,
-          "residential_share": 0.1,
-          "business_share": null,
-          "other_share": 0.0,
-          "share_percent": null
-        }
-      ]
-    }
+    "metros": [
+      {
+        "code": "35620",
+        "name": "New York",
+        "type": "metropolitan",
+        "share": 0.125,
+        "residential_share": 0.1,
+        "business_share": null,
+        "other_share": 0,
+        "share_percent": null
+      }
+    ]
   },
   "missing": {
     "postal": "10001",
@@ -138,18 +130,16 @@
     "latitude": null,
     "longitude": null,
     "timezone": null,
-    "deep": {
-      "metros": [
-        {
-          "code": "35620",
-          "name": "New York",
-          "type": "metropolitan",
-          "share": 0.125,
-          "residential_share": 0.1,
-          "business_share": null,
-          "other_share": 0.0
-        }
-      ]
-    }
+    "metros": [
+      {
+        "code": "35620",
+        "name": "New York",
+        "type": "metropolitan",
+        "share": 0.125,
+        "residential_share": 0.1,
+        "business_share": null,
+        "other_share": 0
+      }
+    ]
   }
 }

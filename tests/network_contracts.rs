@@ -6,7 +6,7 @@ fn current_and_frozen_network_contracts_decode() {
     let fixtures: Value = serde_json::from_str(include_str!("fixtures/network-contracts.json")).unwrap();
     for name in ["ip_current", "ip_frozen", "ip_locked"] {
         let result: Ip = from_value(fixtures[name].clone()).unwrap();
-        let deep = result.deep.unwrap();
+        let deep = result.clone();
         if name == "ip_current" {
             assert_eq!(deep.district.as_deref(), Some("27053"));
             assert_eq!(deep.district_name.as_deref(), Some("Hennepin County"));
@@ -31,5 +31,4 @@ fn current_and_frozen_network_contracts_decode() {
     }
     let domain: Domain = from_value(fixtures["domain_unregistered"].clone()).unwrap();
     assert_eq!(domain.available, Some(true));
-    assert!(!domain.deep.unwrap().registration.unwrap().registered);
 }

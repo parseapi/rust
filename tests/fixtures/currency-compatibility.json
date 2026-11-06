@@ -5,7 +5,6 @@
     "symbol": null,
     "symbol_native": null,
     "digits": 0,
-    "deep": {},
     "iso_numeric": 392,
     "name_plural": null,
     "countries": [
@@ -18,7 +17,6 @@
     "symbol": "$",
     "symbol_native": "$",
     "digits": 2,
-    "deep": {},
     "iso_numeric": null,
     "name_plural": null,
     "countries": null
@@ -29,7 +27,6 @@
     "symbol": null,
     "symbol_native": null,
     "digits": null,
-    "deep": {},
     "iso_numeric": null,
     "name_plural": null,
     "countries": null

@@ -2,13 +2,13 @@ use parseapi::*;
 
 #[test]
 fn postal_compact_tax_preserves_legacy_metadata_and_district_shape() {
-    for body in [r#"{}"#, r#"{"deep":{}}"#, r#"{"deep":{"property_tax":null}}"#] {
+    for body in [r#"{}"#, r#"{}"#, r#"{"property_tax":null}"#] {
         let postal: Postal = serde_json::from_str(body).unwrap();
-        assert!(postal.deep.as_ref().and_then(|deep| deep.property_tax.as_ref()).is_none());
+        assert!(postal.property_tax.as_ref().is_none());
     }
     for amount in [0.0, 1234.5] {
-        let postal: Postal = serde_json::from_value(serde_json::json!({"deep":{"currency":"USD","property_tax":{"annual_median":amount},"future":true}})).unwrap();
-        let deep = postal.deep.unwrap();
+        let postal: Postal = serde_json::from_value(serde_json::json!({"currency":"USD","property_tax":{"annual_median":amount},"future":true})).unwrap();
+        let deep = postal.clone();
         assert_eq!(deep.currency.as_deref(), Some("USD"));
         let tax = deep.property_tax.unwrap();
         assert_eq!(tax.annual_median, amount);
@@ -47,17 +47,17 @@ fn weather_minute_canonical_presence_wins_over_old_payload_values() {
 #[test]
 fn weather_unavailable_collections_differ_from_known_empty_results() {
     let absent: Weather = serde_json::from_str(r#"{}"#).unwrap();
-    assert!(absent.deep.is_none());
-    for body in [r#"{"deep":{}}"#, r#"{"deep":{"forecast":null,"alerts":null,"minutes":null,"hours":null,"days":null}}"#] {
+    assert!(absent.forecast.is_none());
+    for body in [r#"{}"#, r#"{"forecast":null,"alerts":null,"minutes":null,"hours":null,"days":null}"#] {
         let weather: Weather = serde_json::from_str(body).unwrap();
-        let deep = weather.deep.unwrap();
+        let deep = weather.clone();
         assert!(deep.forecast.is_none() && deep.alerts.is_none() && deep.minutes.is_none() && deep.hours.is_none() && deep.days.is_none());
     }
-    let empty: Weather = serde_json::from_str(r#"{"deep":{"forecast":[],"alerts":[],"minutes":[],"hours":[],"days":[],"future":true}}"#).unwrap();
-    let deep = empty.deep.unwrap();
+    let empty: Weather = serde_json::from_str(r#"{"forecast":[],"alerts":[],"minutes":[],"hours":[],"days":[],"future":true}"#).unwrap();
+    let deep = empty.clone();
     assert!(deep.forecast.unwrap().is_empty() && deep.alerts.unwrap().is_empty() && deep.minutes.unwrap().is_empty() && deep.hours.unwrap().is_empty() && deep.days.unwrap().is_empty());
-    let values: Weather = serde_json::from_str(r#"{"deep":{"forecast":[{"temperature":0}],"alerts":[{"event":"Example"}],"minutes":[{"precipitation_rate":0}],"hours":[{"temperature":0}],"days":[{"low":-1.5}]}}"#).unwrap();
-    let deep = values.deep.unwrap();
+    let values: Weather = serde_json::from_str(r#"{"forecast":[{"temperature":0}],"alerts":[{"event":"Example"}],"minutes":[{"precipitation_rate":0}],"hours":[{"temperature":0}],"days":[{"low":-1.5}]}"#).unwrap();
+    let deep = values.clone();
     assert_eq!(deep.forecast.unwrap()[0].temperature, Some(0.0));
     assert_eq!(deep.alerts.unwrap()[0].event, "Example");
     assert_eq!(deep.minutes.unwrap()[0].precipitation_rate, Some(0.0));

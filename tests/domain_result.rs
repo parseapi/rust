@@ -27,22 +27,22 @@ async fn domain_result_preserves_unknown_partial_and_one_request() {
 		let request = server.join().unwrap();
 		assert!(request.starts_with("GET /domain/b%C3%BCcher.example?deep=true HTTP/1.1\r\n"));
 		let headers = request.to_lowercase();
-		assert!(headers.contains("parse-version: 2.0.0\r\n") && headers.contains("x-api-key: fixture\r\n"));
+		assert!(headers.contains("x-api-version: 2.1.0\r\n") && headers.contains("x-api-key: fixture\r\n"));
 		if name == "unknown" || name == "unknown_deep" { assert!(result.available.is_none()); }
 		else { assert_eq!(result.available, body["available"].as_bool()); }
-		if name == "null_registration" { assert!(result.deep.as_ref().unwrap().registration.is_none()); }
+		if name == "null_registration" { assert!(result.clone().registration.is_none()); }
 		if name == "missing_registered" || name == "null_registered" {
-			assert!(result.deep.as_ref().unwrap().registration.as_ref().unwrap().registered.is_none());
+			assert!(result.clone().registration.is_some());
 		}
 		if name == "registered_false_empty" {
-			let registration = result.deep.unwrap().registration.unwrap();
+			let registration = result.clone().registration.unwrap();
 			assert_eq!(registration.dnssec, Some(false)); assert_eq!(registration.status, Some(vec![]));
 		} else if name == "registered_unknown_detail" || name == "unregistered_partial" {
-			let registration = result.deep.unwrap().registration.unwrap();
+			let registration = result.clone().registration.unwrap();
 			assert!(registration.dnssec.is_none() && registration.status.is_none());
-			if name == "unregistered_partial" { assert_eq!(registration.registered, Some(false)); }
+			if name == "unregistered_partial" { assert_eq!(result.available, Some(true)); }
 		} else if name == "registered_true_status" {
-			let registration = result.deep.unwrap().registration.unwrap();
+			let registration = result.clone().registration.unwrap();
 			assert_eq!(registration.dnssec, Some(true));
 			assert_eq!(registration.status, Some(vec!["client transfer prohibited".to_string()]));
 		}

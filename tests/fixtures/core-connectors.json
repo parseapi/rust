@@ -1,0 +1,244 @@
+{
+  "country": {
+    "country": "US",
+    "name": "United States",
+    "name_local": null,
+    "continent": "NA",
+    "currency": "USD",
+    "currency_name": "Dollar",
+    "currency_symbol": "$",
+    "calling_code": "+1",
+    "languages": [
+      "en"
+    ],
+    "timezones": [
+      "America/New_York"
+    ],
+    "borders": [
+      "CA",
+      "MX"
+    ],
+    "iso_alpha3": "USA",
+    "flag": "🇺🇸",
+    "capital": {
+      "name": null,
+      "latitude": 0,
+      "longitude": -77.0365
+    }
+  },
+  "language": {
+    "language": "en",
+    "name": "English",
+    "name_local": null,
+    "script": "Latn",
+    "direction": "ltr",
+    "countries": [
+      "GB",
+      "US"
+    ],
+    "iso_alpha3": "eng"
+  },
+  "currency": {
+    "currency": "USD",
+    "name": "Dollar",
+    "symbol": "$",
+    "symbol_native": "$",
+    "digits": 2,
+    "countries": [
+      "US"
+    ]
+  },
+  "postal": {
+    "postal": "00501",
+    "city": null,
+    "city_local": null,
+    "district": null,
+    "district_name": null,
+    "district_name_local": null,
+    "state": "NY",
+    "state_name": "New York",
+    "state_name_local": null,
+    "country": "US",
+    "country_name": "United States",
+    "latitude": 0,
+    "longitude": 0,
+    "timezone": "America/New_York",
+    "currency": "USD",
+    "neighbors": [
+      "00544"
+    ]
+  },
+  "industry": {
+    "naics": "11",
+    "name": "Agriculture",
+    "level": 2,
+    "parent": null,
+    "parent_name": null,
+    "year": 2022,
+    "country": "US",
+    "children": [
+      {
+        "naics": "111",
+        "name": "Crop Production"
+      }
+    ],
+    "exclusions": [
+      {
+        "description": "Consulting",
+        "codes": [
+          {
+            "naics": "541690",
+            "name": "Other Consulting Services"
+          }
+        ]
+      }
+    ]
+  },
+  "emoji": {
+    "emoji": "👍🏻",
+    "name": "thumbs up light skin tone",
+    "shortcodes": [
+      ":thumbsup:"
+    ],
+    "category": "People & Body",
+    "base": "👍",
+    "variants": [
+      {
+        "emoji": "👍🏽",
+        "tones": [
+          "medium"
+        ]
+      }
+    ],
+    "subcategory": "hand-fingers-closed",
+    "skins": []
+  },
+  "company": {
+    "id": "company_fixture",
+    "name": "Fixture",
+    "country": "US",
+    "website": "https://example.com",
+    "listings": [],
+    "address": null,
+    "industries": [
+      {
+        "type": "sic",
+        "code": "3571",
+        "name": "Electronic Computers"
+      }
+    ],
+    "phone_numbers": [
+      {
+        "number": "+1 408 996 1010",
+        "type": null,
+        "country": "US",
+        "e164": "+14089961010"
+      }
+    ],
+    "jurisdiction": {
+      "country": "US",
+      "state": "DE"
+    },
+    "domains": [
+      {
+        "domain": "other.example.com",
+        "url": null
+      }
+    ],
+    "identifiers": [
+      {
+        "type": "cik",
+        "authority": "sec",
+        "value": "0000320193"
+      }
+    ],
+    "addresses": [
+      {
+        "type": "business",
+        "street": null,
+        "city": null,
+        "state": "NY",
+        "postal": "00501",
+        "country": "US"
+      }
+    ],
+    "email_addresses": [
+      {
+        "address": "info@example.com"
+      }
+    ]
+  },
+  "point": {
+    "latitude": 0,
+    "longitude": 0,
+    "country": "US",
+    "country_name": "United States",
+    "state": null,
+    "state_name": null,
+    "district": null,
+    "district_name": null,
+    "timezone": "America/New_York",
+    "elevation": 0,
+    "elevation_ft": 0,
+    "resolution": null,
+    "city": {
+      "id": "city_7aj899nvwyku",
+      "name": "Fixture city",
+      "name_local": null,
+      "type": "city",
+      "state": null,
+      "state_name": null,
+      "country": "US",
+      "country_name": "United States",
+      "latitude": 0,
+      "longitude": 0,
+      "distance": 0,
+      "distance_mi": 0
+    }
+  },
+  "industry_search": {
+    "q": "coffee shop",
+    "country": "US",
+    "year": 2022,
+    "results": [
+      {
+        "naics": "722515",
+        "name": "Snack and Nonalcoholic Beverage Bars",
+        "level": 6,
+        "parent": "72251",
+        "parent_name": "Restaurants and Other Eating Places",
+        "match": {
+          "field": "term",
+          "text": "Coffee shops, on premise brewing",
+          "corrections": []
+        },
+        "description": "This U.S. industry comprises establishments primarily engaged in (1) preparing and/or serving a specialty snack, such as ice cream, frozen yogurt, cookies, or popcorn, or (2) serving nonalcoholic beverages, such as coffee, juices, or sodas for consumption on or near the premises. These establishments may carry and sell a combination of snack, nonalcoholic beverage, and other related products (e.g., coffee beans, mugs, coffee makers) but generally promote and sell a unique snack or nonalcoholic beverage.\n\nIllustrative Examples:\n\nBeverage bars, nonalcoholic, fixed location\nDoughnut shops, on premise baking and carryout service\nBagel shops, on premise baking and carryout service\nPretzel shops, on premise baking and carryout service\nCookie shops, on premise baking and carryout service\nCoffee shops, on premise brewing\nIce cream parlors\nJuice bars, nonalcoholic, fixed location",
+        "children": [],
+        "exclusions": [
+          {
+            "description": "Selling one or more of the following food specialties (except from mobile vehicles): hamburgers, hot dogs, pizza, chicken, specialty cuisines--are classified based on the type of food service provided to patrons;",
+            "codes": []
+          },
+          {
+            "description": "Preparing and serving snacks and nonalcoholic beverages from mobile vehicles for immediate consumption--are classified in Industry 722330, Mobile Food Services; and",
+            "codes": [
+              {
+                "naics": "722330",
+                "name": "Mobile Food Services"
+              }
+            ]
+          },
+          {
+            "description": "Operating as street vendors (except food) or retailing food (except food prepared and served for immediate consumption)--are classified in Sector 44-45, Retail Trade.",
+            "codes": [
+              {
+                "naics": "44-45",
+                "name": "Retail Trade"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

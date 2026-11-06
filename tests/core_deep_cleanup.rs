@@ -1,0 +1,12 @@
+use parseapi::{Language,State,Postal};
+use serde::Deserialize;
+#[derive(Deserialize)]struct Responses{language:Language,state:State,postal:Postal}
+#[test]fn reviewed_core_deep_responses_decode(){
+ let data:Responses=serde_json::from_str(r#"{"language":{"language":"hr","name":"Croatian","name_local":"hrvatski","script":"Latn","direction":"ltr","countries":["BA","HR"],"iso_alpha3":"hrv"},"state":{"state":"CA","name":"California","name_local":null,"type":"state","country":"US","country_name":"United States","latitude":36.701463,"longitude":-118.755997,"timezones":["America/Los_Angeles"],"fips":"06","area_codes":["209","213","279","310","323","341","408","415","424","442","510","530","559","562","619","626","628","650","657","661","669","707","714","747","760","805","818","820","831","840","858","909","916","925","949","951"],"capital":{"name":"Sacramento","latitude":null,"longitude":null},"population":39431263,"area":423970,"tax":{"name":"Sales tax","rate":7.25},"iso_subdivision":"US-CA"},"postal":{"postal":"10001","city":"New York","city_local":null,"district":"36061","district_name":"New York","district_name_local":null,"state":"NY","state_name":"New York","state_name_local":null,"country":"US","country_name":"United States","latitude":40.750649,"longitude":-73.997298,"timezone":"America/New_York","type":"standard","localities":null,"elevation":20,"elevation_ft":66,"population":30511,"area":1.62,"land_area":1.62,"water_area":0,"tax":{"name":"Sales tax","rate":8.875,"rate_state":4,"rate_county":null,"rate_city":4.5,"rate_special":0.375},"property_tax":null,"metros":[{"code":"35620","name":"New York-Newark-Jersey City, NY-NJ","type":"metropolitan","share_percent":100}],"currency":"USD","neighbors":["10199","10119","10018","10011","10036","10110","10173","10165"]}}"#).unwrap();
+ assert_eq!(data.state.fips.as_deref(),Some("06"));assert_eq!(data.state.iso.as_deref(),Some("US-CA"));assert_eq!(data.state.capital.as_ref().unwrap().latitude,None);
+ assert_eq!(data.state.clone().tax.unwrap().rate,Some(7.25));
+ let postal=data.postal;let deep=postal.clone();let tax=deep.tax.unwrap();
+ assert_eq!(tax.rate,Some(8.875));assert_eq!(tax.rate_county,None);assert_eq!(deep.water_area,Some(0.0));
+ assert_eq!(deep.currency.as_deref(),Some("USD"));assert_eq!(deep.neighbors.unwrap().len(),8);
+ assert_eq!(data.language.iso3.as_deref(),Some("hrv"));assert_eq!(data.language.countries.unwrap().len(),2);assert!(data.language.iso3.is_some());
+}

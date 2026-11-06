@@ -6,7 +6,6 @@ use serde::Deserialize;
 #[serde(default)]
 #[non_exhaustive]
 pub struct DomainRegistrationResult {
-	pub registered: Option<bool>,
 	pub created: Option<String>,
 	pub updated: Option<String>,
 	pub expires: Option<String>,
@@ -31,7 +30,7 @@ pub struct DomainResult {
 	pub domain: String,
 	/// Some(true) means unregistered, Some(false) registered, None unknown.
 	pub available: Option<bool>,
-	pub deep: Option<DomainResultDeep>,
+	pub registration: Option<DomainRegistrationResult>,
 }
 
 impl Client {

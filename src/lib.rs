@@ -23,7 +23,7 @@ use std::time::Duration;
 
 const DEFAULT_BASE_URL: &str = "https://api.parseapi.com";
 // The response types' wire contract. Changes require a reviewed major SDK release.
-const API_VERSION: &str = "2.0.0";
+const API_VERSION: &str = "2.1.0";
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 const DEFAULT_RETRIES: u32 = 2;
 const RETRY_STATUS: [u16; 5] = [429, 500, 502, 503, 504];
@@ -275,11 +275,11 @@ pub struct CitySearchOptions {
 	pub aliases: bool,
 	pub min_population: Option<u64>,
 	pub max_population: Option<u64>,
-	pub timezone: Option<String>,
+
 	/// Bounding box in west,south,east,north order; west > east crosses the dateline.
 	pub bbox: Option<String>,
 	pub sort: Option<String>,
-	pub order: Option<String>,
+
 	pub cursor: Option<String>,
 	pub page: bool,
 	pub countries: Option<Vec<String>>,
@@ -300,10 +300,10 @@ impl CitySearchOptions {
 	pub fn max_elevation(mut self,value:f64)->Self {self.max_elevation=Some(value);self}
 	pub fn min_population(mut self, value: u64) -> Self { self.min_population = Some(value); self }
 	pub fn max_population(mut self, value: u64) -> Self { self.max_population = Some(value); self }
-	pub fn timezone(mut self, value: impl Into<String>) -> Self { self.timezone = Some(value.into()); self }
+
 	pub fn bbox(mut self, value: impl Into<String>) -> Self { self.bbox = Some(value.into()); self }
 	pub fn sort(mut self, value: impl Into<String>) -> Self { self.sort = Some(value.into()); self }
-	pub fn order(mut self, value: impl Into<String>) -> Self { self.order = Some(value.into()); self }
+
 	pub fn cursor(mut self, value: impl Into<String>) -> Self { self.cursor = Some(value.into()); self }
 	pub fn page(mut self, value: bool) -> Self { self.page = value; self }
 
@@ -353,11 +353,11 @@ pub struct CityNearbyOptions {
 	pub ambiguity: Option<String>,
 	pub min_population: Option<u64>,
 	pub max_population: Option<u64>,
-	pub timezone: Option<String>,
+
 	/// Bounding box in west,south,east,north order; west > east crosses the dateline.
 	pub bbox: Option<String>,
 	pub sort: Option<String>,
-	pub order: Option<String>,
+
 	pub cursor: Option<String>,
 	pub page: bool,
 	pub countries: Option<Vec<String>>,
@@ -376,10 +376,10 @@ impl CityNearbyOptions {
 	pub fn max_elevation(mut self,value:f64)->Self {self.max_elevation=Some(value);self}
 	pub fn min_population(mut self, value: u64) -> Self { self.min_population = Some(value); self }
 	pub fn max_population(mut self, value: u64) -> Self { self.max_population = Some(value); self }
-	pub fn timezone(mut self, value: impl Into<String>) -> Self { self.timezone = Some(value.into()); self }
+
 	pub fn bbox(mut self, value: impl Into<String>) -> Self { self.bbox = Some(value.into()); self }
 	pub fn sort(mut self, value: impl Into<String>) -> Self { self.sort = Some(value.into()); self }
-	pub fn order(mut self, value: impl Into<String>) -> Self { self.order = Some(value.into()); self }
+
 	pub fn cursor(mut self, value: impl Into<String>) -> Self { self.cursor = Some(value.into()); self }
 	pub fn page(mut self, value: bool) -> Self { self.page = value; self }
 
@@ -923,7 +923,7 @@ impl HolidayOptions {
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
 pub struct PointOptions {
-	/// Add terrain and compact nearest-city context on paid plans or with retained Deep access. The timezone ID stays in core.
+	/// Add terrain and compact nearest-city context on every plan. The timezone ID stays in core.
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
@@ -931,7 +931,7 @@ pub struct PointOptions {
 
 impl PointOptions {
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
-	/// Add terrain and compact nearest-city context on paid plans or with retained Deep access. The timezone ID stays in core.
+	/// Add terrain and compact nearest-city context on every plan. The timezone ID stays in core.
 	pub fn deep(mut self, value: bool) -> Self {
 		self.deep = value;
 		self
@@ -944,7 +944,7 @@ impl PointOptions {
 pub struct WeatherOptions {
 	/// Add specialist current measurements, forecasts and related detail on paid plans.
 	pub deep: bool,
-	/// Past UTC day (YYYY-MM-DD). Requires paid deep and adds deep.history alongside current conditions.
+	/// Past UTC day (YYYY-MM-DD). Requires paid deep and adds history alongside current conditions.
 	pub date: Option<String>,
 }
 
@@ -954,7 +954,7 @@ impl WeatherOptions {
 		self.deep = value;
 		self
 	}
-	/// Past UTC day (YYYY-MM-DD). Requires paid deep and adds deep.history alongside current conditions.
+	/// Past UTC day (YYYY-MM-DD). Requires paid deep and adds history alongside current conditions.
 	pub fn date(mut self, value: impl Into<String>) -> Self {
 		self.date = Some(value.into());
 		self
@@ -1436,6 +1436,7 @@ fn build_error(status: u16, body: &str, retry_after: Option<String>) -> Error {
 }
 
 fn metered_request(path: &str, query: &Query) -> bool {
+ if path == "/email/verify" { return true; }
 	if ["carrier", "caller", "hlr", "litigator", "reassigned"]
 		.iter()
 		.any(|product| path.starts_with(&format!("/{product}/")))
@@ -1508,7 +1509,7 @@ impl Client {
 				.http
 				.request(if body.is_some() { reqwest::Method::POST } else { reqwest::Method::GET }, &url)
 				.header("X-API-Key", &self.api_key)
-				.header("Parse-Version", API_VERSION)
+				.header("X-API-Version", API_VERSION)
 				.header(reqwest::header::USER_AGENT, ua.unwrap_or(USER_AGENT))
 				.timeout(self.timeout_for(path));
 			if let Some(body) = &body { request = request.json(body); }
@@ -1739,7 +1740,7 @@ impl Client {
 		push(&mut params, "aliases", opts.aliases.then(|| "true".to_string()));
 		push_deep(&mut params, opts.deep);
 		push(&mut params,"romanized",opts.romanized.then(||"true".into()));
-		push_city_collection(&mut params, opts.min_population, opts.max_population, opts.timezone, opts.bbox, opts.sort, opts.order, opts.page, opts.cursor);
+		push_city_collection(&mut params, opts.min_population, opts.max_population, opts.bbox, opts.sort, opts.page, opts.cursor);
 		push_city_extra(&mut params, opts.countries, opts.exclude_countries, opts.timezones, opts.min_elevation, opts.max_elevation);
 		if params.iter().any(|(key,_)|*key=="match"||*key=="max_distance") {
 			let mut page:serde_json::Value=self.get("/city/search",params,None).await?;
@@ -1800,7 +1801,7 @@ impl Client {
 		push(&mut query, "ambiguity", opts.ambiguity);
 		push_deep(&mut query, opts.deep);
 		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
-		push_city_collection(&mut query, opts.min_population, opts.max_population, opts.timezone, opts.bbox, opts.sort, opts.order, opts.page, opts.cursor);
+		push_city_collection(&mut query, opts.min_population, opts.max_population, opts.bbox, opts.sort, opts.page, opts.cursor);
 		push_city_extra(&mut query, opts.countries, opts.exclude_countries, opts.timezones, opts.min_elevation, opts.max_elevation);
 		self.get(&format!("/city/{}/nearby", seg(name)), query, None)
 			.await
@@ -1866,12 +1867,15 @@ impl Client {
 	/// Parse an email and check its format and domain. Deep explicitly requests a metered
 	/// deliverability check. Deep checks use one attempt by default. An explicit retry count can
 	/// repeat paid usage.
+	/// Run one explicit metered mailbox check, without automatic retries.
+	pub async fn email_verify(&self, email: &str) -> Result<Email> {
+		self.post("/email/verify", serde_json::json!({"email": email})).await
+	}
+
 	pub async fn email(&self, email: &str, opts: impl Into<Option<EmailOptions>>) -> Result<Email> {
 		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push_deep(&mut query, opts.deep);
-		self.get(&format!("/email/{}", seg(email)), query, None)
-			.await
+		if opts.deep { return self.email_verify(email).await; }
+		self.get(&format!("/email/{}", seg(email)), Query::new(), None).await
 	}
 
 
@@ -1882,12 +1886,6 @@ impl Client {
 
 
 
-	pub async fn bin(&self, bin: &str, opts: impl Into<Option<BinOptions>>) -> Result<Bin> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push_deep(&mut query, opts.deep);
-		self.get(&format!("/bin/{}", seg(bin)), query, None).await
-	}
 
 
 
@@ -2271,7 +2269,7 @@ impl Client {
 	}
 
 	/// Resolve the country, state, district and timezone at coordinates. Deep adds terrain and compact
-	/// nearest-city context on paid plans or with retained Deep access. The timezone ID stays in core. The nearest city is null
+	/// nearest-city context on every plan. The timezone ID stays in core. The nearest city is null
 	/// when none is within 200 km.
 	pub async fn point(
 		&self,
@@ -2290,7 +2288,7 @@ impl Client {
 
 	/// Get current conditions in metric and imperial units. Paid deep adds specialist current
 	/// measurements, forecasts and related detail. With deep, date selects a past UTC day (YYYY-MM-DD)
-	/// in deep.history alongside current conditions. Date alone does not request history.
+	/// in history alongside current conditions. Date alone does not request history.
 	pub async fn weather(
 		&self,
 		lat: f64,
@@ -2338,17 +2336,15 @@ impl Client {
 	pub async fn emoji_catalog(&self, opts: impl Into<Option<EmojiCatalogOptions>>) -> Result<EmojiCatalog> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = emoji_query(EmojiSearchOptions { lang: opts.lang, category: opts.category, subcategory: opts.subcategory, version: opts.version, max_version: opts.max_version, include_skin_tones: opts.include_skin_tones, ..Default::default() });
-		query.push(("deep", opts.deep.to_string()));
-		push(&mut query, "profile", opts.profile);
+
+
 		self.get("/emoji/catalog", query, None).await
 	}
 
 	pub async fn emoji_convert(&self, text: &str, direction: &str, shortcode_source: &str) -> Result<EmojiConversion> {
 		self.request("/emoji/convert", vec![("direction",direction.to_owned()),("shortcode_source",shortcode_source.to_owned())], None, Some(serde_json::json!({"text":text}))).await
 	}
-	pub async fn emoji_metadata(&self) -> Result<EmojiMetadata> {
-		self.get("/emoji/metadata", Query::new(), None).await
-	}
+	
 
 	pub async fn emoji_categories(&self) -> Result<EmojiCategories> {
 		self.get("/emoji/categories", Query::new(), None).await
@@ -2458,11 +2454,6 @@ impl Client {
 		self.get("/company", query, None).await
 	}
 
-	/// Edition counts, not complete country or worldwide coverage.
-	pub async fn company_coverage(&self) -> Result<CompanyCoverage> {
-		self.get("/company/directory/coverage", Query::new(), None)
-			.await
-	}
 }
 
 #[cfg(test)]
@@ -2527,12 +2518,6 @@ pub type IndustrySearchOptions = NaicsSearchOptions;
 
 
 // Published compatibility declarations.
-/// Configures `bin`. Deep requests an empty object on every plan.
-#[derive(Debug, Clone, Default)]
-#[non_exhaustive]
-pub struct BinOptions {
-	pub deep: bool,
-}
 
 
 
@@ -2541,12 +2526,6 @@ pub struct BinOptions {
 
 
 
-impl BinOptions {
-	pub fn deep(mut self, value: bool) -> Self {
-		self.deep = value;
-		self
-	}
-}
 
 
 
@@ -2577,12 +2556,10 @@ fn emoji_query(opts: EmojiSearchOptions) -> Query {
 	query
 }
 
-/// Complete JSON catalog export. Deep defaults true.
+/// Compact JSON catalog export for offline use.
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct EmojiCatalogOptions {
-	pub profile: Option<String>,
-	pub deep: bool,
 	pub lang: Option<String>,
 	pub category: Option<String>,
 	pub subcategory: Option<String>,
@@ -2591,11 +2568,11 @@ pub struct EmojiCatalogOptions {
 	pub include_skin_tones: Option<bool>,
 }
 impl Default for EmojiCatalogOptions {
-	fn default() -> Self { Self { profile: None, deep: true, lang: None, category: None, subcategory: None, version: None, max_version: None, include_skin_tones: None } }
+	fn default() -> Self { Self { lang: None, category: None, subcategory: None, version: None, max_version: None, include_skin_tones: None } }
 }
 impl EmojiCatalogOptions {
-	pub fn profile(mut self, value: impl Into<String>) -> Self { self.profile = Some(value.into()); self }
-	pub fn deep(mut self, value: bool) -> Self { self.deep = value; self }
+
+
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	pub fn category(mut self, value: impl Into<String>) -> Self { self.category = Some(value.into()); self }
 	pub fn subcategory(mut self, value: impl Into<String>) -> Self { self.subcategory = Some(value.into()); self }
@@ -2621,11 +2598,11 @@ pub struct CityListOptions {
 	pub hierarchy: bool,
 	pub min_population: Option<u64>,
 	pub max_population: Option<u64>,
-	pub timezone: Option<String>,
+
 	/// Bounding box in west,south,east,north order; west > east crosses the dateline.
 	pub bbox: Option<String>,
 	pub sort: Option<String>,
-	pub order: Option<String>,
+
 	pub cursor: Option<String>,
 	pub countries: Option<Vec<String>>,
 	pub exclude_countries: Option<Vec<String>>,
@@ -2651,10 +2628,10 @@ impl CityListOptions {
 	pub fn hierarchy(mut self, value: bool) -> Self { self.hierarchy = value; self }
 	pub fn min_population(mut self, value: u64) -> Self { self.min_population = Some(value); self }
 	pub fn max_population(mut self, value: u64) -> Self { self.max_population = Some(value); self }
-	pub fn timezone(mut self, value: impl Into<String>) -> Self { self.timezone = Some(value.into()); self }
+
 	pub fn bbox(mut self, value: impl Into<String>) -> Self { self.bbox = Some(value.into()); self }
 	pub fn sort(mut self, value: impl Into<String>) -> Self { self.sort = Some(value.into()); self }
-	pub fn order(mut self, value: impl Into<String>) -> Self { self.order = Some(value.into()); self }
+
 	pub fn cursor(mut self, value: impl Into<String>) -> Self { self.cursor = Some(value.into()); self }
 }
 
@@ -2676,11 +2653,11 @@ pub struct CityNearbyCoordsOptions {
 	pub unit: Option<String>,
 	pub min_population: Option<u64>,
 	pub max_population: Option<u64>,
-	pub timezone: Option<String>,
+
 	/// Bounding box in west,south,east,north order; west > east crosses the dateline.
 	pub bbox: Option<String>,
 	pub sort: Option<String>,
-	pub order: Option<String>,
+
 	pub cursor: Option<String>,
 	pub countries: Option<Vec<String>>,
 	pub exclude_countries: Option<Vec<String>>,
@@ -2706,22 +2683,22 @@ impl CityNearbyCoordsOptions {
 	pub fn hierarchy(mut self, value: bool) -> Self { self.hierarchy = value; self }
 	pub fn min_population(mut self, value: u64) -> Self { self.min_population = Some(value); self }
 	pub fn max_population(mut self, value: u64) -> Self { self.max_population = Some(value); self }
-	pub fn timezone(mut self, value: impl Into<String>) -> Self { self.timezone = Some(value.into()); self }
+
 	pub fn bbox(mut self, value: impl Into<String>) -> Self { self.bbox = Some(value.into()); self }
 	pub fn sort(mut self, value: impl Into<String>) -> Self { self.sort = Some(value.into()); self }
-	pub fn order(mut self, value: impl Into<String>) -> Self { self.order = Some(value.into()); self }
+
 	pub fn cursor(mut self, value: impl Into<String>) -> Self { self.cursor = Some(value.into()); self }
 	pub fn radius(mut self, value: f64) -> Self { self.radius = Some(value); self }
 	pub fn unit(mut self, value: impl Into<String>) -> Self { self.unit = Some(value.into()); self }
 }
 
-fn push_city_collection(query: &mut Query, min_population: Option<u64>, max_population: Option<u64>, timezone: Option<String>, bbox: Option<String>, sort: Option<String>, order: Option<String>, page: bool, cursor: Option<String>) {
+fn push_city_collection(query: &mut Query, min_population: Option<u64>, max_population: Option<u64>, bbox: Option<String>, sort: Option<String>, page: bool, cursor: Option<String>) {
 	push(query, "min_population", min_population.map(|value| value.to_string()));
 	push(query, "max_population", max_population.map(|value| value.to_string()));
-	push(query, "timezone", timezone);
+
 	push(query, "bbox", bbox);
 	push(query, "sort", sort);
-	push(query, "order", order);
+
 	push(query, "page", page.then(|| "true".to_string()));
 	push(query, "cursor", cursor);
 }
@@ -2787,9 +2764,9 @@ impl Client {
 		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
 		push_deep(&mut query, opts.deep);
 		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
-		push_city_collection(&mut query, opts.min_population, opts.max_population, opts.timezone, opts.bbox, opts.sort, opts.order, false, opts.cursor);
+		push_city_collection(&mut query, opts.min_population, opts.max_population, opts.bbox, opts.sort, false, opts.cursor);
 		push_city_extra(&mut query, opts.countries, opts.exclude_countries, opts.timezones, opts.min_elevation, opts.max_elevation);
-		push(&mut query,"format",Some("list".into()));
+		
 
 		self.get("/city", query, None).await
 	}
@@ -2812,129 +2789,23 @@ impl Client {
 		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
 		push_deep(&mut query, opts.deep);
 		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
-		push_city_collection(&mut query, opts.min_population, opts.max_population, opts.timezone, opts.bbox, opts.sort, opts.order, false, opts.cursor);
+		push_city_collection(&mut query, opts.min_population, opts.max_population, opts.bbox, opts.sort, false, opts.cursor);
 		push_city_extra(&mut query, opts.countries, opts.exclude_countries, opts.timezones, opts.min_elevation, opts.max_elevation);
-		push(&mut query,"format",Some("list".into()));
+		
 
 		self.get("/city", query, None).await
 	}
 
 /// Canonical City resource with complete Core facts and optional detail.
-	pub async fn city_resource(&self, name: &str, opts: impl Into<Option<CityOptions>>) -> Result<CityResource> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "lang", opts.lang);
-		push(&mut query, "country", opts.country);
-		push(&mut query, "state", opts.state);
-		push(&mut query, "type", opts.r#type);
-		push(&mut query, "grain", opts.grain);
-		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
-		push(&mut query, "aliases", opts.aliases.then(|| "true".to_string()));
-		push(&mut query, "ambiguity", opts.ambiguity);
-		push_deep(&mut query, opts.deep);
-		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
-		push(&mut query,"format",Some("resource".into()));
+	
 
-		self.get(&format!("/city/{}", seg(name)), query, None).await
-	}
 
-pub async fn city_id_resource(&self, id: &str, opts: impl Into<Option<CityIdOptions>>) -> Result<CityResource> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "lang", opts.lang);
-		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
-		push_deep(&mut query, opts.deep);
-		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
-		push(&mut query,"format",Some("resource".into()));
 
-		self.get(&format!("/city/id/{}", seg(id)), query, None)
-			.await
-	}
 
-pub async fn city_nearest_resource(&self, lat: f64, lon: f64, opts: impl Into<Option<CityNearestOptions>>) -> Result<CityResource> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "lang", opts.lang);
-		push(&mut query, "lat", Some(lat.to_string()));
-		push(&mut query, "lon", Some(lon.to_string()));
-		push(&mut query, "country", opts.country);
-		push(&mut query, "state", opts.state);
-		push(&mut query, "type", opts.r#type);
-		push(&mut query, "grain", opts.grain);
-		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
-		push_deep(&mut query, opts.deep);
-		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
-		push(&mut query,"format",Some("resource".into()));
 
-		self.get("/city", query, None).await
-	}
 
-pub async fn city_search_list(
-		&self,
-		query: &str,
-		opts: impl Into<Option<CitySearchOptions>>,
-	) -> Result<CityList> {
-		let opts = opts.into().unwrap_or_default();
-		let mut params = Query::new();
-		push(&mut params, "lang", opts.lang);
-		push(&mut params, "q", Some(query.to_string()));
-		push(&mut params,"match",opts.r#match);push(&mut params,"max_distance",opts.max_distance.map(|v|v.to_string()));
-		push(&mut params, "country", opts.country);
-		push(&mut params, "state", opts.state);
-		push(
-			&mut params,
-			"limit",
-			opts.limit.map(|value| value.to_string()),
-		);
-		push(&mut params, "type", opts.r#type);
-		push(&mut params, "grain", opts.grain);
-		push(&mut params, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
-		push(&mut params, "aliases", opts.aliases.then(|| "true".to_string()));
-		push_deep(&mut params, opts.deep);
-		push(&mut params,"romanized",opts.romanized.then(||"true".into()));
-		push_city_collection(&mut params, opts.min_population, opts.max_population, opts.timezone, opts.bbox, opts.sort, opts.order, opts.page, opts.cursor);
-		push_city_extra(&mut params, opts.countries, opts.exclude_countries, opts.timezones, opts.min_elevation, opts.max_elevation);
-		push(&mut params,"format",Some("list".into()));
 
-		let endpoint=if params.iter().any(|(key,_)|*key=="match"||*key=="max_distance"){"/city/search"}else{"/city"};
-		self.get(endpoint, params, None).await
-	}
 
-pub async fn city_nearby_list(
-		&self,
-		name: &str,
-		opts: impl Into<Option<CityNearbyOptions>>,
-	) -> Result<CityList> {
-		let opts = opts.into().unwrap_or_default();
-		let mut query = Query::new();
-		push(&mut query, "lang", opts.lang);
-		push(&mut query, "country", opts.country);
-		push(&mut query, "state", opts.state);
-		push(
-			&mut query,
-			"radius",
-			opts.radius.map(|value| value.to_string()),
-		);
-		push(&mut query, "unit", opts.unit);
-		push(
-			&mut query,
-			"limit",
-			opts.limit.map(|value| value.to_string()),
-		);
-		push(&mut query, "type", opts.r#type);
-		push(&mut query, "grain", opts.grain);
-		push(&mut query, "hierarchy", opts.hierarchy.then(|| "true".to_string()));
-		push(&mut query, "aliases", opts.aliases.then(|| "true".to_string()));
-		push(&mut query, "ambiguity", opts.ambiguity);
-		push_deep(&mut query, opts.deep);
-		push(&mut query,"romanized",opts.romanized.then(||"true".into()));
-		push_city_collection(&mut query, opts.min_population, opts.max_population, opts.timezone, opts.bbox, opts.sort, opts.order, opts.page, opts.cursor);
-		push_city_extra(&mut query, opts.countries, opts.exclude_countries, opts.timezones, opts.min_elevation, opts.max_elevation);
-		push(&mut query,"format",Some("list".into()));
-
-		self.get(&format!("/city/{}/nearby", seg(name)), query, None)
-			.await
-	}
 
 /// Reviewed immediate children. Relationship coverage remains partial.
     pub async fn city_children(&self,id:&str,opts:impl Into<Option<CityRelationsOptions>>)->Result<CityRelations> {self.city_relations(id,"children",opts.into().unwrap_or_default()).await}

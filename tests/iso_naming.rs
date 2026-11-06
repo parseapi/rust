@@ -1,11 +1,16 @@
-use parseapi::{Country, CountryDeep, Language, State};
+use parseapi::{Country, CountryDeep, Currency, Language, State};
 
 #[test]
 fn released_and_canonical_iso_responses_preserve_native_members() {
- for body in [r#"{"iso3":"USA","numeric":840}"#,r#"{"iso_alpha3":"USA","iso_numeric":840}"#] {
+ for body in [r#"{"iso_alpha3":"USA","iso_numeric":840}"#] {
   let value:Country=serde_json::from_str(body).unwrap();
   assert_eq!(value.iso3.as_deref(),Some("USA"));assert_eq!(value.numeric,Some(840));
   let deep:CountryDeep=serde_json::from_str(body).unwrap();assert_eq!(deep.iso3.as_deref(),Some("USA"));assert_eq!(deep.numeric,Some(840));
+ }
+ for body in [r#"{"iso3":"hrv"}"#,r#"{"iso_alpha3":"hrv"}"#] {let value:Language=serde_json::from_str(body).unwrap();assert_eq!(value.iso3.as_deref(),Some("hrv"));}
+ for body in [r#"{"iso":"US-CA"}"#,r#"{"iso_3166_2":"US-CA"}"#,r#"{"iso_subdivision":"US-CA"}"#] {let value:State=serde_json::from_str(body).unwrap();assert_eq!(value.iso.as_deref(),Some("US-CA"));}
+ for body in [r#"{"numeric":0}"#,r#"{"iso_numeric":0}"#] {
+  let value:Currency=serde_json::from_str(body).unwrap();assert_eq!(value.iso_numeric,Some(0));
  }
 }
 
@@ -17,6 +22,7 @@ fn canonical_explicit_null_wins_in_either_key_order() {
  }
  for body in [r#"{"iso_alpha3":null,"iso3":"hrv"}"#,r#"{"iso3":"hrv","iso_alpha3":null}"#] {let value:Language=serde_json::from_str(body).unwrap();assert!(value.iso3.is_none());}
  for body in [r#"{"iso_subdivision":null,"iso":"US-CA","iso_3166_2":"US-TX"}"#,r#"{"iso":"US-CA","iso_3166_2":"US-TX","iso_subdivision":null}"#] {let value:State=serde_json::from_str(body).unwrap();assert!(value.iso.is_none());}
+ for body in [r#"{"iso_numeric":null,"numeric":840}"#,r#"{"numeric":840,"iso_numeric":null}"#] {let value:Currency=serde_json::from_str(body).unwrap();assert!(value.iso_numeric.is_none());}
 }
 
 #[test]

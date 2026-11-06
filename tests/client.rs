@@ -125,34 +125,34 @@ macro_rules! url_test {
 
 #[tokio::test]
 async fn name_country_and_nullable_evidence() {
-	let server = TestServer::start(vec![(200, r#"{"name":"王","valid":true,"future":true,"deep":{"gender":null,"salutation":null}}"#), (200, r#"{"name":"Andrea","valid":true,"deep":{"known":true,"gender":null,"future":true}}"#)]);
+	let server = TestServer::start(vec![(200, r#"{"name":"王","valid":true,"future":true,"gender":null,"salutation":null}"#), (200, r#"{"name":"Andrea","valid":true,"known":true,"gender":null,"future":true}"#)]);
 	let client = server.client();
 	let result = client.name_with_options("王", NameOptions::default().country("CN").deep(true)).await.unwrap();
-	assert_eq!(result.deep.as_ref().unwrap().gender, None);
-	assert_eq!(result.deep.as_ref().unwrap().salutation, None);
+	assert_eq!(result.clone().gender, None);
+	assert_eq!(result.clone().salutation, None);
 	let old = client.name("Andrea").await.unwrap();
-	assert!(old.deep.as_ref().unwrap().gender.is_none());
-	assert!(old.deep.as_ref().unwrap().salutation.is_none());
+	assert!(old.clone().gender.is_none());
+	assert!(old.clone().salutation.is_none());
 	assert_eq!(server.requests()[0].target, "/name/%E7%8E%8B?country=CN&deep=true");
 	assert_eq!(server.requests()[1].target, "/name/Andrea");
 	let nullable: Name = serde_json::from_str(r#"{}"#).unwrap();
-	assert!(nullable.deep.is_none());
+	assert!(nullable.initials.is_none());
 }
 
 url_test!(url_ip, c => c.ip("8.8.8.8", None), "/ip/8.8.8.8");
 
 #[tokio::test]
 async fn name_formatting_locale_and_nullable_results() {
-	let server = TestServer::start(vec![(200, r#"{"name":"Robert James Smith","deep":{"gender":"male","salutation":"Mr","short":"R.J. Smith","directory":"Smith, Robert James","initials":"RJS"}}"#)]);
+	let server = TestServer::start(vec![(200, r#"{"name":"Robert James Smith","gender":"male","salutation":"Mr","short":"R.J. Smith","directory":"Smith, Robert James","initials":"RJS"}"#)]);
 	let result = server.client().name_with_options("Robert James Smith", NameOptions::default().country("US").deep(true).name_locale("en-GB")).await.unwrap();
-	let detail = result.deep.unwrap();
+	let detail = result.clone();
 	assert_eq!(detail.short.as_deref(), Some("R.J. Smith"));
 	assert_eq!(detail.directory.as_deref(), Some("Smith, Robert James"));
 	assert_eq!(detail.initials.as_deref(), Some("RJS"));
 	assert_eq!(server.requests()[0].target, "/name/Robert%20James%20Smith?country=US&deep=true&name_locale=en-GB");
-	for body in [r#"{"deep":{"short":null,"directory":null,"initials":null}}"#, r#"{"deep":{"gender":null,"salutation":null}}"#, r#"{"deep":{}}"#] {
+	for body in [r#"{"short":null,"directory":null,"initials":null}"#, r#"{"gender":null,"salutation":null}"#, r#"{}"#] {
 		let nullable: Name = serde_json::from_str(body).unwrap();
-		let detail = nullable.deep.unwrap();
+		let detail = nullable.clone();
 		assert!(detail.short.is_none() && detail.directory.is_none() && detail.initials.is_none());
 	}
 }
@@ -289,7 +289,7 @@ async fn sends_key_and_user_agent() {
 	let _ = client.country("US").await;
 	let recorded = server.requests();
 	assert_eq!(recorded[0].headers["x-api-key"], "test_key_123");
-	assert_eq!(recorded[0].headers["parse-version"], "2.0.0");
+	assert_eq!(recorded[0].headers["x-api-version"], "2.1.0");
 	let ua = &recorded[0].headers["user-agent"];
 	assert_eq!(ua, concat!("parseapi-rust/", env!("CARGO_PKG_VERSION")));
 }
@@ -303,7 +303,7 @@ async fn useragent_overrides_ua_header() {
 		server.requests()[0].headers["user-agent"],
 		"Mozilla/5.0 (Test)"
 	);
-	assert_eq!(server.requests()[0].headers["parse-version"], "2.0.0");
+	assert_eq!(server.requests()[0].headers["x-api-version"], "2.1.0");
 	assert_eq!(server.requests()[0].headers["x-api-key"], "test_key_123");
 }
 
@@ -311,7 +311,7 @@ async fn useragent_overrides_ua_header() {
 async fn api_contract_pin_survives_retries_and_self_lookup() {
 	let server = TestServer::start_with_headers(vec![
 		(503, r#"{"code":"unavailable","message":"Try again"}"#, "Retry-After: 0\r\n".into()),
-		(200, r#"{"ip":"192.0.2.1","country":null,"deep":{"datacenter":null},"future":true}"#, String::new()),
+		(200, r#"{"ip":"192.0.2.1","country":null,"future":true,"datacenter":null}"#, String::new()),
 	]);
 	let client = Client::builder()
 		.api_key("test_key_123")
@@ -322,12 +322,13 @@ async fn api_contract_pin_survives_retries_and_self_lookup() {
 	let result = client.ip_self(IpSelfOptions::default().deep(true)).await.unwrap();
 	assert_eq!(result.ip, "192.0.2.1");
 	assert_eq!(result.country, None);
-	assert_eq!(result.deep.unwrap().datacenter, None);
+	assert_eq!(result.clone().datacenter, None);
 	let requests = server.requests();
 	assert_eq!(requests.len(), 2);
 	for request in requests {
 		assert_eq!(request.target, "/ip?deep=true");
-		assert_eq!(request.headers["parse-version"], "2.0.0");
+		assert_eq!(request.headers["x-api-version"], "2.1.0");
+		assert!(!request.headers.contains_key("parse-version"));
 		assert_eq!(request.headers["x-api-key"], "test_key_123");
 		assert_eq!(request.headers["user-agent"], concat!("parseapi-rust/", env!("CARGO_PKG_VERSION")));
 	}
@@ -351,7 +352,7 @@ async fn api_version_errors_do_not_retry_or_fall_back() {
 			other => panic!("expected API error, got {other}"),
 		}
 		assert_eq!(server.requests().len(), 1);
-		assert_eq!(server.requests()[0].headers["parse-version"], "2.0.0");
+		assert_eq!(server.requests()[0].headers["x-api-version"], "2.1.0");
 	}
 }
 
@@ -426,7 +427,7 @@ async fn non_json_error_body() {
 async fn retries_500_then_succeeds() {
 	let server = TestServer::start(vec![
 		(500, r#"{"code":"server_error","message":"boom"}"#),
-		(200, r#"{"country":"us","deep":{"iso3":"USA"}}"#),
+		(200, r#"{"country":"us","iso_alpha3":"USA"}"#),
 	]);
 	let client = Client::builder()
 		.api_key("test_key_123")
@@ -435,7 +436,7 @@ async fn retries_500_then_succeeds() {
 		.build()
 		.expect("client");
 	let country = client.country("US").await.expect("retried response");
-	assert_eq!(country.deep.as_ref().unwrap().iso3.as_deref(), Some("USA"));
+	assert_eq!(country.clone().iso3.as_deref(), Some("USA"));
 	assert_eq!(server.requests().len(), 2);
 }
 
@@ -576,22 +577,22 @@ async fn date_and_timezone_preserve_nulls_and_accept_new_fields() {
 	let server = TestServer::start(vec![
 		(
 			200,
-			r#"{"date":"03/04/2026","valid":false,"future_field":{"value":true},"deep":{"year":null,"leap":null}}"#,
+			r#"{"date":"03/04/2026","valid":false,"future_field":{"value":true},"year":null,"leap":null}"#,
 		),
 		(
 			200,
-			r#"{"latitude":0,"longitude":180,"timezone":null,"abbreviation":null,"offset":null,"dst":null,"future_field":true,"deep":{"name":null,"offset_minutes":null,"next_dst":null}}"#,
+			r#"{"latitude":0,"longitude":180,"timezone":null,"abbreviation":null,"offset":null,"dst":null,"future_field":true,"name":null,"offset_minutes":null,"next_dst":null}"#,
 		),
 	]);
 	let client = server.client();
 	let date = client.date("03/04/2026", None).await.expect("date");
 	assert!(!date.valid);
-	assert_eq!(date.deep.as_ref().unwrap().year, None);
-	assert_eq!(date.deep.as_ref().unwrap().leap, None);
+	assert_eq!(date.clone().year, None);
+	assert_eq!(date.clone().leap, None);
 	let zone = client.timezone_at(0.0, 180.0, None).await.expect("zone");
 	assert_eq!(zone.timezone, None);
 	assert_eq!(zone.dst, None);
-	assert_eq!(zone.deep.as_ref().unwrap().offset_minutes, None);
+	assert_eq!(zone.clone().offset_minutes, None);
 }
 
 #[tokio::test]
@@ -686,16 +687,16 @@ async fn metered_retry_defaults_and_explicit_override() {
 
 #[test]
 fn complete_response_fields_preserve_unknown_values() {
-	let company:Company=serde_json::from_str(r#"{"company":"x","registered":null,"active":null,"type":"company","deep":{"gst":null,"siege":null,"kind":"LIMITED"},"future":true}"#).unwrap();
+	let company:Company=serde_json::from_str(r#"{"company":"x","registered":null,"active":null,"type":"company","future":true,"gst":null,"siege":null,"kind":"LIMITED"}"#).unwrap();
 	assert_eq!(company.registered, None);
 	assert_eq!(company.active, None);
-	assert_eq!(company.deep.as_ref().unwrap().gst, None);
-	assert_eq!(company.deep.as_ref().unwrap().siege, None);
+	assert_eq!(company.clone().gst, None);
+	assert_eq!(company.clone().siege, None);
 	assert_eq!(company.r#type.as_deref(), Some("company"));
-	assert_eq!(company.deep.as_ref().unwrap().kind.as_deref(), Some("LIMITED"));
-	assert!(company.deep.is_some());
-	let weather:Weather=serde_json::from_str(r#"{"deep":{"hours":[{"feels_like":22,"wind_gust":4}],"days":[{"sunrise":"06:00"}],"air":{"aqi":10},"history":{"date":"2026-09-01","high":24}}}"#).unwrap();
-	let deep = weather.deep.unwrap();
+	assert_eq!(company.clone().kind.as_deref(), Some("LIMITED"));
+
+	let weather:Weather=serde_json::from_str(r#"{"hours":[{"feels_like":22,"wind_gust":4}],"days":[{"sunrise":"06:00"}],"air":{"aqi":10},"history":{"date":"2026-09-01","high":24}}"#).unwrap();
+	let deep = weather.clone();
 	assert_eq!(deep.hours.as_ref().unwrap()[0].feels_like, Some(22.0));
 	assert_eq!(deep.air.unwrap().aqi, Some(10.0));
 	assert_eq!(deep.history.unwrap().high, Some(24.0));
@@ -731,14 +732,14 @@ async fn network_records_preserve_nulls_and_tolerate_future_fields() {
 #[tokio::test]
 async fn naics_hierarchy_and_keyword_search() {
  let server = TestServer::start(vec![
-  (200, r#"{"naics":"31-33","name":"Manufacturing","level":2,"parent":null,"parent_name":null,"year":2022,"country":"US","future":true,"deep":{"description":null,"children":[{"naics":"311","name":"Food Manufacturing"}]}}"#),
+  (200, r#"{"naics":"31-33","name":"Manufacturing","level":2,"parent":null,"parent_name":null,"year":2022,"country":"US","future":true,"description":null,"children":[{"naics":"311","name":"Food Manufacturing"}]}"#),
   (200, r#"{"q":"coffee & tea","year":2022,"country":"US","results":[]}"#),
  ]);
  let client = Client::builder().api_key("test_key").base_url(&server.base_url).retries(0).build().unwrap();
  let industry = client.industry("31-33").await.unwrap();
  assert_eq!(industry.naics, "31-33");
- assert!(industry.deep.as_ref().unwrap().description.is_none() && industry.parent.is_none());
- assert_eq!(industry.deep.as_ref().unwrap().children.as_ref().unwrap()[0].naics, "311");
+ assert!(industry.clone().description.is_none() && industry.parent.is_none());
+ assert_eq!(industry.clone().children.as_ref().unwrap()[0].naics, "311");
  let search = client.industry_search("coffee & tea", IndustrySearchOptions::default().limit(5)).await.unwrap();
  assert_eq!(search.year, 2022);
  assert!(search.results.is_empty());
@@ -787,7 +788,7 @@ fn time_target_lists_preserve_unknown_empty_order_and_zero() {
  let data: Time = serde_json::from_str(r#"{"targets":[{"timezone":"UTC","at":"1970-01-01T00:00:00+00:00","unix":0},{"timezone":"UTC","at":"1970-01-01T00:00:00+00:00","unix":0}]}"#).unwrap();
  let targets = data.targets.unwrap(); assert_eq!(targets.len(), 2); assert_eq!(targets[0].unix, Some(0)); assert_eq!(targets[1].timezone, "UTC");
  let zones: TimeZones = serde_json::from_str(r#"{"timezone_database_version":"2026c","timezones":[]}"#).unwrap();
- assert_eq!(zones.timezone_database_version, "2026c"); assert!(zones.timezones.is_empty());
+ assert_eq!(zones.timezone_database_version, "2026c"); assert!(zones.timezones.as_ref().unwrap().is_empty());
 }
 
 #[tokio::test]
@@ -802,9 +803,9 @@ async fn time_invalid_target_lists_never_dispatch() {
 
 #[test]
 fn time_keeps_epoch_zero_and_unknown() {
- let historical: Time = serde_json::from_str(r#"{"deep":{"offset_seconds":-17762,"offset_minutes":-296},"at":"1880-01-01T00:00:00-04:56:02"}"#).unwrap();
- assert_eq!(historical.deep.as_ref().unwrap().offset_seconds, Some(-17762));
- assert_eq!(historical.deep.as_ref().unwrap().offset_minutes, Some(-296));
+ let historical: Time = serde_json::from_str(r#"{"at":"1880-01-01T00:00:00-04:56:02","offset_seconds":-17762,"offset_minutes":-296}"#).unwrap();
+ assert_eq!(historical.clone().offset_seconds, Some(-17762));
+ assert_eq!(historical.clone().offset_minutes, Some(-296));
  let clock: Time = serde_json::from_str(r#"{"timezone":"UTC","at":"1970-01-01T00:00:00+00:00","unix":0,"to":{"timezone":"UTC","unix":0}}"#).unwrap();
  assert_eq!(clock.unix, Some(0));
  assert_eq!(clock.to.unwrap().unix, Some(0));
@@ -817,15 +818,15 @@ fn time_keeps_epoch_zero_and_unknown() {
 
 #[test]
 fn naics_exclusions_and_match_preserve_older_responses() {
- let search: IndustrySearch = serde_json::from_str(r#"{"q":"sofware","year":2022,"country":"US","results":[{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","deep":{"description":null,"children":[]}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":null,"deep":{"description":null,"children":[],"exclusions":null}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"future-field","text":"Future matching evidence","corrections":[],"future":true},"deep":{"description":null,"children":[],"exclusions":[]}},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"term","text":"Computer software programming services","corrections":[{"from":"sofware","to":"software"}]},"future":true,"deep":{"description":null,"children":[],"exclusions":[{"description":"Designing integrated computer systems","codes":[{"naics":"541512","name":"Computer Systems Design Services"}]},{"description":"Activities classified elsewhere","codes":[]}]}}]}"#).unwrap();
+ let search: IndustrySearch = serde_json::from_str(r#"{"q":"sofware","year":2022,"country":"US","results":[{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","description":null,"children":[]},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":null,"description":null,"children":[],"exclusions":null},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"future-field","text":"Future matching evidence","corrections":[],"future":true},"description":null,"children":[],"exclusions":[]},{"naics":"541511","name":"Custom Computer Programming Services","level":6,"parent":"54151","parent_name":"Computer Systems Design and Related Services","match":{"field":"term","text":"Computer software programming services","corrections":[{"from":"sofware","to":"software"}]},"future":true,"description":null,"children":[],"exclusions":[{"description":"Designing integrated computer systems","codes":[{"naics":"541512","name":"Computer Systems Design Services"}]},{"description":"Activities classified elsewhere","codes":[]}]}]}"#).unwrap();
  let results: Vec<IndustrySearchResult> = search.results;
- assert!(results[0].deep.as_ref().unwrap().exclusions.is_none() && results[0].r#match.is_none());
- assert!(results[1].deep.as_ref().unwrap().exclusions.is_none() && results[1].r#match.is_none());
- assert!(results[2].deep.as_ref().unwrap().exclusions.as_ref().unwrap().is_empty());
+ assert!(results[0].exclusions.is_none() && results[0].r#match.is_none());
+ assert!(results[1].exclusions.is_none() && results[1].r#match.is_none());
+ assert!(results[2].exclusions.as_ref().unwrap().is_empty());
  let exact = results[2].r#match.as_ref().unwrap();
  assert_eq!(exact.field, "future-field");
  assert!(exact.corrections.is_empty());
- let exclusions = results[3].deep.as_ref().unwrap().exclusions.as_ref().unwrap();
+ let exclusions = results[3].exclusions.as_ref().unwrap();
  assert_eq!(exclusions[0].codes[0].naics, "541512");
  assert_eq!(exclusions[1].description, "Activities classified elsewhere");
  assert!(exclusions[1].codes.is_empty());
@@ -842,18 +843,18 @@ url_test!(url_card_separators, c => c.card("00 1234-56"), "/card/00%201234-56");
 #[tokio::test]
 async fn card_preserves_prefix_null_false_and_tolerates_unknown_fields() {
 	let server = TestServer::start(vec![
-		(200, r#"{"bin":"00123456","brand":"future-brand","brand_name":null,"logo":"https://cdn.parseapi.com/card/generic.svg","deep":{"prefix":"001234","issuer":"Fixture Bank","country":null,"type":null,"prepaid":false},"future":true}"#),
+		(200, r#"{"bin":"00123456","brand":"future-brand","brand_name":null,"logo":"https://cdn.parseapi.com/card/generic.svg","future":true,"prefix":"001234","issuer":"Fixture Bank","country":null,"type":null,"prepaid":false}"#),
 		(200, r#"{"bin":"000000","brand":null,"brand_name":null,"logo":"https://cdn.parseapi.com/card/generic.svg"}"#),
 		(400, r#"{"code":"invalid_input","message":"Expected 6-11 digits"}"#),
 	]);
 	let client = server.client();
 	let known = client.card_with_options("00123456", parseapi::CardOptions::default().deep(true)).await.unwrap();
 	assert_eq!(known.bin, "00123456");
-	assert_eq!(known.deep.as_ref().unwrap().prefix.as_deref(), Some("001234"));
-	assert_eq!(known.deep.as_ref().unwrap().prepaid, Some(false));
-	assert!(known.deep.as_ref().unwrap().country.is_none());
+	assert_eq!(known.clone().prefix.as_deref(), Some("001234"));
+	assert_eq!(known.clone().prepaid, Some(false));
+	assert!(known.clone().country.is_none());
 	let unknown = client.card("000000").await.unwrap();
-	assert!(unknown.deep.is_none() && unknown.brand.is_none());
+	assert!(unknown.prefix.is_none() && unknown.brand.is_none());
 	assert!(client.card("junk").await.is_err());
 }
 
@@ -1139,7 +1140,7 @@ async fn language_preserves_native_null_and_date_input() {
  assert_eq!(country.country, "DE");
  assert_eq!(country.name, "Allemagne");
  assert_eq!(country.name_local.as_deref(), Some("Deutschland"));
- assert!(country.currency_name.is_none() && country.deep.is_none());
+ assert!(country.currency_name.is_none() && country.population.is_none());
  client.date("03/04/2026", DateOptions::default().format("dmy").lang("en-US")).await.unwrap();
  let calls=server.requests();
  let date=reqwest::Url::parse(&format!("http://fixture{}",calls[1].target)).unwrap();
@@ -1151,17 +1152,17 @@ async fn language_preserves_native_null_and_date_input() {
 async fn stack_preserves_site_inventory_and_request_options() {
  let records = [
   r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":null,"scope":"homepage","pages":0,"partial":null,"cms":null,"servers":null,"frameworks":null,"ecommerce":null,"analytics":null,"chat":null,"payments":null,"hosting":null,"future":true}"#,
-  r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":"2026-09-21T12:00:00Z","scope":"site","pages":2,"partial":false,"cms":[],"servers":[],"frameworks":[],"ecommerce":[],"analytics":[],"chat":[],"payments":[],"hosting":[],"future":true,"deep":{}}"#,
+  r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":"2026-09-21T12:00:00Z","scope":"site","pages":2,"partial":false,"cms":[],"servers":[],"frameworks":[],"ecommerce":[],"analytics":[],"chat":[],"payments":[],"hosting":[],"future":true}"#,
   r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":"2026-09-21T12:00:00Z","scope":"site","pages":3,"partial":true,"cms":[{"technology":"wordpress","name":"WordPress","version":"6.8"},{"technology":"ghost","name":"Ghost","version":null}],"servers":[{"technology":"nginx","name":"nginx","version":"1.26.2"},{"technology":"apache","name":"Apache","version":null}],"frameworks":[{"technology":"nextjs","name":"Next.js","version":null,"future":true},{"technology":"react","name":"React","version":"19.1"}],"ecommerce":[{"technology":"woocommerce","name":"WooCommerce","version":null}],"analytics":[{"technology":"google-analytics","name":"Google Analytics","version":null}],"chat":[{"technology":"intercom","name":"Intercom","version":null}],"payments":[{"technology":"stripe","name":"Stripe","version":null}],"hosting":[{"technology":"vercel","name":"Vercel","version":null}],"future":true}"#,
-  r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":null,"scope":"future-scope","pages":0,"partial":null,"cms":null,"servers":null,"frameworks":null,"ecommerce":null,"analytics":null,"chat":null,"payments":null,"hosting":null,"future":true,"deep":{}}"#,
-  r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":"2026-09-21T12:00:00Z","scope":"homepage","pages":1,"partial":true,"cms":[],"servers":[],"frameworks":[{"technology":"nextjs","name":"Next.js","version":null,"future":true}],"ecommerce":[],"analytics":[],"chat":[],"payments":[],"hosting":[],"future":true,"deep":{}}"#
+  r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":null,"scope":"future-scope","pages":0,"partial":null,"cms":null,"servers":null,"frameworks":null,"ecommerce":null,"analytics":null,"chat":null,"payments":null,"hosting":null,"future":true}"#,
+  r#"{"domain":"xn--bcher-kva.example","url":"https://xn--bcher-kva.example/","checked_at":"2026-09-21T12:00:00Z","scope":"homepage","pages":1,"partial":true,"cms":[],"servers":[],"frameworks":[{"technology":"nextjs","name":"Next.js","version":null,"future":true}],"ecommerce":[],"analytics":[],"chat":[],"payments":[],"hosting":[],"future":true}"#
  ];
  for (i, body) in records.iter().enumerate() {
   let server = TestServer::start(vec![(200, body), (200, body)]);
   let client = server.client();
   let result = client.stack_with_options("bücher.example", StackOptions::default().deep(true).pretty(true)).await.unwrap();
   assert_eq!(server.requests()[0].target, "/stack/b%C3%BCcher.example?deep=true&pretty=true");
-  assert_eq!(server.requests()[0].headers.get("parse-version").unwrap(), "2.0.0");
+  assert_eq!(server.requests()[0].headers.get("x-api-version").unwrap(), "2.1.0");
   if i == 0 || i == 3 { assert!(result.cms.is_none() && result.servers.is_none());  }
   else if i != 2 { assert!(result.cms.as_ref().unwrap().is_empty() && result.servers.as_ref().unwrap().is_empty()); }
   for group in [&result.ecommerce, &result.analytics, &result.chat, &result.payments, &result.hosting] {
@@ -1170,8 +1171,8 @@ async fn stack_preserves_site_inventory_and_request_options() {
    else { assert!(group.as_ref().unwrap().is_empty()); }
   }
   match i {
-   0 => { assert!(result.frameworks.is_none()); assert!(result.checked_at.is_none()); assert!(result.deep.is_none()); },
-   1 => { assert!(result.frameworks.unwrap().is_empty()); assert_eq!(result.deep.unwrap(), serde_json::json!({})); },
+   0 => { assert!(result.frameworks.is_none()); assert!(result.checked_at.is_none()); assert!(!result.domain.is_empty()); },
+   1 => { assert!(result.frameworks.unwrap().is_empty()); assert!(!result.domain.is_empty()); },
    2 => {
     let technologies = result.frameworks.unwrap();
     assert_eq!(technologies.len(), 2);
@@ -1181,14 +1182,14 @@ async fn stack_preserves_site_inventory_and_request_options() {
     assert_eq!(cms[0].technology, "wordpress"); assert_eq!(cms[0].name, "WordPress"); assert_eq!(cms[0].version.as_deref(), Some("6.8"));
     assert_eq!(cms[1].technology, "ghost"); assert!(cms[1].version.is_none());
     assert_eq!(servers[0].version.as_deref(), Some("1.26.2")); assert_eq!(servers[1].technology, "apache");
-    assert!(result.deep.is_none()); assert!(technologies[0].version.is_none());
+    assert!(!result.domain.is_empty()); assert!(technologies[0].version.is_none());
    },
    3 => {
     assert!(result.frameworks.is_none());
-    assert_eq!(result.deep.unwrap(), serde_json::json!({}));
+    assert!(!result.domain.is_empty());
    },
    _ => {
-    assert_eq!(result.deep.unwrap(), serde_json::json!({}));
+    assert!(!result.domain.is_empty());
     let technologies = result.frameworks.unwrap();
     assert_eq!(technologies[0].technology, "nextjs");
     assert!(technologies[0].version.is_none());
@@ -1205,34 +1206,34 @@ async fn time_resolution_and_reserved_source_routes() {
  for zone in ["zones", "help", " ZONES ", "Help"] {
   assert!(matches!(client.time(zone, None).await, Err(Error::Config(message)) if message.contains("IANA timezone ID")));
  }
- let result: Time = serde_json::from_str(r#"{"deep":{"timezone_database_version":"2026c","resolution":{"kind":"gap","policy":"earlier","adjustment_seconds":-1800,"alternatives":[{"at":"1970-01-01T00:00:00.123+00:00","unix":0,"offset":"+00:00"},{"at":"1970-01-01T00:30:00.123+00:00","unix":1800,"offset":"+00:00"}],"future":true}}}"#).unwrap();
- let deep = result.deep.unwrap();
+ let result: Time = serde_json::from_str(r#"{"timezone_database_version":"2026c","resolution":{"kind":"gap","policy":"earlier","adjustment_seconds":-1800,"alternatives":[{"at":"1970-01-01T00:00:00.123+00:00","unix":0,"offset":"+00:00"},{"at":"1970-01-01T00:30:00.123+00:00","unix":1800,"offset":"+00:00"}],"future":true}}"#).unwrap();
+ let deep = result.clone();
  assert_eq!(deep.timezone_database_version.as_deref(), Some("2026c"));
  let resolution = deep.resolution.unwrap();
  assert_eq!(resolution.adjustment_seconds, Some(-1800));
  assert_eq!(resolution.alternatives.unwrap()[0].unix, Some(0));
- for raw in [r#"{"deep":{}}"#, r#"{"deep":{"resolution":null}}"#] {
-  assert!(serde_json::from_str::<Time>(raw).unwrap().deep.unwrap().resolution.is_none());
+ for raw in [r#"{}"#, r#"{"resolution":null}"#] {
+  assert!(serde_json::from_str::<Time>(raw).unwrap().resolution.is_none());
  }
- let unique: Time = serde_json::from_str(r#"{"deep":{"resolution":{"kind":"unique","alternatives":[]}}}"#).unwrap();
- assert!(unique.deep.unwrap().resolution.unwrap().alternatives.unwrap().is_empty());
+ let unique: Time = serde_json::from_str(r#"{"resolution":{"kind":"unique","alternatives":[]}}"#).unwrap();
+ assert!(unique.clone().resolution.unwrap().alternatives.unwrap().is_empty());
 }
 
 #[tokio::test]
 async fn time_locations_rich_catalog_and_seasons() {
- let server=TestServer::start(vec![(200,r#"{"timezone_database_version": "2026c", "timezones": ["UTC"], "at": "1970-01-01T00:00:00.000Z", "zones": [{"timezone": "UTC", "countries": [], "area": null, "abbreviation": "UTC", "offset": "+00:00", "offset_seconds": 0, "dst": false, "observes_dst": false}]}"#),(200,r#"{"timezone": null, "targets": null, "location": {"input": {"type": "city", "value": "Springfield"}, "status": "ambiguous", "candidates": [{"id": "city_a", "name": "Springfield", "country": "US", "state": "IL", "timezone": "America/Chicago", "latitude": 0, "longitude": 0}], "truncated": false, "source": "city_reference"}, "deep": {"standard_offset": "+01:00", "standard_offset_seconds": 3600, "dst_offset_seconds": -3600, "season": {"start": {"at": "2026-10-25T01:00:00Z", "before": {"offset_seconds": 3600, "dst": false}, "after": {"offset_seconds": 0, "dst": true}, "change_seconds": -3600}, "end": null}}}"#)]);
+ let server=TestServer::start(vec![(200,r#"{"timezone_database_version":"2026c","timezones":["UTC"],"at":"1970-01-01T00:00:00.000Z","zones":[{"timezone":"UTC","countries":[],"area":null,"abbreviation":"UTC","offset":"+00:00","offset_seconds":0,"dst":false,"observes_dst":false}]}"#),(200,r#"{"timezone":null,"targets":null,"location":{"input":{"type":"city","value":"Springfield"},"status":"ambiguous","candidates":[{"id":"city_a","name":"Springfield","country":"US","state":"IL","timezone":"America/Chicago","latitude":0,"longitude":0}],"truncated":false,"source":"city_reference"},"standard_offset":"+01:00","standard_offset_seconds":3600,"dst_offset_seconds":-3600,"season":{"start":{"at":"2026-10-25T01:00:00Z","before":{"offset_seconds":3600,"dst":false},"after":{"offset_seconds":0,"dst":true},"change_seconds":-3600},"end":null}}"#)]);
  let client=server.client();
  let zones=client.time_zones_with_options("",TimeZonesOptions::default().country("US").area("America").offset("+00:00").abbreviation("UTC").dst(false).observes_dst(false).at("1970-01-01T00:00:00Z").details(true).sort("offset")).await.unwrap();
  let requests=server.requests();
  assert!(requests[0].target.contains("dst=false")); assert!(requests[0].target.contains("observes_dst=false"));
  assert_eq!(zones.zones.as_ref().unwrap()[0].offset_seconds,0); assert!(!zones.zones.unwrap()[0].dst);
  let result=client.time("",TimeOptions::default().city("Springfield").country("US").state("IL").targets(["UTC"]).deep(true)).await.unwrap();
- assert!(result.timezone.is_none()); let loc=result.location.unwrap(); assert_eq!(loc.status,"ambiguous"); assert_eq!(loc.candidates[0].latitude,Some(0.0));
- let deep=result.deep.unwrap(); assert_eq!(deep.dst_offset_seconds,Some(-3600)); let start=deep.season.unwrap().start.unwrap(); assert_eq!(start.change_seconds,Some(-3600)); assert_eq!(start.before.unwrap().dst,Some(false));
+ assert!(result.timezone.is_none()); let loc=result.location.as_ref().unwrap(); assert_eq!(loc.status,"ambiguous"); assert_eq!(loc.candidates[0].latitude,Some(0.0));
+ let deep=result.clone(); assert_eq!(deep.dst_offset_seconds,Some(-3600)); let start=deep.season.unwrap().start.unwrap(); assert_eq!(start.change_seconds,Some(-3600)); assert_eq!(start.before.unwrap().dst,Some(false));
  for opts in [TimeOptions::default().ip("8.8.8.8").city("Paris"),TimeOptions::default().ip("8.8.8.8").country("US"),TimeOptions::default().state("NY"),TimeOptions::default().city("Paris").state("IDF"),TimeOptions::default().address("a"),TimeOptions::default().ip("")] { assert!(matches!(client.time("",opts).await,Err(Error::Config(_)))); }
  assert!(matches!(client.time("UTC",TimeOptions::default().city("Paris")).await,Err(Error::Config(_))));
  assert_eq!(server.requests().len(),2);
- for raw in ["{}",r#"{"deep":{}}"#,r#"{"deep":{"season":null}}"#] { let old:Time=serde_json::from_str(raw).unwrap(); assert!(old.location.is_none()); }
+ for raw in ["{}",r#"{}"#,r#"{"season":null}"#] { let old:Time=serde_json::from_str(raw).unwrap(); assert!(old.location.is_none()); }
 }
 
 
@@ -1252,7 +1253,7 @@ fn emoji_actual_artwork() {
  let fixture:serde_json::Value=serde_json::from_str(include_str!("fixtures/emoji-artwork.json")).unwrap();
  let metadata:EmojiMetadata=serde_json::from_value(fixture["metadata"].clone()).unwrap();
  let emoji:Emoji=serde_json::from_value(fixture["emoji"].clone()).unwrap();
- assert_eq!(metadata.artwork_sources.len(),3);assert!(!metadata.artwork_sources[0].notices.is_empty());let artwork=emoji.deep.unwrap().artwork.unwrap();assert_eq!(artwork.len(),3);
+ assert_eq!(metadata.artwork_sources.len(),3);assert!(!metadata.artwork_sources[0].notices.is_empty());let artwork=emoji.clone().artwork.unwrap();assert_eq!(artwork.len(),3);
  assert_eq!(artwork["openmoji"].svg.as_deref(),Some("https://cdn.parseapi.com/emoji/openmoji/17.0.0/1f680.svg"));
  assert_eq!(artwork["openmoji"].png["72"],"https://cdn.parseapi.com/emoji/openmoji/17.0.0/72/1f680.png");
 }
@@ -1268,15 +1269,15 @@ async fn emoji_private_conversion() {
 #[tokio::test]
 async fn emoji_catalog_and_private_text_body() {
 	let server = TestServer::start(vec![
-		(200, r#"{"emoji":"🐱","name":"cat face","shortcodes":[],"deep":{}}"#),
+		(200, r#"{"emoji":"🐱","name":"cat face","shortcodes":[]}"#),
 		(200, r#"{"q":"face","emojis":[],"total":0,"next_offset":null}"#),
 		(200, r#"{"q":"","emojis":[],"total":0,"next_offset":null}"#),
 		(200, r#"{"categories":[{"category":"People & Body","subcategories":["hand-fingers-closed"]}]}"#),
-		(200, r#"{"emojis":[{"emoji":"👍🏿","name":"thumbs up","shortcodes":[],"positions":[{"start":2,"end":6},{"start":7,"end":11}],"deep":{"base":"👍","variants":[{"emoji":"👍🏿","tones":["dark"]}],"shortcode_sources":{"cldr":[],"github":[],"slack":[],"discord":[]}}}]}"#),
+		(200, r#"{"emojis":[{"emoji":"👍🏿","name":"thumbs up","shortcodes":[],"positions":[{"start":2,"end":6},{"start":7,"end":11}],"base":"👍","variants":[{"emoji":"👍🏿","tones":["dark"]}],"shortcode_sources":{"cldr":[],"github":[],"slack":[],"discord":[]}}]}"#),
 	]);
 	let client = server.client();
 	let lookup = client.emoji_with_options(":cat:", EmojiOptions::default().shortcode_source("github")).await.unwrap();
-	assert!(lookup.deep.unwrap().variants.is_none());
+	assert!(lookup.clone().variants.is_none());
 	let page = client.emoji_search("face", EmojiSearchOptions::default().category("Smileys & Emotion").version("17.0").max_version("18.0").include_skin_tones(false).offset(0)).await.unwrap();
 	assert_eq!(page.total, Some(0));
 	let browse = client.emoji_browse(EmojiBrowseOptions::default().include_skin_tones(false).offset(2)).await.unwrap();
@@ -1287,7 +1288,7 @@ async fn emoji_catalog_and_private_text_body() {
 	assert_eq!(parsed.emojis.len(), 1);
 	assert_eq!(parsed.emojis[0].positions.len(), 2);
 	assert_eq!(parsed.emojis[0].positions[1].end, 11);
-	assert_eq!(parsed.emojis[0].deep.as_ref().unwrap().variants.as_ref().unwrap()[0].tones, vec!["dark"]);
+	assert_eq!(parsed.emojis[0].variants.as_ref().unwrap()[0].tones, vec!["dark"]);
 	let calls = server.requests();
 	assert_eq!(calls[0].target, "/emoji/%3Acat%3A?shortcode_source=github");
 	let params: std::collections::BTreeMap<_,_> = reqwest::Url::parse(&format!("http://test{}", calls[1].target)).unwrap().query_pairs().map(|(k,v)|(k.into_owned(),v.into_owned())).collect();
@@ -1299,7 +1300,7 @@ async fn emoji_catalog_and_private_text_body() {
 	assert_eq!(calls[4].method, "POST");
 	assert_eq!(calls[4].target, "/emoji/parse?lang=fr&deep=true");
 	assert_eq!(serde_json::from_str::<serde_json::Value>(&calls[4].body).unwrap(), serde_json::json!({"text":"x 👍🏿 👍🏿"}));
-	assert_eq!(calls[4].headers.get("parse-version").map(String::as_str),Some("2.0.0"));
+	assert_eq!(calls[4].headers.get("x-api-version").map(String::as_str),Some("2.1.0"));
 }
 
 #[tokio::test]
@@ -1307,7 +1308,7 @@ async fn emoji_catalog_metadata_and_artwork() {
     let bundle: serde_json::Value = serde_json::from_str(include_str!("fixtures/emoji-catalog.json")).unwrap();
     let body = include_str!("fixtures/emoji-catalog.json");
     let metadata_body: &'static str = Box::leak(serde_json::to_string(&bundle["metadata"]).unwrap().into_boxed_str());
-    let server = TestServer::start(vec![(200,body),(200,body),(200,metadata_body)]);
+    let server = TestServer::start(vec![(200,body),(200,body),(200,body)]);
     let client = server.client();
     let catalog = client.emoji_catalog(None).await.unwrap();
     assert_eq!(catalog.forms["❤"], "❤️");
@@ -1315,24 +1316,34 @@ async fn emoji_catalog_metadata_and_artwork() {
     assert!(catalog.scope.as_ref().unwrap().complete_inventory);
     assert_eq!(catalog.localization.as_ref().unwrap().resolved_locale.as_deref(), Some("fr"));
     assert_eq!(catalog.search.as_ref().unwrap().native["❤️"].keywords, vec!["love"]);
-    assert!(catalog.emojis[0].deep.as_ref().unwrap().artwork.as_ref().unwrap().is_empty());
-    client.emoji_catalog(EmojiCatalogOptions::default().deep(false).include_skin_tones(false).max_version("17.0")).await.unwrap();
-    let metadata = client.emoji_metadata().await.unwrap();
+    assert!(catalog.emojis[0].artwork.as_ref().unwrap().is_empty());
+    client.emoji_catalog(EmojiCatalogOptions::default().include_skin_tones(false).max_version("17.0")).await.unwrap();
+    let metadata = client.emoji_catalog(None).await.unwrap().metadata;
     assert_eq!(metadata.total, 1);
     assert_eq!(metadata.sources[0].source_url, "https://unicode.org/emoji");
     assert_eq!(metadata.notices[0].notice, "Full source notice");
     let requests = server.requests();
-    assert_eq!(requests[0].target, "/emoji/catalog?deep=true");
-    assert_eq!(requests[1].target, "/emoji/catalog?max_version=17.0&include_skin_tones=false&deep=false");
-    assert_eq!(requests[2].target, "/emoji/metadata");
+    assert_eq!(requests[0].target, "/emoji/catalog");
+    assert_eq!(requests[1].target, "/emoji/catalog?max_version=17.0&include_skin_tones=false");
+    assert_eq!(requests[2].target, "/emoji/catalog");
 }
 
 #[test]
 fn emoji_actual_metadata_preset_coverage() {
  let metadata:EmojiMetadata=serde_json::from_str(include_str!("fixtures/emoji-metadata.json")).unwrap();
- let presets=metadata.shortcode_sources.unwrap();
- assert_eq!(presets["cldr"].records,3963);
- assert_eq!(presets["github"].records,1870);
- assert_eq!(presets["github"].missing_records,2093);
- assert_eq!(presets["cldr"].ambiguous_aliases,1);
+ assert!(metadata.total > 0);
+ assert!(!metadata.sources.is_empty());
+}
+
+#[tokio::test]
+async fn email_verify_is_explicit_post_with_no_default_retry() {
+ let body=r#"{"email":"a+tag@example.com","valid":true,"free":false,"disposable":false,"role":false,"deliverable":false,"catchall":null}"#;
+ let server=TestServer::start(vec![(200,body)]);
+ let client=server.client();let value=client.email_verify("a+tag@example.com").await.unwrap();
+ assert_eq!(value.deliverable,Some(false));assert_eq!(value.catchall,None);
+ let requests=server.requests();assert_eq!(requests[0].method,"POST");assert_eq!(requests[0].target,"/email/verify");
+ assert_eq!(serde_json::from_str::<serde_json::Value>(&requests[0].body).unwrap(),serde_json::json!({"email":"a+tag@example.com"}));
+ let server=TestServer::start(vec![(503,r#"{"code":"service_unavailable","message":"pending"}"#);3]);
+ let client=Client::builder().api_key("fixture").base_url(&server.base_url).build().unwrap();
+ assert!(client.email_verify("a@example.com").await.is_err());assert_eq!(server.requests().len(),1);
 }

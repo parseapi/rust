@@ -283,7 +283,7 @@ async fn main() {
 			.unwrap_or(Some("no mx".into()))
 	});
 	s.ok("useragent", parse.useragent(UA, None).await, |r| {
-		(r.browser.as_deref() == Some("Chrome"))
+		(r.browser.as_ref().and_then(|browser| browser.name.as_deref()) == Some("Chrome"))
 			.then_some(None)
 			.unwrap_or(Some(format!("browser {:?}", r.browser)))
 	});
@@ -380,8 +380,7 @@ async fn main() {
 			)
 			.await,
 		|r| {
-			r.deep
-				.is_some()
+			r.country.is_some()
 				.then_some(None)
 				.unwrap_or(Some("deep missing".into()))
 		},

@@ -1,0 +1,2241 @@
+[
+  {
+    "id": "ip--core",
+    "product": "ip",
+    "fields": [
+      "country",
+      "asn",
+      "datacenter"
+    ],
+    "body": {
+      "ip": "8.8.8.8",
+      "country": "US",
+      "country_name": "United States",
+      "continent": "NA",
+      "asn": "AS15169",
+      "asn_name": "Google LLC"
+    }
+  },
+  {
+    "id": "ip--deep",
+    "product": "ip",
+    "fields": [
+      "country",
+      "asn",
+      "datacenter"
+    ],
+    "body": {
+      "ip": "8.8.8.8",
+      "country": "US",
+      "country_name": "United States",
+      "continent": "NA",
+      "asn": "AS15169",
+      "asn_name": "Google LLC",
+      "city": "Mountain View",
+      "state": "CA",
+      "census_division": "Pacific",
+      "census_region": "West",
+      "registry": "arin",
+      "datacenter": false,
+      "relay": false,
+      "tor": false,
+      "vpn": false,
+      "provider": null
+    }
+  },
+  {
+    "id": "country--core",
+    "product": "country",
+    "fields": [
+      "name_full",
+      "iso_numeric",
+      "population",
+      "tax.rate"
+    ],
+    "body": {
+      "country": "US",
+      "iso_alpha3": "USA",
+      "iso_numeric": 840,
+      "name": "United States",
+      "name_full": "United States of America",
+      "name_local": null,
+      "demonym": "American",
+      "continent": "NA",
+      "region": "Americas",
+      "subregion": "Northern America",
+      "currency": "USD",
+      "currency_name": "United States Dollar",
+      "currency_symbol": "$",
+      "calling_code": "+1",
+      "flag": "🇺🇸",
+      "languages": [
+        "en"
+      ],
+      "timezones": [
+        "America/Adak",
+        "America/Anchorage",
+        "America/Boise",
+        "America/Chicago",
+        "America/Denver",
+        "America/Detroit",
+        "America/Indiana/Indianapolis",
+        "America/Indiana/Knox",
+        "America/Indiana/Marengo",
+        "America/Indiana/Petersburg",
+        "America/Indiana/Tell_City",
+        "America/Indiana/Vevay",
+        "America/Indiana/Vincennes",
+        "America/Indiana/Winamac",
+        "America/Juneau",
+        "America/Kentucky/Louisville",
+        "America/Kentucky/Monticello",
+        "America/Los_Angeles",
+        "America/Menominee",
+        "America/Metlakatla",
+        "America/New_York",
+        "America/Nome",
+        "America/North_Dakota/Beulah",
+        "America/North_Dakota/Center",
+        "America/North_Dakota/New_Salem",
+        "America/Phoenix",
+        "America/Sitka",
+        "America/Yakutat",
+        "Pacific/Honolulu"
+      ],
+      "borders": [
+        "CA",
+        "MX"
+      ],
+      "blocs": [
+        "G7",
+        "NATO",
+        "OECD"
+      ],
+      "capital": {
+        "name": "Washington, D.C.",
+        "latitude": 38.89,
+        "longitude": -77.05
+      }
+    }
+  },
+  {
+    "id": "country--deep",
+    "product": "country",
+    "fields": [
+      "name_full",
+      "iso_numeric",
+      "population",
+      "tax.rate"
+    ],
+    "body": {
+      "country": "US",
+      "iso_alpha3": "USA",
+      "iso_numeric": 840,
+      "name": "United States",
+      "name_full": "United States of America",
+      "name_local": null,
+      "demonym": "American",
+      "continent": "NA",
+      "region": "Americas",
+      "subregion": "Northern America",
+      "currency": "USD",
+      "currency_name": "United States Dollar",
+      "currency_symbol": "$",
+      "calling_code": "+1",
+      "flag": "🇺🇸",
+      "languages": [
+        "en"
+      ],
+      "timezones": [
+        "America/Adak",
+        "America/Anchorage",
+        "America/Boise",
+        "America/Chicago",
+        "America/Denver",
+        "America/Detroit",
+        "America/Indiana/Indianapolis",
+        "America/Indiana/Knox",
+        "America/Indiana/Marengo",
+        "America/Indiana/Petersburg",
+        "America/Indiana/Tell_City",
+        "America/Indiana/Vevay",
+        "America/Indiana/Vincennes",
+        "America/Indiana/Winamac",
+        "America/Juneau",
+        "America/Kentucky/Louisville",
+        "America/Kentucky/Monticello",
+        "America/Los_Angeles",
+        "America/Menominee",
+        "America/Metlakatla",
+        "America/New_York",
+        "America/Nome",
+        "America/North_Dakota/Beulah",
+        "America/North_Dakota/Center",
+        "America/North_Dakota/New_Salem",
+        "America/Phoenix",
+        "America/Sitka",
+        "America/Yakutat",
+        "Pacific/Honolulu"
+      ],
+      "borders": [
+        "CA",
+        "MX"
+      ],
+      "blocs": [
+        "G7",
+        "NATO",
+        "OECD"
+      ],
+      "capital": {
+        "name": "Washington, D.C.",
+        "latitude": 38.89,
+        "longitude": -77.05
+      },
+      "population": 340110988,
+      "gdp_usd": 30769700000000,
+      "gdp_per_capita_usd": 90026.52,
+      "population_growth_percent": 0.52,
+      "urban_population_percent": 80.19,
+      "internet_users_percent": 94.69,
+      "area": 9629091,
+      "land_area": null,
+      "water_area": null,
+      "coastline": 19924,
+      "lowest_point": {
+        "name": "Death Valley",
+        "elevation": -86
+      },
+      "highest_point": {
+        "name": "Mount McKinley",
+        "elevation": 6190
+      },
+      "elevation_average": 760,
+      "tld": ".us",
+      "week_start": "sunday",
+      "units": "imperial",
+      "driving_side": "right",
+      "plugs": [
+        "A",
+        "B"
+      ],
+      "voltage": 120,
+      "frequency": 60,
+      "emergency": {
+        "police": "911",
+        "ambulance": "911",
+        "fire": "911"
+      },
+      "postal_format": "#####",
+      "postal_regex": "^(?:(\\d{5})(?:[ \\-](\\d{4}))?)$",
+      "tax": {
+        "name": null,
+        "rate": null
+      },
+      "ioc": "USA",
+      "fifa": "USA",
+      "plate": "USA"
+    }
+  },
+  {
+    "id": "state--core",
+    "product": "state",
+    "fields": [
+      "iso_subdivision",
+      "population",
+      "capital.latitude"
+    ],
+    "body": {
+      "state": "CO",
+      "iso_subdivision": "US-CO",
+      "fips": "08",
+      "name": "Colorado",
+      "name_local": null,
+      "type": "state",
+      "country": "US",
+      "country_name": "United States",
+      "latitude": 38.725178,
+      "longitude": -105.607716,
+      "timezones": [
+        "America/Denver"
+      ],
+      "area_codes": [
+        "303",
+        "719",
+        "720",
+        "748",
+        "970",
+        "983"
+      ],
+      "capital": {
+        "name": "Denver",
+        "latitude": null,
+        "longitude": null
+      }
+    }
+  },
+  {
+    "id": "state--deep",
+    "product": "state",
+    "fields": [
+      "iso_subdivision",
+      "population",
+      "capital.latitude"
+    ],
+    "body": {
+      "state": "CO",
+      "iso_subdivision": "US-CO",
+      "fips": "08",
+      "name": "Colorado",
+      "name_local": null,
+      "type": "state",
+      "country": "US",
+      "country_name": "United States",
+      "latitude": 38.725178,
+      "longitude": -105.607716,
+      "timezones": [
+        "America/Denver"
+      ],
+      "area_codes": [
+        "303",
+        "719",
+        "720",
+        "748",
+        "970",
+        "983"
+      ],
+      "capital": {
+        "name": "Denver",
+        "latitude": null,
+        "longitude": null
+      },
+      "population": 5957493,
+      "area": 269837,
+      "tax": {
+        "name": "Sales tax",
+        "rate": 2.9
+      }
+    }
+  },
+  {
+    "id": "postal--core",
+    "product": "postal",
+    "fields": [
+      "postal",
+      "population",
+      "tax.rate"
+    ],
+    "body": {
+      "postal": "28202",
+      "city": "Charlotte",
+      "city_local": null,
+      "district": "37119",
+      "district_name": "Mecklenburg",
+      "district_name_local": null,
+      "state": "NC",
+      "state_name": "North Carolina",
+      "state_name_local": null,
+      "country": "US",
+      "country_name": "United States",
+      "latitude": 35.227271,
+      "longitude": -80.844194,
+      "timezone": "America/New_York",
+      "type": "standard",
+      "localities": null
+    }
+  },
+  {
+    "id": "postal--deep",
+    "product": "postal",
+    "fields": [
+      "postal",
+      "population",
+      "tax.rate"
+    ],
+    "body": {
+      "postal": "28202",
+      "city": "Charlotte",
+      "city_local": null,
+      "district": "37119",
+      "district_name": "Mecklenburg",
+      "district_name_local": null,
+      "state": "NC",
+      "state_name": "North Carolina",
+      "state_name_local": null,
+      "country": "US",
+      "country_name": "United States",
+      "latitude": 35.227271,
+      "longitude": -80.844194,
+      "timezone": "America/New_York",
+      "type": "standard",
+      "localities": null,
+      "elevation": 245,
+      "elevation_ft": 804,
+      "population": 17653,
+      "area": 4.68,
+      "land_area": 4.67,
+      "water_area": 0.01,
+      "currency": "USD",
+      "tax": {
+        "name": "Sales tax",
+        "rate": 8.25,
+        "rate_state": 4.75,
+        "rate_county": 2,
+        "rate_city": null,
+        "rate_special": 1.5
+      },
+      "property_tax": null,
+      "neighbors": [
+        "28280",
+        "28282",
+        "28244",
+        "28204",
+        "28203",
+        "28206",
+        "28207",
+        "28274"
+      ],
+      "metros": [
+        {
+          "code": "16740",
+          "name": "Charlotte-Concord-Gastonia, NC-SC",
+          "type": "metropolitan",
+          "share_percent": 100
+        }
+      ]
+    }
+  },
+  {
+    "id": "email-completed-negative-core",
+    "product": "email",
+    "fields": [
+      "valid",
+      "deliverable",
+      "catchall",
+      "status"
+    ],
+    "body": {
+      "email": "jane.doe+news@example.com",
+      "didyoumean": null,
+      "valid": true,
+      "free": false,
+      "disposable": false,
+      "role": false,
+      "domain": "example.com",
+      "domain_type": null,
+      "domain_valid": true
+    }
+  },
+  {
+    "id": "email-completed-negative-deep",
+    "product": "email",
+    "fields": [
+      "valid",
+      "deliverable",
+      "catchall",
+      "status"
+    ],
+    "body": {
+      "email": "jane.doe+news@example.com",
+      "didyoumean": null,
+      "valid": true,
+      "free": false,
+      "disposable": false,
+      "role": false,
+      "domain": "example.com",
+      "domain_type": null,
+      "domain_valid": true,
+      "deliverable": false,
+      "catchall": false,
+      "status": "undeliverable",
+      "reason": "rejected",
+      "first_name": null,
+      "no_reply": false,
+      "tag": "news",
+      "mail_provider": null
+    }
+  },
+  {
+    "id": "carrier-completed-core",
+    "product": "carrier",
+    "fields": [
+      "valid",
+      "city",
+      "burner"
+    ],
+    "body": {
+      "phone": "+13129457420",
+      "valid": true,
+      "country": "US",
+      "type": "voip",
+      "carrier": "Telnyx",
+      "burner": false,
+      "city": "WAUKEGAN",
+      "state": "IL",
+      "state_name": "Illinois"
+    }
+  },
+  {
+    "id": "carrier-completed-deep",
+    "product": "carrier",
+    "fields": [
+      "valid",
+      "city",
+      "burner"
+    ],
+    "body": {
+      "phone": "+13129457420",
+      "valid": true,
+      "country": "US",
+      "type": "voip",
+      "carrier": "Telnyx",
+      "burner": false,
+      "city": "WAUKEGAN",
+      "state": "IL",
+      "state_name": "Illinois"
+    }
+  },
+  {
+    "id": "hlr-completed-core",
+    "product": "hlr",
+    "fields": [
+      "live",
+      "connected",
+      "roaming"
+    ],
+    "body": {
+      "phone": "+447772000001",
+      "valid": true,
+      "country": null,
+      "live": true,
+      "connected": true,
+      "roaming": false,
+      "roaming_network": null,
+      "roaming_country": null,
+      "network": "T-Mobile US",
+      "original_network": "Verizon Wireless",
+      "mcc": "310",
+      "mnc": "260"
+    }
+  },
+  {
+    "id": "hlr-completed-deep",
+    "product": "hlr",
+    "fields": [
+      "live",
+      "connected",
+      "roaming"
+    ],
+    "body": {
+      "phone": "+447772000001",
+      "valid": true,
+      "country": null,
+      "live": true,
+      "connected": true,
+      "roaming": false,
+      "roaming_network": null,
+      "roaming_country": null,
+      "network": "T-Mobile US",
+      "original_network": "Verizon Wireless",
+      "mcc": "310",
+      "mnc": "260"
+    }
+  },
+  {
+    "id": "useragent--core",
+    "product": "useragent",
+    "fields": [
+      "bot",
+      "device.type",
+      "browser.name"
+    ],
+    "body": {
+      "useragent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "device": {
+        "type": "desktop"
+      },
+      "os": {
+        "name": "Windows"
+      },
+      "browser": {
+        "name": "Chrome"
+      },
+      "bot": false,
+      "mobile": false
+    }
+  },
+  {
+    "id": "useragent--deep",
+    "product": "useragent",
+    "fields": [
+      "bot",
+      "device.type",
+      "browser.name"
+    ],
+    "body": {
+      "useragent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "device": {
+        "type": "desktop",
+        "brand": null,
+        "model": null,
+        "cpu": "x86_64",
+        "touchscreen": false
+      },
+      "os": {
+        "name": "Windows",
+        "version": "10",
+        "platform": "x64"
+      },
+      "browser": {
+        "name": "Chrome",
+        "version": "141.0.0.0",
+        "type": "browser"
+      },
+      "bot": false,
+      "mobile": false,
+      "engine": {
+        "name": "Blink",
+        "version": null
+      },
+      "headless": false
+    }
+  },
+  {
+    "id": "weather--core",
+    "product": "weather",
+    "fields": [
+      "current.temperature",
+      "current.pressure"
+    ],
+    "body": {
+      "latitude": 40.7128,
+      "longitude": -74.006,
+      "current": {
+        "temperature": 17.8,
+        "temperature_f": 64,
+        "feels_like": 17.8,
+        "feels_like_f": 64,
+        "humidity": 50,
+        "wind_speed": 9.3,
+        "wind_speed_mph": 5.8,
+        "wind_direction": 210,
+        "condition": "rain",
+        "condition_name": "rain",
+        "condition_emoji": "🌧️",
+        "observed_at": "2026-11-01T19:56:00.000Z"
+      },
+      "station": {
+        "id": "KJRB",
+        "name": "New York/Downtown",
+        "distance": 1.34,
+        "distance_mi": 0.83
+      }
+    }
+  },
+  {
+    "id": "weather--deep",
+    "product": "weather",
+    "fields": [
+      "current.temperature",
+      "current.pressure"
+    ],
+    "body": {
+      "latitude": 40.7128,
+      "longitude": -74.006,
+      "current": {
+        "temperature": 17.8,
+        "temperature_f": 64,
+        "feels_like": 17.8,
+        "feels_like_f": 64,
+        "humidity": 50,
+        "wind_speed": 9.3,
+        "wind_speed_mph": 5.8,
+        "wind_direction": 210,
+        "condition": "rain",
+        "condition_name": "rain",
+        "condition_emoji": "🌧️",
+        "observed_at": "2026-11-01T19:56:00.000Z",
+        "dewpoint": 7.2,
+        "dewpoint_f": 45,
+        "wind_gust": null,
+        "wind_gust_mph": null,
+        "pressure": 1033,
+        "pressure_inhg": 30.5,
+        "visibility": 16.1,
+        "visibility_mi": 10
+      },
+      "station": {
+        "id": "KJRB",
+        "name": "New York/Downtown",
+        "distance": 1.34,
+        "distance_mi": 0.83
+      },
+      "forecast": [
+        {
+          "name": "This Afternoon",
+          "start": "2026-11-01T15:00:00-05:00",
+          "end": "2026-11-01T18:00:00-05:00",
+          "daytime": true,
+          "temperature": 16,
+          "temperature_f": 60,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "name": "Tonight",
+          "start": "2026-11-01T18:00:00-05:00",
+          "end": "2026-11-02T06:00:00-05:00",
+          "daytime": false,
+          "temperature": 11,
+          "temperature_f": 51,
+          "precipitation_chance": 1,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "name": "Monday",
+          "start": "2026-11-02T06:00:00-05:00",
+          "end": "2026-11-02T18:00:00-05:00",
+          "daytime": true,
+          "temperature": 19,
+          "temperature_f": 66,
+          "precipitation_chance": 1,
+          "wind_speed": 19.3,
+          "wind_speed_mph": 12,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "name": "Monday Night",
+          "start": "2026-11-02T18:00:00-05:00",
+          "end": "2026-11-03T06:00:00-05:00",
+          "daytime": false,
+          "temperature": 13,
+          "temperature_f": 56,
+          "precipitation_chance": 1,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_direction": 225,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly Cloudy",
+          "condition_emoji": "⛅"
+        },
+        {
+          "name": "Tuesday",
+          "start": "2026-11-03T06:00:00-05:00",
+          "end": "2026-11-03T18:00:00-05:00",
+          "daytime": true,
+          "temperature": 19,
+          "temperature_f": 67,
+          "precipitation_chance": 0,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "name": "Tuesday Night",
+          "start": "2026-11-03T18:00:00-05:00",
+          "end": "2026-11-04T06:00:00-05:00",
+          "daytime": false,
+          "temperature": 14,
+          "temperature_f": 57,
+          "precipitation_chance": 0,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "name": "Wednesday",
+          "start": "2026-11-04T06:00:00-05:00",
+          "end": "2026-11-04T18:00:00-05:00",
+          "daytime": true,
+          "temperature": 21,
+          "temperature_f": 69,
+          "precipitation_chance": 2,
+          "wind_speed": 16.1,
+          "wind_speed_mph": 10,
+          "wind_direction": 180,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "name": "Wednesday Night",
+          "start": "2026-11-04T18:00:00-05:00",
+          "end": "2026-11-05T06:00:00-05:00",
+          "daytime": false,
+          "temperature": 16,
+          "temperature_f": 61,
+          "precipitation_chance": 15,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_direction": 180,
+          "condition": "rain",
+          "condition_name": "Partly Cloudy then Slight Chance Light Rain",
+          "condition_emoji": "🌧️"
+        },
+        {
+          "name": "Thursday",
+          "start": "2026-11-05T06:00:00-05:00",
+          "end": "2026-11-05T18:00:00-05:00",
+          "daytime": true,
+          "temperature": 22,
+          "temperature_f": 71,
+          "precipitation_chance": 44,
+          "wind_speed": 19.3,
+          "wind_speed_mph": 12,
+          "wind_direction": 180,
+          "condition": "rain",
+          "condition_name": "Chance Light Rain",
+          "condition_emoji": "🌧️"
+        },
+        {
+          "name": "Thursday Night",
+          "start": "2026-11-05T18:00:00-05:00",
+          "end": "2026-11-06T06:00:00-05:00",
+          "daytime": false,
+          "temperature": 17,
+          "temperature_f": 62,
+          "precipitation_chance": 62,
+          "wind_speed": 16.1,
+          "wind_speed_mph": 10,
+          "wind_direction": 180,
+          "condition": "rain",
+          "condition_name": "Light Rain Likely",
+          "condition_emoji": "🌧️"
+        },
+        {
+          "name": "Friday",
+          "start": "2026-11-06T06:00:00-05:00",
+          "end": "2026-11-06T18:00:00-05:00",
+          "daytime": true,
+          "temperature": 21,
+          "temperature_f": 70,
+          "precipitation_chance": 62,
+          "wind_speed": 16.1,
+          "wind_speed_mph": 10,
+          "wind_direction": 180,
+          "condition": "rain",
+          "condition_name": "Light Rain Likely",
+          "condition_emoji": "🌧️"
+        },
+        {
+          "name": "Friday Night",
+          "start": "2026-11-06T18:00:00-05:00",
+          "end": "2026-11-07T06:00:00-05:00",
+          "daytime": false,
+          "temperature": 14,
+          "temperature_f": 57,
+          "precipitation_chance": 58,
+          "wind_speed": 16.1,
+          "wind_speed_mph": 10,
+          "wind_direction": 45,
+          "condition": "rain",
+          "condition_name": "Light Rain Likely",
+          "condition_emoji": "🌧️"
+        },
+        {
+          "name": "Saturday",
+          "start": "2026-11-07T06:00:00-05:00",
+          "end": "2026-11-07T18:00:00-05:00",
+          "daytime": true,
+          "temperature": 18,
+          "temperature_f": 64,
+          "precipitation_chance": 49,
+          "wind_speed": 20.9,
+          "wind_speed_mph": 13,
+          "wind_direction": 315,
+          "condition": "rain",
+          "condition_name": "Chance Light Rain",
+          "condition_emoji": "🌧️"
+        },
+        {
+          "name": "Saturday Night",
+          "start": "2026-11-07T18:00:00-05:00",
+          "end": "2026-11-08T06:00:00-05:00",
+          "daytime": false,
+          "temperature": 11,
+          "temperature_f": 52,
+          "precipitation_chance": 20,
+          "wind_speed": 19.3,
+          "wind_speed_mph": 12,
+          "wind_direction": 315,
+          "condition": "rain",
+          "condition_name": "Slight Chance Light Rain then Partly Cloudy",
+          "condition_emoji": "🌧️"
+        }
+      ],
+      "alerts": [],
+      "minutes": [
+        {
+          "at": "2026-11-01T20:27:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:28:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:29:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:30:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:31:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:32:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:33:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:34:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:35:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:36:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:37:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:38:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:39:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:40:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:41:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:42:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:43:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:44:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:45:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:46:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:47:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:48:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:49:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:50:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:51:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:52:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:53:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:54:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:55:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:56:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:57:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:58:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T20:59:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:00:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:01:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:02:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:03:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:04:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:05:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:06:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:07:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:08:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:09:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:10:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:11:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:12:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:13:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:14:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:15:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:16:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:17:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:18:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:19:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:20:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:21:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:22:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:23:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:24:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:25:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:26:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        },
+        {
+          "at": "2026-11-01T21:27:00Z",
+          "precipitation_rate": 0,
+          "precipitation_rate_in": 0,
+          "type": null
+        }
+      ],
+      "hours": [
+        {
+          "at": "2026-11-01T15:00:00-05:00",
+          "daytime": true,
+          "temperature": 16,
+          "temperature_f": 60,
+          "feels_like": 16,
+          "feels_like_f": 60.8,
+          "humidity": 46,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "clear",
+          "condition_name": "Sunny",
+          "condition_emoji": "☀️"
+        },
+        {
+          "at": "2026-11-01T16:00:00-05:00",
+          "daytime": true,
+          "temperature": 16,
+          "temperature_f": 60,
+          "feels_like": 16,
+          "feels_like_f": 60.8,
+          "humidity": 46,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "clear",
+          "condition_name": "Sunny",
+          "condition_emoji": "☀️"
+        },
+        {
+          "at": "2026-11-01T17:00:00-05:00",
+          "daytime": true,
+          "temperature": 16,
+          "temperature_f": 60,
+          "feels_like": 16,
+          "feels_like_f": 60.8,
+          "humidity": 47,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-01T18:00:00-05:00",
+          "daytime": false,
+          "temperature": 15,
+          "temperature_f": 59,
+          "feels_like": 15,
+          "feels_like_f": 59,
+          "humidity": 53,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-01T19:00:00-05:00",
+          "daytime": false,
+          "temperature": 15,
+          "temperature_f": 59,
+          "feels_like": 15,
+          "feels_like_f": 59,
+          "humidity": 53,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-01T20:00:00-05:00",
+          "daytime": false,
+          "temperature": 15,
+          "temperature_f": 59,
+          "feels_like": 15,
+          "feels_like_f": 59,
+          "humidity": 53,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-01T21:00:00-05:00",
+          "daytime": false,
+          "temperature": 15,
+          "temperature_f": 59,
+          "feels_like": 15,
+          "feels_like_f": 59,
+          "humidity": 55,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-01T22:00:00-05:00",
+          "daytime": false,
+          "temperature": 15,
+          "temperature_f": 59,
+          "feels_like": 15,
+          "feels_like_f": 59,
+          "humidity": 55,
+          "precipitation_chance": 1,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly Cloudy",
+          "condition_emoji": "⛅"
+        },
+        {
+          "at": "2026-11-01T23:00:00-05:00",
+          "daytime": false,
+          "temperature": 15,
+          "temperature_f": 59,
+          "feels_like": 15,
+          "feels_like_f": 59,
+          "humidity": 55,
+          "precipitation_chance": 1,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T00:00:00-05:00",
+          "daytime": false,
+          "temperature": 14,
+          "temperature_f": 58,
+          "feels_like": 14,
+          "feels_like_f": 57.2,
+          "humidity": 57,
+          "precipitation_chance": 1,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T01:00:00-05:00",
+          "daytime": false,
+          "temperature": 14,
+          "temperature_f": 57,
+          "feels_like": 14,
+          "feels_like_f": 57.2,
+          "humidity": 59,
+          "precipitation_chance": 1,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T02:00:00-05:00",
+          "daytime": false,
+          "temperature": 13,
+          "temperature_f": 55,
+          "feels_like": 13,
+          "feels_like_f": 55.4,
+          "humidity": 64,
+          "precipitation_chance": 1,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T03:00:00-05:00",
+          "daytime": false,
+          "temperature": 12,
+          "temperature_f": 53,
+          "feels_like": 12,
+          "feels_like_f": 53.6,
+          "humidity": 66,
+          "precipitation_chance": 1,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T04:00:00-05:00",
+          "daytime": false,
+          "temperature": 11,
+          "temperature_f": 51,
+          "feels_like": 11,
+          "feels_like_f": 51.8,
+          "humidity": 71,
+          "precipitation_chance": 1,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 270,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly Cloudy",
+          "condition_emoji": "⛅"
+        },
+        {
+          "at": "2026-11-02T05:00:00-05:00",
+          "daytime": false,
+          "temperature": 11,
+          "temperature_f": 51,
+          "feels_like": 11,
+          "feels_like_f": 51.8,
+          "humidity": 71,
+          "precipitation_chance": 1,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T06:00:00-05:00",
+          "daytime": true,
+          "temperature": 12,
+          "temperature_f": 53,
+          "feels_like": 12,
+          "feels_like_f": 53.6,
+          "humidity": 66,
+          "precipitation_chance": 1,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T07:00:00-05:00",
+          "daytime": true,
+          "temperature": 13,
+          "temperature_f": 55,
+          "feels_like": 13,
+          "feels_like_f": 55.4,
+          "humidity": 61,
+          "precipitation_chance": 1,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T08:00:00-05:00",
+          "daytime": true,
+          "temperature": 13,
+          "temperature_f": 56,
+          "feels_like": 13,
+          "feels_like_f": 55.4,
+          "humidity": 59,
+          "precipitation_chance": 1,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T09:00:00-05:00",
+          "daytime": true,
+          "temperature": 14,
+          "temperature_f": 57,
+          "feels_like": 14,
+          "feels_like_f": 57.2,
+          "humidity": 55,
+          "precipitation_chance": 1,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T10:00:00-05:00",
+          "daytime": true,
+          "temperature": 15,
+          "temperature_f": 59,
+          "feels_like": 15,
+          "feels_like_f": 59,
+          "humidity": 51,
+          "precipitation_chance": 1,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T11:00:00-05:00",
+          "daytime": true,
+          "temperature": 17,
+          "temperature_f": 62,
+          "feels_like": 17,
+          "feels_like_f": 62.6,
+          "humidity": 46,
+          "precipitation_chance": 1,
+          "wind_speed": 16.1,
+          "wind_speed_mph": 10,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T12:00:00-05:00",
+          "daytime": true,
+          "temperature": 17,
+          "temperature_f": 63,
+          "feels_like": 17,
+          "feels_like_f": 62.6,
+          "humidity": 44,
+          "precipitation_chance": 1,
+          "wind_speed": 16.1,
+          "wind_speed_mph": 10,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly Sunny",
+          "condition_emoji": "⛅"
+        },
+        {
+          "at": "2026-11-02T13:00:00-05:00",
+          "daytime": true,
+          "temperature": 18,
+          "temperature_f": 65,
+          "feels_like": 18,
+          "feels_like_f": 64.4,
+          "humidity": 41,
+          "precipitation_chance": 1,
+          "wind_speed": 19.3,
+          "wind_speed_mph": 12,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly Sunny",
+          "condition_emoji": "⛅"
+        },
+        {
+          "at": "2026-11-02T14:00:00-05:00",
+          "daytime": true,
+          "temperature": 19,
+          "temperature_f": 66,
+          "feels_like": 19,
+          "feels_like_f": 66.2,
+          "humidity": 42,
+          "precipitation_chance": 1,
+          "wind_speed": 16.1,
+          "wind_speed_mph": 10,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T15:00:00-05:00",
+          "daytime": true,
+          "temperature": 19,
+          "temperature_f": 66,
+          "feels_like": 19,
+          "feels_like_f": 66.2,
+          "humidity": 42,
+          "precipitation_chance": 1,
+          "wind_speed": 16.1,
+          "wind_speed_mph": 10,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T16:00:00-05:00",
+          "daytime": true,
+          "temperature": 19,
+          "temperature_f": 66,
+          "feels_like": 19,
+          "feels_like_f": 66.2,
+          "humidity": 43,
+          "precipitation_chance": 1,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T17:00:00-05:00",
+          "daytime": true,
+          "temperature": 19,
+          "temperature_f": 66,
+          "feels_like": 19,
+          "feels_like_f": 66.2,
+          "humidity": 45,
+          "precipitation_chance": 1,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "clear",
+          "condition_name": "Sunny",
+          "condition_emoji": "☀️"
+        },
+        {
+          "at": "2026-11-02T18:00:00-05:00",
+          "daytime": false,
+          "temperature": 18,
+          "temperature_f": 65,
+          "feels_like": 18,
+          "feels_like_f": 64.4,
+          "humidity": 48,
+          "precipitation_chance": 1,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T19:00:00-05:00",
+          "daytime": false,
+          "temperature": 18,
+          "temperature_f": 64,
+          "feels_like": 18,
+          "feels_like_f": 64.4,
+          "humidity": 50,
+          "precipitation_chance": 0,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly Cloudy",
+          "condition_emoji": "⛅"
+        },
+        {
+          "at": "2026-11-02T20:00:00-05:00",
+          "daytime": false,
+          "temperature": 17,
+          "temperature_f": 63,
+          "feels_like": 17,
+          "feels_like_f": 62.6,
+          "humidity": 52,
+          "precipitation_chance": 0,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T21:00:00-05:00",
+          "daytime": false,
+          "temperature": 17,
+          "temperature_f": 63,
+          "feels_like": 17,
+          "feels_like_f": 62.6,
+          "humidity": 52,
+          "precipitation_chance": 0,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T22:00:00-05:00",
+          "daytime": false,
+          "temperature": 17,
+          "temperature_f": 62,
+          "feels_like": 17,
+          "feels_like_f": 62.6,
+          "humidity": 54,
+          "precipitation_chance": 0,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-02T23:00:00-05:00",
+          "daytime": false,
+          "temperature": 16,
+          "temperature_f": 61,
+          "feels_like": 16,
+          "feels_like_f": 60.8,
+          "humidity": 58,
+          "precipitation_chance": 0,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-03T00:00:00-05:00",
+          "daytime": false,
+          "temperature": 16,
+          "temperature_f": 61,
+          "feels_like": 16,
+          "feels_like_f": 60.8,
+          "humidity": 56,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly Cloudy",
+          "condition_emoji": "⛅"
+        },
+        {
+          "at": "2026-11-03T01:00:00-05:00",
+          "daytime": false,
+          "temperature": 16,
+          "temperature_f": 60,
+          "feels_like": 16,
+          "feels_like_f": 60.8,
+          "humidity": 60,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly Cloudy",
+          "condition_emoji": "⛅"
+        },
+        {
+          "at": "2026-11-03T02:00:00-05:00",
+          "daytime": false,
+          "temperature": 15,
+          "temperature_f": 59,
+          "feels_like": 15,
+          "feels_like_f": 59,
+          "humidity": 62,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly Cloudy",
+          "condition_emoji": "⛅"
+        },
+        {
+          "at": "2026-11-03T03:00:00-05:00",
+          "daytime": false,
+          "temperature": 14,
+          "temperature_f": 57,
+          "feels_like": 14,
+          "feels_like_f": 57.2,
+          "humidity": 67,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly Cloudy",
+          "condition_emoji": "⛅"
+        },
+        {
+          "at": "2026-11-03T04:00:00-05:00",
+          "daytime": false,
+          "temperature": 13,
+          "temperature_f": 56,
+          "feels_like": 13,
+          "feels_like_f": 55.4,
+          "humidity": 69,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly Cloudy",
+          "condition_emoji": "⛅"
+        },
+        {
+          "at": "2026-11-03T05:00:00-05:00",
+          "daytime": false,
+          "temperature": 13,
+          "temperature_f": 56,
+          "feels_like": 13,
+          "feels_like_f": 55.4,
+          "humidity": 72,
+          "precipitation_chance": 0,
+          "wind_speed": 11.3,
+          "wind_speed_mph": 7,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Clear",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-03T06:00:00-05:00",
+          "daytime": true,
+          "temperature": 14,
+          "temperature_f": 57,
+          "feels_like": 14,
+          "feels_like_f": 57.2,
+          "humidity": 69,
+          "precipitation_chance": 0,
+          "wind_speed": 11.3,
+          "wind_speed_mph": 7,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-03T07:00:00-05:00",
+          "daytime": true,
+          "temperature": 15,
+          "temperature_f": 59,
+          "feels_like": 15,
+          "feels_like_f": 59,
+          "humidity": 64,
+          "precipitation_chance": 0,
+          "wind_speed": 11.3,
+          "wind_speed_mph": 7,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-03T08:00:00-05:00",
+          "daytime": true,
+          "temperature": 15,
+          "temperature_f": 59,
+          "feels_like": 15,
+          "feels_like_f": 59,
+          "humidity": 64,
+          "precipitation_chance": 0,
+          "wind_speed": 11.3,
+          "wind_speed_mph": 7,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-03T09:00:00-05:00",
+          "daytime": true,
+          "temperature": 15,
+          "temperature_f": 59,
+          "feels_like": 15,
+          "feels_like_f": 59,
+          "humidity": 64,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-03T10:00:00-05:00",
+          "daytime": true,
+          "temperature": 16,
+          "temperature_f": 60,
+          "feels_like": 16,
+          "feels_like_f": 60.8,
+          "humidity": 62,
+          "precipitation_chance": 0,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-03T11:00:00-05:00",
+          "daytime": true,
+          "temperature": 17,
+          "temperature_f": 63,
+          "feels_like": 17,
+          "feels_like_f": 62.6,
+          "humidity": 56,
+          "precipitation_chance": 0,
+          "wind_speed": 14.5,
+          "wind_speed_mph": 9,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-03T12:00:00-05:00",
+          "daytime": true,
+          "temperature": 18,
+          "temperature_f": 65,
+          "feels_like": 18,
+          "feels_like_f": 64.4,
+          "humidity": 52,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-03T13:00:00-05:00",
+          "daytime": true,
+          "temperature": 19,
+          "temperature_f": 66,
+          "feels_like": 19,
+          "feels_like_f": 66.2,
+          "humidity": 52,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        },
+        {
+          "at": "2026-11-03T14:00:00-05:00",
+          "daytime": true,
+          "temperature": 19,
+          "temperature_f": 66,
+          "feels_like": 19,
+          "feels_like_f": 66.2,
+          "humidity": 52,
+          "precipitation_chance": 0,
+          "wind_speed": 12.9,
+          "wind_speed_mph": 8,
+          "wind_gust": null,
+          "wind_gust_mph": null,
+          "wind_direction": 225,
+          "condition": "mostly_clear",
+          "condition_name": "Mostly Sunny",
+          "condition_emoji": "🌤️"
+        }
+      ],
+      "days": [
+        {
+          "date": "2026-11-01",
+          "high": 18,
+          "high_f": 64,
+          "low": 13,
+          "low_f": 55,
+          "precipitation_chance": 0,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly cloudy",
+          "condition_emoji": "⛅",
+          "sunrise": "2026-11-01T06:26:39-05:00",
+          "sunset": "2026-11-01T16:52:26-05:00",
+          "moon_phase": "last_quarter",
+          "moon_phase_name": "Last quarter",
+          "moon_phase_emoji": "🌗"
+        },
+        {
+          "date": "2026-11-02",
+          "high": 19,
+          "high_f": 65,
+          "low": 10,
+          "low_f": 51,
+          "precipitation_chance": 0,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly cloudy",
+          "condition_emoji": "⛅",
+          "sunrise": "2026-11-02T06:27:50-05:00",
+          "sunset": "2026-11-02T16:51:15-05:00",
+          "moon_phase": "last_quarter",
+          "moon_phase_name": "Last quarter",
+          "moon_phase_emoji": "🌗"
+        },
+        {
+          "date": "2026-11-03",
+          "high": 19,
+          "high_f": 66,
+          "low": 10,
+          "low_f": 51,
+          "precipitation_chance": 0,
+          "condition": "partly_cloudy",
+          "condition_name": "Partly cloudy",
+          "condition_emoji": "⛅",
+          "sunrise": "2026-11-03T06:29:02-05:00",
+          "sunset": "2026-11-03T16:50:06-05:00",
+          "moon_phase": "last_quarter",
+          "moon_phase_name": "Last quarter",
+          "moon_phase_emoji": "🌗"
+        },
+        {
+          "date": "2026-11-04",
+          "high": 20,
+          "high_f": 68,
+          "low": 12,
+          "low_f": 54,
+          "precipitation_chance": 2,
+          "condition": "clear",
+          "condition_name": "Clear",
+          "condition_emoji": "☀️",
+          "sunrise": "2026-11-04T06:30:13-05:00",
+          "sunset": "2026-11-04T16:48:58-05:00",
+          "moon_phase": "waning_crescent",
+          "moon_phase_name": "Waning crescent",
+          "moon_phase_emoji": "🌘"
+        },
+        {
+          "date": "2026-11-05",
+          "high": 19,
+          "high_f": 67,
+          "low": 16,
+          "low_f": 61,
+          "precipitation_chance": 52,
+          "condition": "rain",
+          "condition_name": "Rain",
+          "condition_emoji": "🌧️",
+          "sunrise": "2026-11-05T06:31:24-05:00",
+          "sunset": "2026-11-05T16:47:51-05:00",
+          "moon_phase": "waning_crescent",
+          "moon_phase_name": "Waning crescent",
+          "moon_phase_emoji": "🌘"
+        },
+        {
+          "date": "2026-11-06",
+          "high": 19,
+          "high_f": 66,
+          "low": 15,
+          "low_f": 59,
+          "precipitation_chance": 52,
+          "condition": "rain",
+          "condition_name": "Rain",
+          "condition_emoji": "🌧️",
+          "sunrise": "2026-11-06T06:32:36-05:00",
+          "sunset": "2026-11-06T16:46:46-05:00",
+          "moon_phase": "waning_crescent",
+          "moon_phase_name": "Waning crescent",
+          "moon_phase_emoji": "🌘"
+        },
+        {
+          "date": "2026-11-07",
+          "high": 15,
+          "high_f": 59,
+          "low": 10,
+          "low_f": 50,
+          "precipitation_chance": 52,
+          "condition": "rain",
+          "condition_name": "Rain",
+          "condition_emoji": "🌧️",
+          "sunrise": "2026-11-07T06:33:48-05:00",
+          "sunset": "2026-11-07T16:45:43-05:00",
+          "moon_phase": "waning_crescent",
+          "moon_phase_name": "Waning crescent",
+          "moon_phase_emoji": "🌘"
+        }
+      ],
+      "air": {
+        "aqi": 33,
+        "aqi_name": "Good",
+        "pm2_5": 6,
+        "pm10": 8
+      }
+    }
+  }
+]
