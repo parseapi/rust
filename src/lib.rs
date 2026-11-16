@@ -1496,13 +1496,28 @@ impl Client {
 		self.request(path, Query::new(), None, Some(body)).await
 	}
 
-	async fn request<T: DeserializeOwned>(&self, path: &str, query: Query, ua: Option<&str>, body: Option<serde_json::Value>) -> Result<T> {
+	async fn request<T: DeserializeOwned>(&self, path: &str, mut query: Query, ua: Option<&str>, mut body: Option<serde_json::Value>) -> Result<T> {
 		let retries = if !self.retries_explicit && metered_request(path, &query) {
 			0
 		} else {
 			self.retries
 		};
 		let url = format!("{}{}", self.base_url, path);
+		if body.is_none() && matches!(path, "/email/verify" | "/emoji/parse" | "/emoji/convert") {
+			let field = if path == "/email/verify" { "email" } else { "text" };
+			if let Ok(mut candidate) = reqwest::Url::parse(&url) {
+				candidate.query_pairs_mut().extend_pairs(query.iter().map(|(key, value)| (*key, value.as_str())));
+				if candidate.as_str().len() > 8000 {
+					if let Some((_, value)) = query.iter().find(|(key, _)| *key == field) {
+						let mut input = serde_json::Map::new();
+						input.insert(field.to_owned(), serde_json::Value::String(value.clone()));
+						body = Some(serde_json::Value::Object(input));
+						query.retain(|(key, _)| *key != field);
+					}
+				}
+			}
+		}
+
 		let mut attempt: u32 = 0;
 		loop {
 			let mut request = self
@@ -1874,7 +1889,7 @@ impl Client {
 	/// repeat paid usage.
 	/// Run one explicit metered mailbox check, without automatic retries.
 	pub async fn email_verify(&self, email: &str) -> Result<Email> {
-		self.post("/email/verify", serde_json::json!({"email": email})).await
+		self.get("/email/verify", vec![("email", email.to_owned())], None).await
 	}
 
 	pub async fn email(&self, email: &str, opts: impl Into<Option<EmailOptions>>) -> Result<Email> {
@@ -2347,7 +2362,7 @@ impl Client {
 	}
 
 	pub async fn emoji_convert(&self, text: &str, direction: &str, shortcode_source: &str) -> Result<EmojiConversion> {
-		self.request("/emoji/convert", vec![("direction",direction.to_owned()),("shortcode_source",shortcode_source.to_owned())], None, Some(serde_json::json!({"text":text}))).await
+		self.get("/emoji/convert", vec![("text",text.to_owned()),("direction",direction.to_owned()),("shortcode_source",shortcode_source.to_owned())], None).await
 	}
 	
 
@@ -2361,7 +2376,8 @@ impl Client {
 		let mut query = Query::new();
 		push(&mut query, "lang", opts.lang);
 		push_deep(&mut query, opts.deep);
-		self.request("/emoji/parse", query, None, Some(serde_json::json!({"text": text}))).await
+		query.push(("text", text.to_owned()));
+		self.get("/emoji/parse", query, None).await
 	}
 
 

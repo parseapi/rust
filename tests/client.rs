@@ -1262,8 +1262,8 @@ fn emoji_actual_artwork() {
 async fn emoji_private_conversion() {
  let server=TestServer::start(vec![(200,r#"{"text":"🚀","unresolved":[]}"#)]);
  assert_eq!(server.client().emoji_convert(":rocket:","to_emoji","github").await.unwrap().text,"🚀");
- let calls=server.requests();assert_eq!(calls.len(),1);assert_eq!(calls[0].method,"POST");
- assert_eq!(serde_json::from_str::<serde_json::Value>(&calls[0].body).unwrap(),serde_json::json!({"text":":rocket:"}));
+ let calls=server.requests();assert_eq!(calls.len(),1);assert_eq!(calls[0].method,"GET");
+ assert!(calls[0].body.is_empty());assert!(calls[0].target.contains("text=%3Arocket%3A"));
 }
 
 #[tokio::test]
@@ -1297,9 +1297,9 @@ async fn emoji_catalog_and_private_text_body() {
 	assert_eq!(params.get("max_version").map(String::as_str), Some("18.0"));
 	assert_eq!(calls[2].target, "/emoji?offset=2&include_skin_tones=false");
 	assert_eq!(calls[3].target, "/emoji/categories");
-	assert_eq!(calls[4].method, "POST");
-	assert_eq!(calls[4].target, "/emoji/parse?lang=fr&deep=true");
-	assert_eq!(serde_json::from_str::<serde_json::Value>(&calls[4].body).unwrap(), serde_json::json!({"text":"x 👍🏿 👍🏿"}));
+	assert_eq!(calls[4].method, "GET");
+	assert_eq!(calls[4].target, "/emoji/parse?lang=fr&deep=true&text=x+%F0%9F%91%8D%F0%9F%8F%BF+%F0%9F%91%8D%F0%9F%8F%BF");
+	assert!(calls[4].body.is_empty());
 	assert_eq!(calls[4].headers.get("x-api-version").map(String::as_str),Some("2.2.0"));
 }
 
@@ -1336,13 +1336,13 @@ fn emoji_actual_metadata_preset_coverage() {
 }
 
 #[tokio::test]
-async fn email_verify_is_explicit_post_with_no_default_retry() {
+async fn email_verify_is_explicit_get_with_no_default_retry() {
  let body=r#"{"email":"a+tag@example.com","valid":true,"free":false,"disposable":false,"role":false,"deliverable":false,"catchall":null}"#;
  let server=TestServer::start(vec![(200,body)]);
  let client=server.client();let value=client.email_verify("a+tag@example.com").await.unwrap();
  assert_eq!(value.deliverable,Some(false));assert_eq!(value.catchall,None);
- let requests=server.requests();assert_eq!(requests[0].method,"POST");assert_eq!(requests[0].target,"/email/verify");
- assert_eq!(serde_json::from_str::<serde_json::Value>(&requests[0].body).unwrap(),serde_json::json!({"email":"a+tag@example.com"}));
+ let requests=server.requests();assert_eq!(requests[0].method,"GET");assert_eq!(requests[0].target,"/email/verify?email=a%2Btag%40example.com");
+ assert!(requests[0].body.is_empty());
  let server=TestServer::start(vec![(503,r#"{"code":"service_unavailable","message":"pending"}"#);3]);
  let client=Client::builder().api_key("fixture").base_url(&server.base_url).build().unwrap();
  assert!(client.email_verify("a@example.com").await.is_err());assert_eq!(server.requests().len(),1);
@@ -1360,4 +1360,16 @@ async fn county_contract_and_published_method_aliases() {
  let requests=server.requests();assert_eq!(requests.len(),3);
  assert_eq!(requests[0].target,"/county/Denver%20County?country=US&state=CO&deep=true");assert_eq!(requests[1].target,"/state/CO/counties?country=US");assert_eq!(requests[2].target,"/county/75?country=FR");
  assert!(requests.iter().all(|r|r.headers.get("x-api-version").map(String::as_str)==Some("2.2.0")));
+}
+
+
+#[tokio::test]
+async fn emoji_long_text_uses_one_post_and_empty_text_remains_get() {
+ for text in ["🚀".repeat(8000),String::new()] {
+  let server=TestServer::start(vec![(200,r#"{"emojis":[]}"#)]);
+  server.client().emoji_parse(&text,None).await.unwrap();
+  let calls=server.requests();assert_eq!(calls.len(),1);
+  if text.is_empty() {assert_eq!(calls[0].method,"GET");assert!(calls[0].target.contains("text="));}
+  else {assert_eq!(calls[0].method,"POST");assert_eq!(serde_json::from_str::<serde_json::Value>(&calls[0].body).unwrap(),serde_json::json!({"text":text}));assert!(!calls[0].target.contains("text="));}
+ }
 }
