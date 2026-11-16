@@ -27,7 +27,7 @@ async fn domain_result_preserves_unknown_partial_and_one_request() {
 		let request = server.join().unwrap();
 		assert!(request.starts_with("GET /domain/b%C3%BCcher.example?deep=true HTTP/1.1\r\n"));
 		let headers = request.to_lowercase();
-		assert!(headers.contains("x-api-version: 2.1.0\r\n") && headers.contains("x-api-key: fixture\r\n"));
+		assert!(headers.contains("x-api-version: 2.2.0\r\n") && headers.contains("x-api-key: fixture\r\n"));
 		if name == "unknown" || name == "unknown_deep" { assert!(result.available.is_none()); }
 		else { assert_eq!(result.available, body["available"].as_bool()); }
 		if name == "null_registration" { assert!(result.clone().registration.is_none()); }

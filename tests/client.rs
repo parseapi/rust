@@ -177,9 +177,9 @@ url_test!(url_state_name, c => c.state("colorado", None), "/state/colorado");
 url_test!(
 	url_state_districts,
 	c => c.state_districts("NC", parseapi::StateDistrictsOptions::default().country("US")),
-	"/state/NC/districts?country=US"
+	"/state/NC/counties?country=US"
 );
-url_test!(url_district, c => c.district("37081", None), "/district/37081");
+url_test!(url_district, c => c.county("37081", None), "/county/37081");
 url_test!(
 	url_city,
 	c => c.city("charlotte", parseapi::CityOptions::default().state("NC")),
@@ -289,7 +289,7 @@ async fn sends_key_and_user_agent() {
 	let _ = client.country("US").await;
 	let recorded = server.requests();
 	assert_eq!(recorded[0].headers["x-api-key"], "test_key_123");
-	assert_eq!(recorded[0].headers["x-api-version"], "2.1.0");
+	assert_eq!(recorded[0].headers["x-api-version"], "2.2.0");
 	let ua = &recorded[0].headers["user-agent"];
 	assert_eq!(ua, concat!("parseapi-rust/", env!("CARGO_PKG_VERSION")));
 }
@@ -303,7 +303,7 @@ async fn useragent_overrides_ua_header() {
 		server.requests()[0].headers["user-agent"],
 		"Mozilla/5.0 (Test)"
 	);
-	assert_eq!(server.requests()[0].headers["x-api-version"], "2.1.0");
+	assert_eq!(server.requests()[0].headers["x-api-version"], "2.2.0");
 	assert_eq!(server.requests()[0].headers["x-api-key"], "test_key_123");
 }
 
@@ -327,7 +327,7 @@ async fn api_contract_pin_survives_retries_and_self_lookup() {
 	assert_eq!(requests.len(), 2);
 	for request in requests {
 		assert_eq!(request.target, "/ip?deep=true");
-		assert_eq!(request.headers["x-api-version"], "2.1.0");
+		assert_eq!(request.headers["x-api-version"], "2.2.0");
 		assert!(!request.headers.contains_key("parse-version"));
 		assert_eq!(request.headers["x-api-key"], "test_key_123");
 		assert_eq!(request.headers["user-agent"], concat!("parseapi-rust/", env!("CARGO_PKG_VERSION")));
@@ -352,7 +352,7 @@ async fn api_version_errors_do_not_retry_or_fall_back() {
 			other => panic!("expected API error, got {other}"),
 		}
 		assert_eq!(server.requests().len(), 1);
-		assert_eq!(server.requests()[0].headers["x-api-version"], "2.1.0");
+		assert_eq!(server.requests()[0].headers["x-api-version"], "2.2.0");
 	}
 }
 
@@ -887,7 +887,7 @@ async fn adp_state_districts_option() {
 async fn adp_district_option() {
  let server=TestServer::start(vec![(200,"{}")]);
  let client=server.client();
- let _=client.district("37081", DistrictOptions::default().deep(true)).await;
+ let _=client.county("37081", DistrictOptions::default().deep(true)).await;
  assert_eq!(server.requests().len(),1);
  assert!(server.requests()[0].target.split('?').nth(1).unwrap_or("").split('&').any(|pair| pair=="deep=true"));
 }
@@ -1104,8 +1104,8 @@ language_request_test!(language_continent_countries, c => c.continent_countries_
 language_request_test!(language_country, c => c.country_with_options("DE", CountryOptions::default().deep(true).lang("fr-CA")), c.country_with_options("DE", CountryOptions::default().deep(true)), "/country/DE", "deep=true");
 language_request_test!(language_country_states, c => c.country_states_with_options("DE", CountryStatesOptions::default().lang("fr-CA")), c.country_states("DE"), "/country/DE/states", "");
 language_request_test!(language_state, c => c.state("CA", StateOptions::default().country("US").lang("fr-CA")), c.state("CA", StateOptions::default().country("US")), "/state/CA", "country=US");
-language_request_test!(language_state_districts, c => c.state_districts("CA", StateDistrictsOptions::default().country("US").deep(true).lang("fr-CA")), c.state_districts("CA", StateDistrictsOptions::default().country("US").deep(true)), "/state/CA/districts", "country=US&deep=true");
-language_request_test!(language_district, c => c.district("37081", DistrictOptions::default().country("US").state("NC").lang("fr-CA")), c.district("37081", DistrictOptions::default().country("US").state("NC")), "/district/37081", "country=US&state=NC");
+language_request_test!(language_state_districts, c => c.state_districts("CA", StateDistrictsOptions::default().country("US").deep(true).lang("fr-CA")), c.state_districts("CA", StateDistrictsOptions::default().country("US").deep(true)), "/state/CA/counties", "country=US&deep=true");
+language_request_test!(language_district, c => c.county("37081", DistrictOptions::default().country("US").state("NC").lang("fr-CA")), c.county("37081", DistrictOptions::default().country("US").state("NC")), "/county/37081", "country=US&state=NC");
 language_request_test!(language_city, c => c.city("München", CityOptions::default().country("DE").lang("fr-CA")), c.city("München", CityOptions::default().country("DE")), "/city/M%C3%BCnchen", "country=DE");
 language_request_test!(language_city_id, c => c.city_id_with_options("city_fixture", CityIdOptions::default().deep(true).lang("fr-CA")), c.city_id_with_options("city_fixture", CityIdOptions::default().deep(true)), "/city/id/city_fixture", "deep=true");
 language_request_test!(language_city_search, c => c.city_search("Mün", CitySearchOptions::default().limit(2).lang("fr-CA")), c.city_search("Mün", CitySearchOptions::default().limit(2)), "/city", "limit=2&q=M%C3%BCn");
@@ -1162,7 +1162,7 @@ async fn stack_preserves_site_inventory_and_request_options() {
   let client = server.client();
   let result = client.stack_with_options("bücher.example", StackOptions::default().deep(true).pretty(true)).await.unwrap();
   assert_eq!(server.requests()[0].target, "/stack/b%C3%BCcher.example?deep=true&pretty=true");
-  assert_eq!(server.requests()[0].headers.get("x-api-version").unwrap(), "2.1.0");
+  assert_eq!(server.requests()[0].headers.get("x-api-version").unwrap(), "2.2.0");
   if i == 0 || i == 3 { assert!(result.cms.is_none() && result.servers.is_none());  }
   else if i != 2 { assert!(result.cms.as_ref().unwrap().is_empty() && result.servers.as_ref().unwrap().is_empty()); }
   for group in [&result.ecommerce, &result.analytics, &result.chat, &result.payments, &result.hosting] {
@@ -1300,7 +1300,7 @@ async fn emoji_catalog_and_private_text_body() {
 	assert_eq!(calls[4].method, "POST");
 	assert_eq!(calls[4].target, "/emoji/parse?lang=fr&deep=true");
 	assert_eq!(serde_json::from_str::<serde_json::Value>(&calls[4].body).unwrap(), serde_json::json!({"text":"x 👍🏿 👍🏿"}));
-	assert_eq!(calls[4].headers.get("x-api-version").map(String::as_str),Some("2.1.0"));
+	assert_eq!(calls[4].headers.get("x-api-version").map(String::as_str),Some("2.2.0"));
 }
 
 #[tokio::test]
@@ -1346,4 +1346,18 @@ async fn email_verify_is_explicit_post_with_no_default_retry() {
  let server=TestServer::start(vec![(503,r#"{"code":"service_unavailable","message":"pending"}"#);3]);
  let client=Client::builder().api_key("fixture").base_url(&server.base_url).build().unwrap();
  assert!(client.email_verify("a@example.com").await.is_err());assert_eq!(server.requests().len(),1);
+}
+
+#[tokio::test]
+async fn county_contract_and_published_method_aliases() {
+ let server=TestServer::start(vec![(200,r#"{"county":"08031","name":"Denver County","country":"US","population":0}"#),(200,r#"{"state":"CO","country":"US","counties":[{"county":"08031","name":"Denver County"}]}"#),(200,r#"{"county":"75","name":"Paris","country":"FR","type":"department"}"#)]);
+ let client=server.client();
+ let result=client.county("Denver County",CountyOptions::default().country("US").state("CO").deep(true)).await.unwrap();
+ assert_eq!(result.county,"08031");assert_eq!(result.population,Some(0));
+ let list=client.state_counties("CO",StateCountiesOptions::default().country("US")).await.unwrap();
+ assert_eq!(list.counties[0].county,"08031");
+ let old=client.district("75",DistrictOptions::default().country("FR")).await.unwrap();assert_eq!(old.county,"75");
+ let requests=server.requests();assert_eq!(requests.len(),3);
+ assert_eq!(requests[0].target,"/county/Denver%20County?country=US&state=CO&deep=true");assert_eq!(requests[1].target,"/state/CO/counties?country=US");assert_eq!(requests[2].target,"/county/75?country=FR");
+ assert!(requests.iter().all(|r|r.headers.get("x-api-version").map(String::as_str)==Some("2.2.0")));
 }

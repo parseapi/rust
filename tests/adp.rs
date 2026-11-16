@@ -10,7 +10,7 @@ assert_eq!(plain.state,rich.state);
 assert_eq!(rich.population,Some(0));
 let plain: District=serde_json::from_str(r#"{"district":"37081","name":"Guilford","country":"US"}"#).unwrap();
 let rich: District=serde_json::from_str(r#"{"district":"37081","name":"Guilford","country":"US","population":0,"water_area":0.25}"#).unwrap();
-assert_eq!(plain.district,rich.district);
+assert_eq!(plain.county,rich.county);
 assert_eq!(rich.population,Some(0));
 let plain: City=serde_json::from_str(r#"{"name":"Charlotte","country":"US","id":"city_123"}"#).unwrap();
 let rich: City=serde_json::from_str(r#"{"name":"Charlotte","country":"US","id":"city_123","population":0,"area":0.25}"#).unwrap();
@@ -72,7 +72,7 @@ assert_eq!(rich.current.pressure,Some(1012.5));
 #[test]
 fn nested_district_profiles_and_clock_targets_preserve_zero() {
  let listing: StateDistricts = serde_json::from_str(r#"{"state":"NC","country":"US","districts":[{"district":"37081","name":"Guilford","population":0}]}"#).unwrap();
- assert_eq!(listing.districts[0].population,Some(0));
+ assert_eq!(listing.counties[0].population,Some(0));
  let clock: Time = serde_json::from_str(r#"{"timezone":"UTC","unix":0,"to":{"timezone":"UTC","unix":0,"offset_seconds":0},"offset_seconds":0,"next_dst":null}"#).unwrap();
  assert_eq!(clock.to.unwrap().offset_seconds,Some(0));
 }

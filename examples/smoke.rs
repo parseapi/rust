@@ -117,7 +117,7 @@ async fn main() {
 			)
 			.await,
 		|r| {
-			(!r.districts.is_empty())
+			(!r.counties.is_empty())
 				.then_some(None)
 				.unwrap_or(Some("empty".into()))
 		},

@@ -8,11 +8,11 @@ fn current_and_frozen_network_contracts_decode() {
         let result: Ip = from_value(fixtures[name].clone()).unwrap();
         let deep = result.clone();
         if name == "ip_current" {
-            assert_eq!(deep.district.as_deref(), Some("27053"));
-            assert_eq!(deep.district_name.as_deref(), Some("Hennepin County"));
+            assert_eq!(deep.county.as_deref(), Some("27053"));
+            assert_eq!(deep.county_name.as_deref(), Some("Hennepin County"));
             assert_eq!(deep.census_division.as_deref(), Some("West North Central"));
             assert_eq!(deep.census_region.as_deref(), Some("Midwest"));
-        } else { assert!(deep.district.is_none() && deep.census_region.is_none()); }
+        } else { assert!(deep.county.is_none() && deep.census_region.is_none()); }
     }
     for name in ["stack_success", "stack_unavailable", "stack_empty"] {
         let result: Stack = from_value(fixtures[name].clone()).unwrap();

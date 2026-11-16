@@ -20,7 +20,7 @@ async fn ordinary_request_and_retry() {
  });
  let result=Client::builder().api_key("fixture").base_url(format!("http://{address}")).retries(1).build().unwrap().time_zones("").await.unwrap();
  assert!(!result.timezones.as_ref().unwrap().is_empty());
- for request in server.join().unwrap() {assert!(request.contains("x-api-version: 2.1.0"));assert!(!request.contains("parse-response:"));}
+ for request in server.join().unwrap() {assert!(request.contains("x-api-version: 2.2.0"));assert!(!request.contains("parse-response:"));}
 }
 
 #[test]

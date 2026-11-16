@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.6.0 - 2026-11-16
+
+- State uses `iso_code` with its existing value or null. County and State county items add nullable `iso_code` for the exact place. Other ISO representations and package versions are unchanged.
+- Select HTTP API `2.2.0` through the existing client factory. Existing installed clients retain their current contract. This release preserves the reviewed breaking field/read migration and requires matching application updates.
+- Add County lookup and State counties methods, canonical County models/options, and `county` / `county_name` / `county_name_local` / `counties` wire names. Historical method/type spellings remain source aliases.
+- This is a breaking response/model migration: update District member reads to County names and `capital_of == "district"` checks to `"county"`. Existing published clients and saved account versions are unchanged. Historical payload keys remain readable where supported; the native aliases do not add duplicate JSON fields.
+
 ## 2.5.0 — 2026-11-02
 
 - Select API `2.1.0` through the existing client factory. Requested profile detail uses natural field homes instead of a response `.deep` bag.

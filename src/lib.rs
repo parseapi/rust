@@ -23,7 +23,7 @@ use std::time::Duration;
 
 const DEFAULT_BASE_URL: &str = "https://api.parseapi.com";
 // The response types' wire contract. Changes require a reviewed major SDK release.
-const API_VERSION: &str = "2.1.0";
+const API_VERSION: &str = "2.2.0";
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 const DEFAULT_RETRIES: u32 = 2;
 const RETRY_STATUS: [u16; 5] = [429, 500, 502, 503, 504];
@@ -169,14 +169,14 @@ impl StateOptions {
 /// Configures `state_districts`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct StateDistrictsOptions {
+pub struct StateCountiesOptions {
 	pub country: Option<String>,
 	pub deep: bool,
 	/// Display language for this request.
 	pub lang: Option<String>,
 }
 
-impl StateDistrictsOptions {
+impl StateCountiesOptions {
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
@@ -190,7 +190,7 @@ impl StateDistrictsOptions {
 /// Configures `district`. Omitted fields use API defaults.
 #[derive(Debug, Clone, Default)]
 #[non_exhaustive]
-pub struct DistrictOptions {
+pub struct CountyOptions {
 	pub country: Option<String>,
 	pub state: Option<String>,
 	pub deep: bool,
@@ -198,7 +198,7 @@ pub struct DistrictOptions {
 	pub lang: Option<String>,
 }
 
-impl DistrictOptions {
+impl CountyOptions {
 	pub fn lang(mut self, value: impl Into<String>) -> Self { self.lang = Some(value.into()); self }
 	/// Sets the `country` query option.
 	pub fn country(mut self, value: impl Into<String>) -> Self {
@@ -1651,36 +1651,41 @@ impl Client {
 			.await
 	}
 
-	/// Calls `/state/{code}/districts`.
-	pub async fn state_districts(
+	/// Calls `/state/{code}/counties`.
+	pub async fn state_counties(
 		&self,
 		code: &str,
-		opts: impl Into<Option<StateDistrictsOptions>>,
-	) -> Result<StateDistricts> {
+		opts: impl Into<Option<StateCountiesOptions>>,
+	) -> Result<StateCounties> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "lang", opts.lang);
 		push(&mut query, "country", opts.country);
 		push_deep(&mut query, opts.deep);
-		self.get(&format!("/state/{}/districts", seg(code)), query, None)
+		self.get(&format!("/state/{}/counties", seg(code)), query, None)
 			.await
 	}
 
-	/// Calls `/district/{code}`.
-	pub async fn district(
+	/// Calls `/county/{code}`.
+	pub async fn county(
 		&self,
 		code: &str,
-		opts: impl Into<Option<DistrictOptions>>,
-	) -> Result<District> {
+		opts: impl Into<Option<CountyOptions>>,
+	) -> Result<County> {
 		let opts = opts.into().unwrap_or_default();
 		let mut query = Query::new();
 		push(&mut query, "lang", opts.lang);
 		push(&mut query, "country", opts.country);
 		push(&mut query, "state", opts.state);
 		push_deep(&mut query, opts.deep);
-		self.get(&format!("/district/{}", seg(code)), query, None)
+		self.get(&format!("/county/{}", seg(code)), query, None)
 			.await
 	}
+
+    /// Legacy method spelling; uses the County route and the client's fixed contract.
+    pub async fn district(&self, code:&str, opts:impl Into<Option<DistrictOptions>>) -> Result<District> { self.county(code,opts).await }
+    /// Legacy method spelling; uses the County collection route.
+    pub async fn state_districts(&self, code:&str, opts:impl Into<Option<StateDistrictsOptions>>) -> Result<StateDistricts> { self.state_counties(code,opts).await }
 
 	/// Calls `/city/{name}`.
 	pub async fn city(&self, name: &str, opts: impl Into<Option<CityOptions>>) -> Result<City> {
@@ -2899,3 +2904,8 @@ impl Client {
 		.await
 	}
 }
+
+/// Legacy option spelling; use `CountyOptions`.
+pub type DistrictOptions = CountyOptions;
+/// Legacy option spelling; use `StateCountiesOptions`.
+pub type StateDistrictsOptions = StateCountiesOptions;

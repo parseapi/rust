@@ -1,5 +1,5 @@
 //! Response types for the ParseAPI public API. Nullable fields are `Option`.
-// Optional 2.1 detail belongs to its owning resource. Missing and null remain unknown.
+// Optional 2.2 detail belongs to its owning resource. Missing and null remain unknown.
 
 use serde::Deserialize;
 
@@ -33,9 +33,11 @@ pub struct IpDeep {
 	pub tor: Option<bool>,
 	pub vpn: Option<bool>,
 	pub provider: Option<String>,
-	/// Present only when supported. District is qualified by the response country.
-	pub district: Option<String>,
-	pub district_name: Option<String>,
+	/// Present only when supported. County is qualified by the response country.
+	#[serde(alias = "district")]
+	pub county: Option<String>,
+	#[serde(alias = "district_name")]
+	pub county_name: Option<String>,
 	pub census_division: Option<String>,
 	pub census_region: Option<String>,
 }
@@ -66,8 +68,10 @@ pub struct Ip {
 	pub tor: Option<bool>,
 	pub vpn: Option<bool>,
 	pub provider: Option<String>,
-	pub district: Option<String>,
-	pub district_name: Option<String>,
+	#[serde(alias = "district")]
+	pub county: Option<String>,
+	#[serde(alias = "district_name")]
+	pub county_name: Option<String>,
 	pub census_division: Option<String>,
 	pub census_region: Option<String>,
 }
@@ -340,7 +344,9 @@ pub struct State {
 
  pub timezones: Vec<String>,
 
-pub iso: Option<String>,
+ pub iso_code: Option<String>,
+ /// Legacy native read adapter. New code should read iso_code.
+ pub iso: Option<String>,
  pub iso_3166_2:Option<String>,
 	pub fips: Option<String>,
 	pub area_codes: Option<Vec<String>>,
@@ -366,9 +372,7 @@ impl<'de> Deserialize<'de> for State {
 	longitude: Option<f64>,
 	#[serde(default, deserialize_with = "null_default")]
  timezones: Vec<String>,
-	#[serde(rename = "iso_subdivision")]
-iso: Option<String>,
- iso_3166_2:Option<String>,
+ iso_code: Option<String>,
 	fips: Option<String>,
 	area_codes: Option<Vec<String>>,
 	capital: Option<StateCapital>,
@@ -379,10 +383,11 @@ iso: Option<String>,
 	tax_rate:Option<f64>,
   }
   let mut value = serde_json::Value::deserialize(decoder)?;
-  country_shape_alias(&mut value,"iso_subdivision","iso");
-  country_shape_alias(&mut value,"iso_subdivision","iso_3166_2");
+  country_shape_alias(&mut value,"iso_code","iso_subdivision");
+  country_shape_alias(&mut value,"iso_code","iso");
+  country_shape_alias(&mut value,"iso_code","iso_3166_2");
   let wire: Wire = serde_json::from_value(value).map_err(serde::de::Error::custom)?;
-  Ok(Self {state: wire.state, name: wire.name, name_local: wire.name_local, kind: wire.kind, country: wire.country, country_name: wire.country_name, latitude: wire.latitude, longitude: wire.longitude, timezones: wire.timezones, iso: wire.iso, iso_3166_2: wire.iso_3166_2, fips: wire.fips, area_codes: wire.area_codes, capital: wire.capital, population: wire.population, population_period: wire.population_period, area: wire.area, tax: wire.tax, tax_rate: wire.tax_rate})
+  Ok(Self {state: wire.state, name: wire.name, name_local: wire.name_local, kind: wire.kind, country: wire.country, country_name: wire.country_name, latitude: wire.latitude, longitude: wire.longitude, timezones: wire.timezones, iso: wire.iso_code.clone(), iso_3166_2: wire.iso_code.clone(), iso_code: wire.iso_code, fips: wire.fips, area_codes: wire.area_codes, capital: wire.capital, population: wire.population, population_period: wire.population_period, area: wire.area, tax: wire.tax, tax_rate: wire.tax_rate})
  }
 }
 
@@ -392,8 +397,10 @@ iso: Option<String>,
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct StateDistrictItem {
-	pub district: String,
+pub struct StateCountyItem {
+	#[serde(alias = "district")]
+	pub county: String,
+	pub iso_code: Option<String>,
 	pub name: String,
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
@@ -405,20 +412,23 @@ pub struct StateDistrictItem {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct StateDistricts {
+pub struct StateCounties {
 	pub state: String,
 	pub state_name: Option<String>,
 	pub country: String,
 	pub country_name: Option<String>,
 	#[serde(default, deserialize_with = "null_default")]
-	pub districts: Vec<StateDistrictItem>,
+	#[serde(alias = "districts")]
+	pub counties: Vec<StateCountyItem>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct District {
-	pub district: String,
+pub struct County {
+	#[serde(alias = "district")]
+	pub county: String,
+	pub iso_code: Option<String>,
 	pub name: String,
 	#[serde(rename = "type")]
 	pub kind: Option<String>,
@@ -453,8 +463,10 @@ pub struct City {
 	pub kind: Option<String>,
 	pub state: Option<String>,
 	pub state_name: Option<String>,
-	pub district: Option<String>,
-	pub district_name: Option<String>,
+	#[serde(alias = "district")]
+	pub county: Option<String>,
+	#[serde(alias = "district_name")]
+	pub county_name: Option<String>,
 	pub country: String,
 	pub country_name: Option<String>,
 	pub latitude: Option<f64>,
@@ -549,9 +561,12 @@ pub struct Postal {
 	pub city_local: Option<String>,
 	/// None is unknown. An empty list has no eligible choices. One choice does not imply city.
 	pub localities: Option<Vec<PostalLocality>>,
-	pub district: Option<String>,
-	pub district_name: Option<String>,
-	pub district_name_local: Option<String>,
+	#[serde(alias = "district")]
+	pub county: Option<String>,
+	#[serde(alias = "district_name")]
+	pub county_name: Option<String>,
+	#[serde(alias = "district_name_local")]
+	pub county_name_local: Option<String>,
 	pub state: Option<String>,
 	pub state_name: Option<String>,
 	pub state_name_local: Option<String>,
@@ -1182,7 +1197,7 @@ pub struct Elevation {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[non_exhaustive]
 pub struct PointElectoral {
-	/// District code string; preserves leading zeros.
+	/// Electoral district code string; preserves leading zeros.
 	pub code: String,
 	pub name: Option<String>,
 	pub congress: Option<i32>,
@@ -1210,8 +1225,10 @@ pub struct Point {
 	pub country_name: Option<String>,
 	pub state: Option<String>,
 	pub state_name: Option<String>,
-	pub district: Option<String>,
-	pub district_name: Option<String>,
+	#[serde(alias = "district")]
+	pub county: Option<String>,
+	#[serde(alias = "district_name")]
+	pub county_name: Option<String>,
 
 	pub timezone: Option<String>,
 	pub city: Option<PointCity>,
@@ -1502,8 +1519,10 @@ pub struct Address {
 	pub street: Option<String>,
 	pub unit: Option<String>,
 	pub city: Option<String>,
-	pub district: Option<String>,
-	pub district_name: Option<String>,
+	#[serde(alias = "district")]
+	pub county: Option<String>,
+	#[serde(alias = "district_name")]
+	pub county_name: Option<String>,
 	pub state: Option<String>,
 	pub state_name: Option<String>,
 	pub postal: Option<String>,
@@ -1915,7 +1934,7 @@ impl<'de> Deserialize<'de> for StateDeep {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct DistrictDeep {
+pub struct CountyDeep {
 	pub population: Option<i64>,
 	/// Retained for source compatibility. No longer returned or decoded.
 	#[deprecated(note = "Population observation periods are no longer returned")]
@@ -2185,7 +2204,7 @@ pub struct PostalMetroDeep {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 #[non_exhaustive]
-pub struct StateDistrictItemDeep {
+pub struct StateCountyItemDeep {
 	pub population: Option<i64>,
 	/// Retained for source compatibility. No longer returned or decoded.
 	#[deprecated(note = "Population observation periods are no longer returned")]
@@ -3051,7 +3070,9 @@ pub struct CityResource {
 	pub name_romanized: Option<String>,
 	pub romanization_language: Option<String>,
  pub r#match: Option<CityMatch>,
- pub id:String, pub object:String, pub name:Option<String>, pub name_local:Option<String>, pub country:Option<String>, pub country_name:Option<String>, pub state:Option<String>, pub state_name:Option<String>, pub district:Option<String>, pub district_name:Option<String>,
+ pub id:String, pub object:String, pub name:Option<String>, pub name_local:Option<String>, pub country:Option<String>, pub country_name:Option<String>, pub state:Option<String>, pub state_name:Option<String>, #[serde(alias = "district")]
+	pub county:Option<String>, #[serde(alias = "district_name")]
+	pub county_name:Option<String>,
  #[serde(rename="type")] pub kind:Option<String>,
  pub grain:Option<String>, pub latitude:Option<f64>, pub longitude:Option<f64>, pub timezone:Option<String>, pub distance:Option<f64>, pub distance_mi:Option<f64>, pub parent:Option<CityParent>, 
 pub capital_of: Option<String>,
@@ -3149,3 +3170,18 @@ pub struct CurrencyRate {
 pub struct CurrencyDeep {}
 
 
+
+/// Legacy type spelling; use `StateCountyItem`. Model fields follow the selected County contract.
+pub type StateDistrictItem = StateCountyItem;
+
+/// Legacy type spelling; use `StateCounties`. Model fields follow the selected County contract.
+pub type StateDistricts = StateCounties;
+
+/// Legacy type spelling; use `County`. Model fields follow the selected County contract.
+pub type District = County;
+
+/// Legacy type spelling; use `CountyDeep`. Model fields follow the selected County contract.
+pub type DistrictDeep = CountyDeep;
+
+/// Legacy type spelling; use `StateCountyItemDeep`. Model fields follow the selected County contract.
+pub type StateDistrictItemDeep = StateCountyItemDeep;

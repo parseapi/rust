@@ -32,3 +32,21 @@ fn historical_deep_read_members_remain_available() {
  let state:parseapi::StateDeep=serde_json::from_str(r#"{"fips":"06","capital":"Sacramento","area_codes":["916"],"tax":"Sales tax","tax_rate":0}"#).unwrap();
  assert_eq!(state.fips.as_deref(),Some("06"));assert_eq!(state.capital.as_deref(),Some("Sacramento"));assert_eq!(state.area_codes.as_ref().unwrap(),&vec!["916".to_owned()]);assert_eq!(state.tax_rate,Some(0.0));assert_eq!(state.tax.as_ref().unwrap().name.as_deref(),Some("Sales tax"));
 }
+
+#[test]
+fn state_county_iso_code_keeps_canonical_null_and_exact_place() {
+ for key in ["iso_code","iso_subdivision","iso","iso_3166_2"] {
+  let value:State=serde_json::from_value(serde_json::json!({(key):"US-CO"})).unwrap();
+  assert_eq!(value.iso_code.as_deref(),Some("US-CO"));
+  assert_eq!(value.iso,value.iso_code);assert_eq!(value.iso_3166_2,value.iso_code);
+ }
+ for body in [r#"{"iso_code":null,"iso_subdivision":"US-CA","iso":"US-TX","iso_3166_2":"US-NY"}"#,r#"{"iso_subdivision":"US-CA","iso":"US-TX","iso_3166_2":"US-NY","iso_code":null}"#] {
+  let value:State=serde_json::from_str(body).unwrap();
+  assert!(value.iso_code.is_none()&&value.iso.is_none()&&value.iso_3166_2.is_none());
+ }
+ let feature=serde_json::json!({"type":"Feature","properties":{"county":"E09000033","iso_code":"GB-WSM","type":"district"},"geometry":null});
+ let county:parseapi::County=serde_json::from_value(feature["properties"].clone()).unwrap();
+ assert_eq!(county.iso_code.as_deref(),Some("GB-WSM"));assert_eq!(county.county,"E09000033");assert_eq!(county.kind.as_deref(),Some("district"));
+ let list:parseapi::StateCounties=serde_json::from_str(r#"{"counties":[{"county":"29","iso_code":"FR-29"},{"county":"08031","iso_code":null},{"county":"old"}]}"#).unwrap();
+ assert_eq!(list.counties[0].iso_code.as_deref(),Some("FR-29"));assert!(list.counties[1].iso_code.is_none());assert!(list.counties[2].iso_code.is_none());
+}
